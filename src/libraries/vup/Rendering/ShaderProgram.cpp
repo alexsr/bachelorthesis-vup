@@ -9,10 +9,14 @@ vup::ShaderProgram::ShaderProgram(const char* vertpath, const char* fragpath)
   glAttachShader(m_program, fragmentShader);
   glLinkProgram(m_program);
   checkProgramStatus(m_program);
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
 }
 
 vup::ShaderProgram::~ShaderProgram()
 {
+  glUseProgram(0);
+  glDeleteProgram(m_program);
 }
 
 void vup::ShaderProgram::use()
