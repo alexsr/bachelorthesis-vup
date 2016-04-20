@@ -16,7 +16,7 @@ FIND_PATH(GLEW_INCLUDE_PATH
 
 FIND_LIBRARY(GLEW_LIBRARY
     NAMES
-       glew32s.lib glew32sd.lib
+       glew32s.lib
     PATHS
         ${OPENGL_SEARCH_PATHS}
     PATH_SUFFIXES

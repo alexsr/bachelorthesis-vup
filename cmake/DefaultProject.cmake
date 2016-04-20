@@ -23,11 +23,6 @@ else(WIN32)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif(WIN32)
 
-set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-if(APPLE)
-	set(OpenCV_STATIC ON)
-endif(APPLE)
-
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(GLFW3 REQUIRED)
@@ -40,12 +35,6 @@ add_subdirectory(${OPENCL_KERNEL_PATH})
 if("${CMAKE_SYSTEM}" MATCHES "Linux")
 	find_package(X11)
 	set(ALL_LIBRARIES ${ALL_LIBRARIES} ${X11_LIBRARIES} Xrandr Xxf86vm Xi pthread)
-endif()
-
-set(USE_OPENGL_CORE_PROFILE_330 1 CACHE BOOL "Use OpenGL Core Profile")
-
-if(${USE_OPENGL_CORE_PROFILE_330})
-	add_definitions(-DCVARK_USE_CORE_PROFILE_330)
 endif()
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

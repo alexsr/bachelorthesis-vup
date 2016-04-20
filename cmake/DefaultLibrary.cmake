@@ -14,7 +14,7 @@ include_directories(
     ${GLFW3_INCLUDE_PATH}
     ${GLM_INCLUDE_PATH}
     ${ASSIMP_INCLUDE_DIRS}
-    ${OpenCL_INCLUDE_DIRS}
+    ${OPENCL_INCLUDE_DIRS}
     ${EXTERNAL_LIBRARY_PATHS}
     ${LIBRARIES_PATH}
 )
@@ -27,6 +27,8 @@ add_definitions(-DOPENCL_KERNEL_PATH="${OPENCL_KERNEL_PATH}")
 #add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
 add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 add_definitions(-DGLEW_STATIC)
+
+add_library(${ProjectId} ${SOURCES} ${HEADER})
 
 target_link_libraries(
     ${ProjectId}

@@ -15,6 +15,8 @@ include_directories(
     ${GLM_INCLUDE_PATH}
     ${ASSIMP_INCLUDE_DIRS}
     ${OPENCL_INCLUDE_DIRS}
+    ${EXTERNAL_LIBRARY_PATHS}
+    ${LIBRARIES_PATH}
 )
 
 file(GLOB_RECURSE SOURCES *.cpp)
