@@ -39,3 +39,5 @@ target_link_libraries(
     ${ASSIMP_LIBRARIES}
     ${OPENCL_LIBRARIES}
 )
+
+set_target_properties(${ProjectId} PROPERTIES LINKER_LANGUAGE CXX)
