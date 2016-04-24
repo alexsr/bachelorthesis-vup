@@ -4,17 +4,22 @@ vup::ShaderProgram::ShaderProgram(const char* vertpath, const char* fragpath)
 {
   GLuint vertexShader = createShader(vertpath, GL_VERTEX_SHADER);
   GLuint fragmentShader = createShader(fragpath, GL_FRAGMENT_SHADER);
+
   m_program = glCreateProgram();
   glAttachShader(m_program, vertexShader);
   glAttachShader(m_program, fragmentShader);
   glLinkProgram(m_program);
+
   checkProgramStatus(m_program);
+
+  // Delete shaders because they are already compiled into the program
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 }
 
 vup::ShaderProgram::~ShaderProgram()
 {
+  // Unbind the shader program in case it is in use before deleting it.
   glUseProgram(0);
   glDeleteProgram(m_program);
 }
@@ -31,14 +36,14 @@ GLuint vup::ShaderProgram::getProgram()
 
 GLuint vup::ShaderProgram::createShader(const char * path, GLenum type)
 {
-  GLuint shader = glCreateShader(type);
-  loadFromSource(path, shader);
-  glCompileShader(shader);
-  checkShaderStatus(shader);
-  return shader;
+  GLuint shaderID = glCreateShader(type);
+  loadFromSource(path, shaderID);
+  glCompileShader(shaderID);
+  checkShaderStatus(shaderID);
+  return shaderID;
 }
 
-void vup::ShaderProgram::loadFromSource(const char * path, GLuint shader)
+void vup::ShaderProgram::loadFromSource(const char * path, GLuint shaderID)
 {
   std::string source = "";
   std::string line = "";
@@ -54,32 +59,32 @@ void vup::ShaderProgram::loadFromSource(const char * path, GLuint shader)
   }
   const char* shaderSource = source.c_str();
   GLint sourceSize = strlen(shaderSource);
-  glShaderSource(shader, 1, &shaderSource, &sourceSize);
+  glShaderSource(shaderID, 1, &shaderSource, &sourceSize);
 }
 
-void vup::ShaderProgram::checkShaderStatus(GLuint shader)
+void vup::ShaderProgram::checkShaderStatus(GLuint shaderID)
 {
   GLint status;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+  glGetShaderiv(shaderID, GL_COMPILE_STATUS, &status);
   if (status == GL_FALSE) {
     GLint infoLogLength;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+    glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength + 1];
-    glGetShaderInfoLog(shader, infoLogLength, NULL, infoLog);
+    glGetShaderInfoLog(shaderID, infoLogLength, NULL, infoLog);
     std::cout << "ERROR: Shader compilation failed.\n" << infoLog << std::endl;
     delete[] infoLog;
   }
 }
 
-void vup::ShaderProgram::checkProgramStatus(GLuint program)
+void vup::ShaderProgram::checkProgramStatus(GLuint programID)
 {
   GLint status;
-  glGetProgramiv(program, GL_LINK_STATUS, &status);
+  glGetProgramiv(programID, GL_LINK_STATUS, &status);
   if (status == GL_FALSE) {
     GLint infoLogLength;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+    glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength + 1];
-    glGetProgramInfoLog(program, infoLogLength, NULL, infoLog);
+    glGetProgramInfoLog(programID, infoLogLength, NULL, infoLog);
     std::cout << "ERROR: Shader program creation failed.\n" << infoLog << std::endl;
     delete[] infoLog;
   }
