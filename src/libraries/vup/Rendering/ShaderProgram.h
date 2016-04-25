@@ -6,6 +6,9 @@
 #define VUP_SHADER_PROGRAM_H
 
 #include "vup/defs.h"
+#include "vup/Exceptions/ProgramCompilationException.h"
+#include "vup/Exceptions/ShaderCompilationException.h"
+#include "vup/Exceptions/FileNotFoundException.h"
 #include <string>
 #include <fstream>
 #include <iostream>
