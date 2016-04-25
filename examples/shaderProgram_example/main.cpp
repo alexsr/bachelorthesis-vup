@@ -43,7 +43,7 @@ int main()
   glfwSetKeyCallback(window, key_callback);
 
   vup::ShaderProgram simpleShader(SHADERS_PATH "/minimal.vert", SHADERS_PATH "/minimal.frag");
-  
+
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
