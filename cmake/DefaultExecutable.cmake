@@ -14,7 +14,7 @@ include_directories(
     ${GLFW3_INCLUDE_PATH}
     ${GLM_INCLUDE_PATH}
     ${ASSIMP_INCLUDE_DIRS}
-    ${OPENCL_INCLUDE_DIRS}
+    ${OpenCL_INCLUDE_DIRS}
     ${EXTERNAL_LIBRARY_PATHS}
     ${LIBRARIES_PATH}
 )
@@ -38,6 +38,6 @@ target_link_libraries(
     ${GLEW_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${ASSIMP_LIBRARIES}
-    ${OPENCL_LIBRARIES}
+    ${OpenCL_LIBRARIES}
 )
 
