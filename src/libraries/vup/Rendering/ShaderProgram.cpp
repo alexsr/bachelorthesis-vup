@@ -9,7 +9,6 @@ vup::ShaderProgram::ShaderProgram(const char* vertpath, const char* fragpath)
   glAttachShader(m_program, vertexShader);
   glAttachShader(m_program, fragmentShader);
   glLinkProgram(m_program);
-
   checkProgramStatus(m_program);
 
   // Delete shaders because they are already compiled into the program
@@ -54,8 +53,9 @@ void vup::ShaderProgram::loadFromSource(const char * path, GLuint shaderID)
     }
     shaderfile.close();
     std::cout << "SUCCESS: Loading shader source from " << path << std::endl;
-  } else {
-    std::cout << "ERROR: Failed loading shader source from " << path << std::endl;
+  }
+  else {
+    throw(vup::FileNotFoundException(path));
   }
   const char* shaderSource = source.c_str();
   GLint sourceSize = strlen(shaderSource);
@@ -71,8 +71,11 @@ void vup::ShaderProgram::checkShaderStatus(GLuint shaderID)
     glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength + 1];
     glGetShaderInfoLog(shaderID, infoLogLength, NULL, infoLog);
-    std::cout << "ERROR: Shader compilation failed.\n" << infoLog << std::endl;
+    throw(vup::ShaderCompilationException(infoLog));
     delete[] infoLog;
+  }
+  else {
+    std::cout << "SUCCESS: Compiling shader." << std::endl;
   }
 }
 
@@ -85,7 +88,10 @@ void vup::ShaderProgram::checkProgramStatus(GLuint programID)
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength + 1];
     glGetProgramInfoLog(programID, infoLogLength, NULL, infoLog);
-    std::cout << "ERROR: Shader program creation failed.\n" << infoLog << std::endl;
+    throw(vup::ProgramCompilationException(infoLog));
     delete[] infoLog;
+  }
+  else {
+    std::cout << "SUCCESS: Compiling shader program." << std::endl;
   }
 }
