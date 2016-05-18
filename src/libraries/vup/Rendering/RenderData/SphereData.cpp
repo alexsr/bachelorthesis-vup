@@ -18,25 +18,25 @@ vup::SphereData::SphereData(float r, int hres, int vres)
     for (int j = 0; j < vres; j++) {
       float v = j * d_v;
       float vn = v + d_v;
-      glm::vec3 p0 = createPoint(h, v);
-      glm::vec3 p1 = createPoint(h, vn);
-      glm::vec3 p2 = createPoint(hn, v);
-      glm::vec3 p3 = createPoint(hn , vn);
+      glm::vec4 p0 = createPoint(h, v);
+      glm::vec4 p1 = createPoint(h, vn);
+      glm::vec4 p2 = createPoint(hn, v);
+      glm::vec4 p3 = createPoint(hn , vn);
       m_vertices[n] = p0 * r;
-      m_normals[n++] = p0;
+      m_normals[n++] = glm::vec3(p0);
       m_vertices[n] = p1 * r;
-      m_normals[n++] = p1;
+      m_normals[n++] = glm::vec3(p1);
       m_vertices[n] = p3 * r;
-      m_normals[n++] = p3;
+      m_normals[n++] = glm::vec3(p3);
       m_vertices[n] = p3 * r;
-      m_normals[n++] = p3;
+      m_normals[n++] = glm::vec3(p3);
       m_vertices[n] = p2 * r;
-      m_normals[n++] = p2;
+      m_normals[n++] = glm::vec3(p2);
       m_vertices[n] = p0 * r;
-      m_normals[n++] = p0;
+      m_normals[n++] = glm::vec3(p0);
     }
-
   }
+  m_size = n;
 }
 
 vup::SphereData::~SphereData()
@@ -44,11 +44,12 @@ vup::SphereData::~SphereData()
 
 }
 
-glm::vec3 vup::SphereData::createPoint(float theta, float phi)
+glm::vec4 vup::SphereData::createPoint(float theta, float phi)
 {
-  glm::vec3 p;
+  glm::vec4 p;
   p.x = glm::cos(theta) * glm::sin(phi);
   p.y = glm::sin(theta) * glm::sin(phi);
   p.z = glm::cos(phi);
+  p.w = 1.0f;
   return p;
 }

@@ -20,7 +20,7 @@ public:
   SphereData(float r = 1.0, int hres = 30, int vres = 30);
   virtual ~SphereData();
 
-  glm::vec3 createPoint(float theta, float phi);
+  glm::vec4 createPoint(float theta, float phi);
 
 private:
   float m_r;
