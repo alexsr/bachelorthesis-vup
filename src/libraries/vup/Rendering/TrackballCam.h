@@ -9,10 +9,6 @@
 
 namespace vup {
 
-// Creates an OpenGL Shader Program from source and provides
-// additional functionality to use and update the shader
-// inside the renderloop.
-
 class TrackballCam
 {
 public:
@@ -43,7 +39,6 @@ private:
   int m_width;
   int m_height;
   bool m_lmb_pressed;
-
 
 };
 

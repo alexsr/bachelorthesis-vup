@@ -10,16 +10,11 @@
 
 namespace vup {
 
-// Creates an OpenGL Shader Program from source and provides
-// additional functionality to use and update the shader
-// inside the renderloop.
-
 class RenderData
 {
 public:
   RenderData();
   virtual ~RenderData();
-  // Activates the use of the shader program.
   std::vector<glm::vec4> getVertices() { return m_vertices; }
   std::vector<glm::vec3> getNormals() { return m_normals; }
   int sizeOfVertices() { return sizeof(glm::vec4) * m_vertices.size(); }

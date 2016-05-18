@@ -13,7 +13,7 @@ vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, floa
   m_oldY = 0.0f;
   m_x = 0.0f;
   m_y = 0.0f;
-  
+ 
   m_theta = glm::pi<float>() / 2.0f;
   m_phi = 0.f;
   m_radius = r;
@@ -42,7 +42,6 @@ glm::mat4 vup::TrackballCam::getProjection()
 
 void vup::TrackballCam::update(GLFWwindow * window)
 {
-
   double x, y;
   glfwGetCursorPos(window, &x, &y);
 

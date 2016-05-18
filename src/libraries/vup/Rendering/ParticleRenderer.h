@@ -14,10 +14,6 @@ struct pos {
 
 namespace vup {
 
-// Creates an OpenGL Shader Program from source and provides
-// additional functionality to use and update the shader
-// inside the renderloop.
-
 class ParticleRenderer
 {
 public:
