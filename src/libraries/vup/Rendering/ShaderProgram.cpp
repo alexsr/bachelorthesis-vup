@@ -33,6 +33,22 @@ GLuint vup::ShaderProgram::getProgram()
   return m_program;
 }
 
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::mat4 m)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(m));
+}
+
+GLint vup::ShaderProgram::findUniform(const GLchar* name)
+{
+  GLint loc = glGetUniformLocation(m_program, name);
+  if (loc == -1) {
+    throw(vup::UniformNotFoundException(name));
+  }
+  return loc;
+}
+
 GLuint vup::ShaderProgram::createShader(const char * path, GLenum type)
 {
   GLuint shaderID = glCreateShader(type);

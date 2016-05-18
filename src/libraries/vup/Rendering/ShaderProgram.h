@@ -9,6 +9,7 @@
 #include "vup/Exceptions/ProgramCompilationException.h"
 #include "vup/Exceptions/ShaderCompilationException.h"
 #include "vup/Exceptions/FileNotFoundException.h"
+#include "vup/Exceptions/UniformNotFoundException.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -27,8 +28,11 @@ public:
   // Activates the use of the shader program.
   void use();
   GLuint getProgram();
+  void updateUniform(const GLchar* name, glm::mat4 m);
 
 private:
+  GLint findUniform(const GLchar* name);
+
   GLuint createShader(const char* path, GLenum type);
 
   // Loads the shader file source from the path but does not return the source.
