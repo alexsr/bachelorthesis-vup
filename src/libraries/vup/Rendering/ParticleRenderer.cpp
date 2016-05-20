@@ -1,6 +1,5 @@
 #include "ParticleRenderer.h"
 
-
 vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size)
 {
   m_size = size;
@@ -42,12 +41,12 @@ void vup::ParticleRenderer::execute(int amount)
   glBindVertexArray(0);
 }
 
-void vup::ParticleRenderer::updatePositions(std::vector<pos>* positions)
+void vup::ParticleRenderer::updatePositions(std::vector<vup::particle::pos>* data)
 {
   glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-  pos * vertexArray = (pos *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+  vup::particle::pos * vertexArray = (vup::particle::pos *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
   for (int i = 0; i < 1000; i++) {
-    vertexArray[i] = positions->at(i);
+    vertexArray[i] = data->at(i);
   }
   glUnmapBuffer(GL_ARRAY_BUFFER);
   glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -7,10 +7,7 @@
 
 #include "vup/defs.h"
 #include "vup/Rendering/RenderData/RenderData.h"
-
-struct pos {
-  float x, y, z;
-};
+#include "vup/particle.h"
 
 namespace vup {
 
@@ -20,7 +17,7 @@ public:
   ParticleRenderer(RenderData rd, int size);
   ~ParticleRenderer();
   void execute(int amount);
-  void updatePositions(std::vector<pos>* positions);
+  void updatePositions(std::vector<vup::particle::pos>* data);
 
 private:
   int m_size;

@@ -1,4 +1,5 @@
 #include "vup/defs.h"
+#include "vup/particle.h"
 #include "vup/Rendering/ShaderProgram.h"
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
@@ -59,7 +60,7 @@ int main()
     vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
   }
 
-  std::vector<pos> translations(1000);
+  std::vector<vup::particle::pos> translations(1000);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < 1000; i++) {
     translations[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
