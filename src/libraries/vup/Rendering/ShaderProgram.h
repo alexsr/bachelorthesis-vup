@@ -8,8 +8,8 @@
 #include "vup/defs.h"
 #include "vup/Exceptions/ProgramCompilationException.h"
 #include "vup/Exceptions/ShaderCompilationException.h"
-#include "vup/Exceptions/FileNotFoundException.h"
 #include "vup/Exceptions/UniformNotFoundException.h"
+#include "vup/Util/FileReader.h"
 #include <string>
 #include <fstream>
 #include <iostream>
