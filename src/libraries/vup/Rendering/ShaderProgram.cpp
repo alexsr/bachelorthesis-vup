@@ -60,20 +60,11 @@ GLuint vup::ShaderProgram::createShader(const char * path, GLenum type)
 
 void vup::ShaderProgram::loadFromSource(const char * path, GLuint shaderID)
 {
-  std::string source = "";
-  std::string line = "";
-  std::ifstream shaderfile(path);
-  if (shaderfile.is_open()) {
-    while (std::getline(shaderfile, line)) {
-      source += line + "\n";
-    }
-    shaderfile.close();
+  vup::FileReader fr(path);
+  if (fr.isLoaded()) {
     std::cout << "SUCCESS: Loading shader source from " << path << std::endl;
   }
-  else {
-    throw(vup::FileNotFoundException(path));
-  }
-  const char* shaderSource = source.c_str();
+  const char* shaderSource = fr.getSourceChar();
   GLint sourceSize = strlen(shaderSource);
   glShaderSource(shaderID, 1, &shaderSource, &sourceSize);
 }
