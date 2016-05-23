@@ -18,7 +18,9 @@ class FileReader
 public:
   FileReader(const char* path);
   ~FileReader();
+  std::string getSource() { return m_source; }
   const char* getSourceChar() { return m_source.c_str(); }
+  int length() { return m_source.length(); }
   bool isLoaded() { return m_loaded; }
 
 private:
