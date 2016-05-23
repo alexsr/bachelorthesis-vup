@@ -18,6 +18,7 @@ public:
   ~ParticleRenderer();
   void execute(int amount);
   void updatePositions(std::vector<vup::particle::pos>* data);
+  GLuint getVBO() { return m_posVBO; }
 
 private:
   int m_size;
