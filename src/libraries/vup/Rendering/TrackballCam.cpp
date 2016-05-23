@@ -23,7 +23,7 @@ vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, floa
   m_cameraPos.z = m_center.z + m_radius * glm::sin(m_theta) * glm::cos(m_phi);
   
   m_view = glm::lookAt(m_cameraPos, m_center, glm::vec3(0, 1.0f, 0));
-  m_projection = glm::perspective(50.0f, m_width / (float)m_height, 0.001f, 1000.0f);
+  m_projection = glm::perspective(50.0f, m_width / (float)m_height, 0.001f, 10000.0f);
 }
 
 vup::TrackballCam::~TrackballCam()
@@ -81,10 +81,10 @@ void vup::TrackballCam::update(GLFWwindow * window)
   }
   
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-    m_radius -= 0.1f;
+    m_radius -= m_zoomsens;
   }
   else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-    m_radius += 0.1f;
+    m_radius += m_zoomsens;
   }
   if (m_radius < 0.1f) {
     m_radius = 0.1f;
