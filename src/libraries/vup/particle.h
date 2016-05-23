@@ -7,10 +7,10 @@ namespace vup {
 
 struct particle {
   struct pos {
-    float x, y, z;
+    float x, y, z, w;
   };
   struct vel {
-    float x, y, z;
+    float x, y, z, w;
   };
 };
 

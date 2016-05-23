@@ -51,6 +51,7 @@ int main()
   vup::TrackballCam cam(WIDTH, HEIGHT, 0.01f, 10.0f);
 
   vup::ShaderProgram simpleShader(SHADERS_PATH "/minimal.vert", SHADERS_PATH "/minimal.frag");
+  simpleShader.updateUniform("proj", cam.getProjection());
 
   glm::vec3 vel[1000];
   srand(static_cast <unsigned> (time(0)));
@@ -92,7 +93,6 @@ int main()
     }
     cam.update(window);
     simpleShader.updateUniform("view", cam.getView());
-    simpleShader.updateUniform("proj", cam.getProjection());
     simpleShader.use();
     renderer.updatePositions(&translations);
     renderer.execute(100);
