@@ -14,18 +14,15 @@ namespace vup {
 class ParticleRenderer
 {
 public:
-  ParticleRenderer(RenderData rd, int size);
+  ParticleRenderer(RenderData rd, int size, GLuint posVBO, std::vector<std::pair<GLuint, int>> instancedVBOS);
   ~ParticleRenderer();
   void execute(int amount);
-  void updatePositions(std::vector<vup::particle::pos>* data);
-  GLuint getVBO() { return m_posVBO; }
 
 private:
   int m_size;
   int m_rdsize;
   RenderData m_rd;
   GLuint m_vao;
-  GLuint m_posVBO;
 
 };
 

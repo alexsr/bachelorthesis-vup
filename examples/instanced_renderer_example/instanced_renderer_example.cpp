@@ -48,57 +48,11 @@ int main()
 
   glfwSetKeyCallback(window, key_callback);
 
-  vup::TrackballCam cam(WIDTH, HEIGHT, 0.01f, 10.0f);
-
-  vup::ShaderProgram simpleShader(SHADERS_PATH "/minimal.vert", SHADERS_PATH "/minimal.frag");
-  simpleShader.updateUniform("proj", cam.getProjection());
-
-  glm::vec3 vel[1000];
-  srand(static_cast <unsigned> (time(0)));
-  for (int i = 0; i < 1000; i++) {
-    vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-  }
-
-  std::vector<vup::particle::pos> translations(1000);
-  srand(static_cast <unsigned> (time(0)));
-  for (int i = 0; i < 1000; i++) {
-    translations[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-  }
-  
-  float size = .1f;
-  vup::SphereData sphere(size);
-  vup::ParticleRenderer renderer(sphere, 1000);
-
-  int test = 0;
-
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    if (test > 100) {
-      test = 0;
-      for (int i = 0; i < 1000; i++) {
-        vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-        vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-        vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-      }
-    }
-    for (int i = 0; i < 1000; i++) {
-      translations[i].x += vel[i].x * 0.01f;
-      translations[i].y += vel[i].y * 0.01f;
-      translations[i].z += vel[i].z * 0.01f;
-    }
-    cam.update(window);
-    simpleShader.updateUniform("view", cam.getView());
-    simpleShader.use();
-    renderer.updatePositions(&translations);
-    renderer.execute(100);
     glfwPollEvents();
     glfwSwapBuffers(window);
-    test++;
   }
   glfwTerminate();
   return 0;
