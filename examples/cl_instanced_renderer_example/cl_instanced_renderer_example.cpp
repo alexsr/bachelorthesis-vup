@@ -4,6 +4,7 @@
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
+#include "vup/ParticleHandling/VBOHandler.h"
 #include <Windows.h>
 
 #include <CL/cl.hpp>
@@ -65,12 +66,12 @@ int main()
 
   glfwSetKeyCallback(window, key_callback);
 
-  vup::TrackballCam cam(WIDTH, HEIGHT, 0.01f, 10000.0f, 100.0f);
+  vup::TrackballCam cam(WIDTH, HEIGHT, 0.01f, 100.0f, 5.0f);
 
-  vup::ShaderProgram simpleShader(SHADERS_PATH "/minimal.vert", SHADERS_PATH "/minimal.frag");
+  vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 1000000;
+  int particle_amount = 50000;
 
   std::vector<vup::particle::vel> vel(particle_amount);
   srand(static_cast <unsigned> (time(0)));
@@ -89,11 +90,29 @@ int main()
     translations[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     translations[i].w = 1.0f;
   }
+  std::vector<vup::particle::color> color(particle_amount);
+  for (int i = 0; i < particle_amount; i++) {
+    color[i].r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+    color[i].g = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+    color[i].b = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+    color[i].a = 1.0f;
+  }
 
-  float size = .001f;
-  vup::SphereData sphere(size, 10, 10);
-  vup::ParticleRenderer renderer(sphere, particle_amount);
-  renderer.updatePositions(&translations);
+  std::vector<vup::particle::type> type(particle_amount);
+  srand(static_cast <unsigned> (time(0)));
+  for (int i = 0; i < particle_amount; i++) {
+    type[i] = static_cast<int>(-1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f)));
+    
+  }
+
+  vup::VBOHandler vboHandler(particle_amount);
+
+  float size = .01f;
+  vup::SphereData sphere(size, 20, 20);
+  vup::ParticleRenderer renderer(sphere, particle_amount, vboHandler.getPosVBO(), vboHandler.getVBOs());
+  vboHandler.updatePositions(&translations);
+  vboHandler.updateColor(&color);
+  vboHandler.updateType(&type);
 
   int test = 0;
 
@@ -105,7 +124,7 @@ int main()
     std::cout << " No platforms found. Check OpenCL installation!\n";
     exit(1);
   }
-  cl::Platform default_platform = all_platforms[0];
+  cl::Platform default_platform = all_platforms[1]; // Only 1 because of laptop, TODO find better way to detect platform
   std::cout << "Using platform: " << default_platform.getInfo<CL_PLATFORM_NAME>() << "\n";
 
   std::vector<cl::Device> all_devices;
@@ -141,7 +160,7 @@ int main()
   }
   glFinish();
   cl_int clError;
-  cl::BufferGL vbo_cl(context, CL_MEM_READ_WRITE, renderer.getVBO(), &clError);
+  cl::BufferGL vbo_cl(context, CL_MEM_READ_WRITE, vboHandler.getPosVBO(), &clError);
   std::cout << clError << " Error?" << std::endl;
   cl::Buffer vel_cl(context, CL_MEM_READ_ONLY, sizeof(vup::particle::vel) * vel.size(), NULL, &clError);
   queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(vup::particle::vel) * vel.size(), &vel[0]);
@@ -154,15 +173,10 @@ int main()
   kernel.setArg(0, vbo_cl);
   kernel.setArg(1, vel_cl);
 
-
+  glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    /*for (int i = 0; i < 1000; i++) {
-      translations[i].x += vel[i].x * 0.01f;
-      translations[i].y += vel[i].y * 0.01f;
-      translations[i].z += vel[i].z * 0.01f;
-    }*/
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     cam.update(window);
     simpleShader.updateUniform("view", cam.getView());
     simpleShader.use();

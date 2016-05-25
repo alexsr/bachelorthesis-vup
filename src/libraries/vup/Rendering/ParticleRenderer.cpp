@@ -1,16 +1,11 @@
 #include "ParticleRenderer.h"
 
-vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size)
+vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size, GLuint posVBO, std::vector<std::pair<GLuint, int>> instancedVBOS)
 {
   m_size = size;
   m_rd = rd;
   m_rdsize = rd.getSize();
 
-  // Store instance data in an array buffer
-  glGenBuffers(1, &m_posVBO);
-  glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * m_size, NULL, GL_STREAM_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
   GLuint renderVBO;
   glGenVertexArrays(1, &m_vao);
   glGenBuffers(1, &renderVBO);
@@ -21,10 +16,17 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size)
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
   // Also set instance data
   glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, posVBO);
   glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glVertexAttribDivisor(1, 1); // Tell OpenGL this is an instanced vertex attribute.
+  for (int i = 0; i < instancedVBOS.size(); i++) {
+    glEnableVertexAttribArray(i + 2);
+    glBindBuffer(GL_ARRAY_BUFFER, instancedVBOS[i].first);
+    glVertexAttribPointer(i + 2, instancedVBOS[i].second, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribDivisor(i + 2, 1); // Tell OpenGL this is an instanced vertex attribute.
+  }
   glBindVertexArray(0);
 }
 
@@ -39,15 +41,4 @@ void vup::ParticleRenderer::execute(int amount)
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glDrawArraysInstanced(GL_TRIANGLES, 0, m_rdsize, amount);
   glBindVertexArray(0);
-}
-
-void vup::ParticleRenderer::updatePositions(std::vector<vup::particle::pos>* data)
-{
-  glBindBuffer(GL_ARRAY_BUFFER, m_posVBO);
-  vup::particle::pos * vertexArray = (vup::particle::pos *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-  for (int i = 0; i < 1000; i++) {
-    vertexArray[i] = data->at(i);
-  }
-  glUnmapBuffer(GL_ARRAY_BUFFER);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
