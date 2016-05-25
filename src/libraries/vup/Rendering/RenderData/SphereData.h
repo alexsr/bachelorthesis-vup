@@ -18,6 +18,8 @@ public:
 
   glm::vec4 createPoint(float theta, float phi);
 
+  virtual int getResolution() { return m_hres * m_vres; }
+
 private:
   float m_r;
   int m_hres;

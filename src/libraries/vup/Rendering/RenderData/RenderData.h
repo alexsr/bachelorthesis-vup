@@ -20,6 +20,7 @@ public:
   int sizeOfVertices() { return sizeof(glm::vec4) * m_vertices.size(); }
   int sizeOfNormals() { return sizeof(glm::vec3) * m_normals.size(); }
   int getSize() { return m_size; }
+  virtual int getResolution() { return 0; }
 
 protected:
   std::vector<glm::vec4> m_vertices;

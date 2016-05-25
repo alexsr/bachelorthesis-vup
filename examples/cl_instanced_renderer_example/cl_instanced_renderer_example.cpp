@@ -17,8 +17,8 @@
 #include <cstdlib>
 #include <ctime>
 
-#define WIDTH 1920
-#define HEIGHT 1080
+#define WIDTH 800
+#define HEIGHT 600
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
@@ -48,8 +48,8 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  // Init particle data
   int particle_amount = 5000;
+
   std::vector<vup::particle::pos> translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
@@ -58,7 +58,6 @@ int main()
     translations[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     translations[i].w = 1.0f;
   }
-  srand(static_cast <unsigned> (time(0)));
   std::vector<vup::particle::color> color(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     color[i].r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
@@ -74,7 +73,6 @@ int main()
     vel[i].w = 0.0f;
   }
   std::vector<vup::particle::type> type(particle_amount);
-  
   for (int i = 0; i < particle_amount; i++) {
     type[i] = static_cast<int>(-1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f)));
     
@@ -97,6 +95,7 @@ int main()
   cl_int err;
   cl::Context context = gpuHandler.getContext();
   cl::Device default_device = gpuHandler.getDevice();
+
   cl::CommandQueue queue(context, default_device);
 
   vup::FileReader file(OPENCL_KERNEL_PATH "/interop.cl");
