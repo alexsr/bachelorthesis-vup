@@ -33,6 +33,111 @@ GLuint vup::ShaderProgram::getProgram()
   return m_program;
 }
 
+void vup::ShaderProgram::updateUniform(const GLchar* name, bool b)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform1i(loc, b);
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, int i)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform1i(loc, i);
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, float f)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform1f(loc, f);
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, double d)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform1f(loc, d);
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::vec2 v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform2fv(loc, 1, glm::value_ptr(v));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::vec3 v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform3fv(loc, 1, glm::value_ptr(v));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::vec4 v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform4fv(loc, 1, glm::value_ptr(v));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::ivec2 v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform2iv(loc, 1, glm::value_ptr(v));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::ivec3 v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform3iv(loc, 1, glm::value_ptr(v));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::ivec4 v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform4iv(loc, 1, glm::value_ptr(v));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, std::vector<glm::vec2> v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform2fv(loc, sizeof(v), glm::value_ptr((&v[0])[0]));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, std::vector<glm::vec3> v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform3fv(loc, sizeof(v), glm::value_ptr((&v[0])[0]));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, std::vector<glm::vec4> v)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniform4fv(loc, sizeof(v), glm::value_ptr((&v[0])[0]));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::mat2 m)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniformMatrix2fv(loc, 1, GL_FALSE, glm::value_ptr(m));
+}
+
+void vup::ShaderProgram::updateUniform(const GLchar* name, glm::mat3 m)
+{
+  GLint loc = findUniform(name);
+  glUseProgram(m_program);
+  glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(m));
+}
+
 void vup::ShaderProgram::updateUniform(const GLchar* name, glm::mat4 m)
 {
   GLint loc = findUniform(name);

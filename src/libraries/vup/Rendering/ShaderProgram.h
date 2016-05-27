@@ -13,12 +13,13 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 namespace vup {
 
 // Creates an OpenGL Shader Program from source and provides
-// additional functionality to use and update the shader
-// inside the renderloop.
+// additional functionality to use the shader and update the
+// uniform values.
 
 class ShaderProgram
 {
@@ -28,11 +29,34 @@ public:
   // Activates the use of the shader program.
   void use();
   GLuint getProgram();
+
+  // Update the uniform at the location of name with
+  // the second value in the method decleration.
+  // These are the essential methods for updating uniforms.
+  void updateUniform(const GLchar * name, bool b);
+  void updateUniform(const GLchar * name, int i);
+  void updateUniform(const GLchar * name, float f);
+  void updateUniform(const GLchar * name, double d);
+  void updateUniform(const GLchar * name, glm::vec2 v);
+  void updateUniform(const GLchar * name, glm::vec3 v);
+  void updateUniform(const GLchar * name, glm::vec4 v);
+  void updateUniform(const GLchar * name, glm::ivec2 v);
+  void updateUniform(const GLchar * name, glm::ivec3 v);
+  void updateUniform(const GLchar * name, glm::ivec4 v);
+  void updateUniform(const GLchar * name, std::vector<glm::vec2> v);
+  void updateUniform(const GLchar * name, std::vector<glm::vec3> v);
+  void updateUniform(const GLchar * name, std::vector<glm::vec4> v);
+  void updateUniform(const GLchar * name, glm::mat2 m);
+  void updateUniform(const GLchar * name, glm::mat3 m);
   void updateUniform(const GLchar* name, glm::mat4 m);
 
 private:
+
+  // Tries to find the uniform location of the uniform with the given name.
+  // If the uniform is not found in the shader, an exception is thrown.
   GLint findUniform(const GLchar* name);
 
+  // Handles the shader creation and returns the id of the compiled shader.
   GLuint createShader(const char* path, GLenum type);
 
   // Loads the shader file source from the path but does not return the source.
