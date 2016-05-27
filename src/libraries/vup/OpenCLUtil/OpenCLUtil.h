@@ -39,10 +39,11 @@ public:
   TBD(int platformID, cl_device_type deviceType, int deviceID);
   ~TBD();
   void setDefaultPlatform(int id);
-  cl::Platform getPlatform();
+  cl::Platform getPlatform() { return m_defaultPlatform; }
   void setDefaultDevice(int id);
-  cl::Device getDevice();
-  cl::Context getContext();
+  cl::Device getDevice() { return m_defaultDevice; }
+  cl::Context getContext() { return m_context; }
+  cl::CommandQueue getQueue() { return m_queue; }
 
 private:
   void initPlatform(int id);
@@ -54,6 +55,7 @@ private:
   cl::Device m_defaultDevice;
   std::vector<cl::Device> m_devices;
   cl::Context m_context;
+  cl::CommandQueue m_queue;
 };
 
 }

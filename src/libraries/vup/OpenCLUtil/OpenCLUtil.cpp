@@ -5,6 +5,7 @@ vup::TBD::TBD(int platformID, cl_device_type deviceType, int deviceID)
   initPlatform(platformID);
   initContext(deviceType);
   initDevice(deviceID);
+  m_queue = cl::CommandQueue(m_context, m_defaultDevice);
 }
 
 vup::TBD::~TBD()
@@ -24,25 +25,10 @@ void vup::TBD::setDefaultPlatform(int id)
   std::cout << "Using platform: " << m_defaultPlatform.getInfo<CL_PLATFORM_NAME>() << "\n";
 }
 
-cl::Platform vup::TBD::getPlatform()
-{
-  return m_defaultPlatform;
-}
-
 void vup::TBD::setDefaultDevice(int id)
 {
   m_defaultDevice = m_devices[id];
   std::cout << "Using device: " << m_defaultDevice.getInfo<CL_DEVICE_NAME>() << "\n";
-}
-
-cl::Device vup::TBD::getDevice()
-{
-  return m_defaultDevice;
-}
-
-cl::Context vup::TBD::getContext()
-{
-  return m_context;
 }
 
 void vup::TBD::initPlatform(int id)
