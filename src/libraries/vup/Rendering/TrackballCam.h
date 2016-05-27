@@ -12,7 +12,7 @@ namespace vup {
 class TrackballCam
 {
 public:
-  TrackballCam(int width, int height, float sens, float r = 2.0, float zoomsens = 0.1f);
+  TrackballCam(int width, int height, float sens, float r = 2.0, float zoomsens = 0.1f, float fov = 60.0f, float near = 0.001f, float far = 1000.0f);
   ~TrackballCam();
 
   glm::mat4 getView();

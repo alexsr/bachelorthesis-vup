@@ -1,6 +1,6 @@
 #include "TrackballCam.h"
 
-vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, float zoomsens) {
+vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, float zoomsens, float fov, float near, float far) {
   m_sens = sens;
   m_zoomsens = zoomsens;
   m_width = width;
@@ -22,8 +22,8 @@ vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, floa
   m_cameraPos.y = m_center.y + m_radius * glm::cos(m_theta);
   m_cameraPos.z = m_center.z + m_radius * glm::sin(m_theta) * glm::cos(m_phi);
   
-  m_view = glm::lookAt(m_cameraPos, m_center, glm::vec3(0, 1.0f, 0));
-  m_projection = glm::perspective(50.0f, m_width / (float)m_height, 0.001f, 10000.0f);
+  m_view = glm::lookAt(m_cameraPos, m_center, glm::vec3(0.0, 1.0f, 0.0));
+  m_projection = glm::perspective(glm::radians(fov), m_width / (float)m_height, near, far);
 }
 
 vup::TrackballCam::~TrackballCam()
@@ -94,6 +94,6 @@ void vup::TrackballCam::update(GLFWwindow * window)
   m_cameraPos.y = m_center.y + m_radius * glm::cos(m_theta);
   m_cameraPos.z = m_center.z + m_radius * glm::sin(m_theta) * glm::cos(m_phi);
 
-  m_view = glm::lookAt(m_cameraPos, m_center, glm::vec3(0, 1.0f, 0));
+  m_view = glm::lookAt(m_cameraPos, m_center, glm::vec3(0.0f, 1.0f, 0.0f));
 
 }
