@@ -5,7 +5,8 @@
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
-#include "vup/ParticleHandling/VBOHandler.h"
+#include "vup/ParticleHandling/BufferHandler.h"
+#include "vup/ParticleHandling/BufferHandler.cpp"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 
 #include <CL/cl.hpp>
@@ -51,7 +52,7 @@ int main()
 
   int particle_amount = 10000;
 
-  std::vector<vup::particle::pos> translations(particle_amount);
+  std::vector<glm::vec4> translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
     translations[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
@@ -60,41 +61,39 @@ int main()
     translations[i].w = 1.0f;
   }
   srand(static_cast <unsigned> (time(0)));
-  std::vector<vup::particle::color> color(particle_amount);
+  std::vector<glm::vec4> color(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     color[i].r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
     color[i].g = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
     color[i].b = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
     color[i].a = 1.0f;
   }
-  std::vector<vup::particle::vel> vel(particle_amount);
+  std::vector<glm::vec4> vel(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     vel[i].w = 0.0f;
   }
-  std::vector<vup::particle::type> type(particle_amount);
+  std::vector<int> type(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     type[i] = static_cast<int>(-1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f)));
-    
+
   }
 
-  vup::VBOHandler vboHandler(particle_amount);
+  vup::BufferHandler vboHandler;
+  vboHandler.createVBOData("pos", 1, particle_amount, translations, true, GL_STREAM_DRAW);
+  vboHandler.createVBOData("color", 2, particle_amount, color, true, GL_STATIC_DRAW);
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
-  vup::ParticleRenderer renderer(sphere, particle_amount, vboHandler.getPosVBO(), vboHandler.getVBOs());
-  vboHandler.updatePositions(&translations);
-  vboHandler.updateColor(&color);
-  vboHandler.updateType(&type);
+  vup::ParticleRenderer renderer(sphere, particle_amount, vboHandler.getVBOs());
 
   int test = 0;
 
   // OPENCL
   vup::TBD gpuHandler(0, CL_DEVICE_TYPE_GPU, 0);
 
-  cl_int err;
   cl::Context context = gpuHandler.getContext();
   cl::Device default_device = gpuHandler.getDevice();
 
@@ -111,10 +110,10 @@ int main()
   }
   glFinish();
   cl_int clError;
-  cl::BufferGL vbo_cl(context, CL_MEM_READ_WRITE, vboHandler.getPosVBO(), &clError);
+  cl::BufferGL vbo_cl(context, CL_MEM_READ_WRITE, vboHandler.getInteropVBOHandle("pos"), &clError);
   std::cout << clError << " Error?" << std::endl;
-  cl::Buffer vel_cl(context, CL_MEM_READ_ONLY, sizeof(vup::particle::vel) * vel.size(), NULL, &clError);
-  queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(vup::particle::vel) * vel.size(), &vel[0]);
+  cl::Buffer vel_cl(context, CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size(), NULL, &clError);
+  queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
   std::cout << clError << " Error?" << std::endl;
 
   std::vector<cl::Memory> openglbuffers = { vbo_cl };
@@ -154,7 +153,7 @@ int main()
         vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
         vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
       }
-      queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(vup::particle::vel) * vel.size(), &vel[0]);
+      queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
     }
     clError = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(particle_amount), cl::NullRange);
     clError = queue.enqueueReleaseGLObjects(&openglbuffers);
@@ -163,7 +162,7 @@ int main()
     cam.update(window);
     simpleShader.updateUniform("view", cam.getView());
     simpleShader.use();
-    
+
     renderer.execute(particle_amount);
     glfwPollEvents();
     glfwSwapBuffers(window);

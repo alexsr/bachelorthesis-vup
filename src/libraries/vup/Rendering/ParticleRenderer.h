@@ -8,13 +8,15 @@
 #include "vup/defs.h"
 #include "vup/Rendering/RenderData/RenderData.h"
 #include "vup/particle.h"
+#include "vup/Rendering/VBO.h"
+#include <map>
 
 namespace vup {
 
 class ParticleRenderer
 {
 public:
-  ParticleRenderer(RenderData rd, int size, GLuint posVBO, std::vector<std::pair<GLuint, int>> instancedVBOS);
+  ParticleRenderer(RenderData rd, int size, std::map<std::string, vup::VBO> instancedVBOS);
   ~ParticleRenderer();
   void execute(int amount);
 

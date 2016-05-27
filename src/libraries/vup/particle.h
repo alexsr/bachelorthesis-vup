@@ -6,10 +6,13 @@
 namespace vup {
 
 struct particle {
-  typedef glm::vec4 pos;
-  typedef glm::vec4 vel;
-  typedef glm::vec4 color;
-  typedef int type;
+  glm::vec4 pos;
+  glm::vec4 vel;
+  int type;
+  float mass;
+  float density;
+  float viscosity;
+  glm::vec4 color;
 };
 
 }

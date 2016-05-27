@@ -1,6 +1,6 @@
 #include "ParticleRenderer.h"
 
-vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size, GLuint posVBO, std::vector<std::pair<GLuint, int>> instancedVBOS)
+vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size, std::map<std::string, vup::VBO> instancedVBOS)
 {
   m_size = size;
   m_rd = rd;
@@ -15,17 +15,14 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size, GLuint posVBO, 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
   // Also set instance data
-  glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, posVBO);
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glVertexAttribDivisor(1, 1); // Tell OpenGL this is an instanced vertex attribute.
-  for (int i = 0; i < instancedVBOS.size(); i++) {
-    glEnableVertexAttribArray(i + 2);
-    glBindBuffer(GL_ARRAY_BUFFER, instancedVBOS[i].first);
-    glVertexAttribPointer(i + 2, instancedVBOS[i].second, GL_FLOAT, GL_FALSE, 0, 0);
+  std::map<std::string, vup::VBO>::iterator it;
+  for (it = instancedVBOS.begin(); it != instancedVBOS.end(); it++) {
+    int loc = it->second.location;
+    glEnableVertexAttribArray(loc);
+    glBindBuffer(GL_ARRAY_BUFFER, it->second.handle);
+    glVertexAttribPointer(loc, it->second.size, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexAttribDivisor(i + 2, 1); // Tell OpenGL this is an instanced vertex attribute.
+    glVertexAttribDivisor(loc, 1); // Tell OpenGL this is an instanced vertex attribute.
   }
   glBindVertexArray(0);
 }
