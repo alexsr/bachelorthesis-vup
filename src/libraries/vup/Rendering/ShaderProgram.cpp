@@ -183,6 +183,8 @@ void vup::ShaderProgram::checkShaderStatus(GLuint shaderID)
     glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength + 1];
     glGetShaderInfoLog(shaderID, infoLogLength, NULL, infoLog);
+    // When throwing the compilation exception,
+    // the info log from the compiler is included.
     throw(vup::ShaderCompilationException(infoLog));
     delete[] infoLog;
   }
@@ -200,6 +202,8 @@ void vup::ShaderProgram::checkProgramStatus(GLuint programID)
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength + 1];
     glGetProgramInfoLog(programID, infoLogLength, NULL, infoLog);
+    // When throwing the compilation exception,
+    // the info log from the compiler is included.
     throw(vup::ProgramCompilationException(infoLog));
     delete[] infoLog;
   }

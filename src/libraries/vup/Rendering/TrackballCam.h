@@ -9,15 +9,23 @@
 
 namespace vup {
 
+// Provides the functionality of a trackball camera.
+// The view matrix for the current camera view is calculated and
+// is accessable as well as the projection.
+// A lot of parameters of this camera can be specified.
+
 class TrackballCam
 {
 public:
-  TrackballCam(int width, int height, float sens, float r = 2.0, float zoomsens = 0.1f, float fov = 60.0f, float near = 0.001f, float far = 1000.0f);
+  // The given options proved to be reasonable.
+  TrackballCam(int width, int height, float sens = 0.01f, float r = 2.0, float zoomsens = 1.0f, float fov = 60.0f, float near = 0.001f, float far = 1000.0f);
   ~TrackballCam();
 
   glm::mat4 getView();
   glm::mat4 getProjection();
 
+  // Updates the camera view using mouse controls, which is the reason
+  // why the window has to be passed.
   void update(GLFWwindow* window);
 
 private:

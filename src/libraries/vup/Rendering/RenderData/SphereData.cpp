@@ -11,13 +11,23 @@ vup::SphereData::SphereData(float r, int hres, int vres)
   float d_v = glm::pi<float>()/((float) vres);
   
   int n = 0;
-
+  
+  // Vertices are created inside this loop.
   for (int i = 0; i < hres; i++) {
     float h = i * d_h;
     float hn = h + d_h;
     for (int j = 0; j < vres; j++) {
       float v = j * d_v;
       float vn = v + d_v;
+
+      // The sphere is consists of multiple triangles
+      // where 2 triangles make a plane.
+      // These 4 points are the corners of said plane.
+      // To create a triangle 3 of these corners are
+      // used counterclockwise with the 2nd triangle's
+      // first point being the 1st last point.
+      // Normal vectors are the same as the points
+      // without the radius multiplied.
       glm::vec4 p0 = createPoint(h, v);
       glm::vec4 p1 = createPoint(h, vn);
       glm::vec4 p2 = createPoint(hn, v);

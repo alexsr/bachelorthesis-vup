@@ -10,6 +10,11 @@
 
 namespace vup {
 
+// Contains vertices and normals of render objects.
+// This class is not meant to be used itself but
+// serves as an abstract class to all render data classes.
+// All the shared methods are specified here.
+
 class RenderData
 {
 public:
