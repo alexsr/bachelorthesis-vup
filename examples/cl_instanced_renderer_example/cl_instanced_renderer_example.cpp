@@ -16,9 +16,10 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <sstream>
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1920
+#define HEIGHT 1080
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
@@ -48,7 +49,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 5000;
+  int particle_amount = 10000;
 
   std::vector<vup::particle::pos> translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
@@ -58,6 +59,7 @@ int main()
     translations[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     translations[i].w = 1.0f;
   }
+  srand(static_cast <unsigned> (time(0)));
   std::vector<vup::particle::color> color(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     color[i].r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
@@ -81,7 +83,7 @@ int main()
   vup::VBOHandler vboHandler(particle_amount);
 
   float size = .1f;
-  vup::SphereData sphere(size, 30, 30);
+  vup::SphereData sphere(size, 20, 20);
   vup::ParticleRenderer renderer(sphere, particle_amount, vboHandler.getPosVBO(), vboHandler.getVBOs());
   vboHandler.updatePositions(&translations);
   vboHandler.updateColor(&color);
@@ -90,7 +92,7 @@ int main()
   int test = 0;
 
   // OPENCL
-  vup::TBD gpuHandler(1, CL_DEVICE_TYPE_GPU, 0);
+  vup::TBD gpuHandler(0, CL_DEVICE_TYPE_GPU, 0);
 
   cl_int err;
   cl::Context context = gpuHandler.getContext();
@@ -105,7 +107,7 @@ int main()
   cl::Program program(context, source);
   if (program.build({ default_device }) != CL_SUCCESS) {
     std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(default_device) << "\n";
-    exit(1);
+    exit(-1);
   }
   glFinish();
   cl_int clError;
@@ -119,17 +121,30 @@ int main()
 
   cl::Kernel kernel(program, "move", &clError);
   std::cout << clError << " Error?" << std::endl;
+  glfwSetTime(0.0);
+  double currentTime = glfwGetTime();
+  double lastTime = glfwGetTime();
+  int frames = 0;
+
   kernel.setArg(0, vbo_cl);
   kernel.setArg(1, vel_cl);
+  kernel.setArg(2, 0.01f);
 
   // Main loop
   glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    cam.update(window);
-    simpleShader.updateUniform("view", cam.getView());
-    simpleShader.use();
+    currentTime = glfwGetTime();
+    frames++;
+    if (currentTime - lastTime >= 1.0) {
+      std::ostringstream strs;
+      strs << frames;
+      std::string title = "FPS: " + strs.str();
+      glfwSetWindowTitle(window, title.c_str());
+      frames = 0;
+      lastTime = currentTime;
+    }
     glFinish();
     clError = queue.enqueueAcquireGLObjects(&openglbuffers);
     if (test > 100) {
@@ -144,10 +159,14 @@ int main()
     clError = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(particle_amount), cl::NullRange);
     clError = queue.enqueueReleaseGLObjects(&openglbuffers);
     queue.finish();
+    test++;
+    cam.update(window);
+    simpleShader.updateUniform("view", cam.getView());
+    simpleShader.use();
+    
     renderer.execute(particle_amount);
     glfwPollEvents();
     glfwSwapBuffers(window);
-    test++;
   }
   glfwTerminate();
   return 0;

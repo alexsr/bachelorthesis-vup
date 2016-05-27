@@ -19,6 +19,7 @@ GLFWwindow* createWindow(int width, int height, const char* title, GLFWmonitor* 
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwMakeContextCurrent(window);
+  glfwSwapInterval(0);
   return window;
 }
 
