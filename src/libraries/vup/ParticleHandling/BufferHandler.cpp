@@ -49,58 +49,30 @@ GLuint vup::BufferHandler::getInteropVBOHandle(std::string name)
 }
 
 template<typename T>
-void vup::BufferHandler::createVBO(std::string name, int loc, int size, bool isInterop, GLint drawType)
+void vup::BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
 {
   GLuint vbo;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, NULL, drawType);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  m_vbos[name] = vup::VBO(vbo, loc, sizeof(T));
+  m_vbos[name] = vup::VBO(vbo, loc, format);
   if (isInterop) {
-    m_interopVBOs[name] = vup::VBO(vbo, loc, sizeof(T));
-  }
-}
-
-template<>
-void vup::BufferHandler::createVBO<glm::vec4>(std::string name, int loc, int size, bool isInterop, GLint drawType)
-{
-  GLuint vbo;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * size, NULL, drawType);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  m_vbos[name] = vup::VBO(vbo, loc, 4);
-  if (isInterop) {
-    m_interopVBOs[name] = vup::VBO(vbo, loc, 4);
+    m_interopVBOs[name] = vup::VBO(vbo, loc, format);
   }
 }
 
 template<typename T>
-void vup::BufferHandler::createVBOData(std::string name, int loc, int size, std::vector<T> data, bool isInterop, GLint drawType)
+void vup::BufferHandler::createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop, GLint drawType)
 {
   GLuint vbo;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, &data[0], drawType);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  m_vbos[name] = vup::VBO(vbo, loc, T);
+  m_vbos[name] = vup::VBO(vbo, loc, format);
   if (isInterop) {
-    m_interopVBOs[name] = vup::VBO(vbo, loc, T);
-  }
-}
-
-template<>
-void vup::BufferHandler::createVBOData<glm::vec4>(std::string name, int loc, int size, std::vector<glm::vec4> data, bool isInterop, GLint drawType)
-{
-  GLuint vbo;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * size, &data[0], drawType);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  m_vbos[name] = vup::VBO(vbo, loc, 4);
-  if (isInterop) {
-    m_interopVBOs[name] = vup::VBO(vbo, loc, 4);
+    m_interopVBOs[name] = vup::VBO(vbo, loc, format);
   }
 }
 

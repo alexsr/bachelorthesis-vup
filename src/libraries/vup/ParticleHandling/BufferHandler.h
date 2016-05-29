@@ -19,8 +19,8 @@ class BufferHandler
 public:
   BufferHandler();
   ~BufferHandler();
-  template <typename T> void createVBO(std::string name, int loc, int size, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
-  template <typename T> void createVBOData(std::string name, int loc, int size, std::vector<T> data, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
+  template <typename T> void createVBO(std::string name, int loc, int size, int format, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
+  template <typename T> void createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
   template <typename T> void updateVBO(std::string name, std::vector<T> data);
   template <typename T> void updateSubVBO(std::string name, std::vector<T> data, int range);
   std::map<std::string, vup::VBO> getVBOs() { return m_vbos; }

@@ -82,8 +82,8 @@ int main()
   }
 
   vup::BufferHandler vboHandler;
-  vboHandler.createVBOData("pos", 1, particle_amount, translations, true, GL_STREAM_DRAW);
-  vboHandler.createVBOData("color", 2, particle_amount, color, true, GL_STATIC_DRAW);
+  vboHandler.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
+  vboHandler.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
