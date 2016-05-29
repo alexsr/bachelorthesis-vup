@@ -13,6 +13,9 @@
 
 namespace vup {
 
+// Renders particles with instanced rendering using the RenderData as the displayed object
+// and the data in the instancedVBOs vector to provide information for each instance.
+
 class ParticleRenderer
 {
 public:
@@ -25,6 +28,7 @@ private:
   int m_rdsize;
   RenderData m_rd;
   GLuint m_vao;
+  std::map<std::string, vup::VBO> m_instancedVBOS;
 
 };
 
