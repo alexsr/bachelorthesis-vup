@@ -7,9 +7,11 @@
 
 #include "vup/defs.h"
 #include "vup/particle.h"
+#include "vup/Util/FileReader.h"
 #include "CL/cl.hpp"
 #include "CL/cl_gl.h"
 #include <vector>
+#include <map>
 #include <iostream>
 
 #ifdef _WIN32
@@ -33,17 +35,16 @@
 
 namespace vup {
 
-class TBD
+class OpenCLBasis
 {
 public:
-  TBD(int platformID, cl_device_type deviceType, int deviceID);
-  ~TBD();
+  OpenCLBasis(int platformID, cl_device_type deviceType, int deviceID);
+  ~OpenCLBasis();
   void setDefaultPlatform(int id);
   cl::Platform getPlatform() { return m_defaultPlatform; }
   void setDefaultDevice(int id);
   cl::Device getDevice() { return m_defaultDevice; }
   cl::Context getContext() { return m_context; }
-  cl::CommandQueue getQueue() { return m_queue; }
 
 private:
   void initPlatform(int id);
@@ -55,9 +56,36 @@ private:
   cl::Device m_defaultDevice;
   std::vector<cl::Device> m_devices;
   cl::Context m_context;
-  cl::CommandQueue m_queue;
 };
 
+class KernelRunner
+{
+public:
+  KernelRunner(cl::Context context, cl::Device device, const char* programPath);
+  ~KernelRunner();
+  cl::CommandQueue getQueue() { return m_queue; }
+  cl::Program getProgram() { return m_program; }
+  void add(std::string name);
+  cl::Kernel get(std::string name);
+  template <class T> void setArg(std::string name, int index, T data);
+  void writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr);
+  void runRangeKernel(std::string name, cl::NDRange offset, cl::NDRange global, cl::NDRange local);
+  void acquireGL(std::vector<cl::Memory> * mem);
+  void releaseGL(std::vector<cl::Memory> * mem);
+
+  void finish() { m_queue.finish(); }
+  void flush() { m_queue.flush(); }
+private:
+  bool doesKernelExist(std::string name);
+  cl::CommandQueue m_queue;
+  cl::Program m_program;
+  std::map<std::string, cl::Kernel> m_kernels;
+};
+template<class T>
+void KernelRunner::setArg(std::string name, int index, T data)
+{
+  m_kernels[name].setArg(index, data);
+}
 }
 
 #endif
