@@ -1,3 +1,7 @@
+// Bachelor thesis Particleframework
+// Author: Alexander Scheid-Rehder
+// Email: alexsr@uni-koblenz.de
+
 #ifndef VUP_DEFS_H
 #define VUP_DEFS_H
 

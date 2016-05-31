@@ -34,8 +34,7 @@ void vup::OpenCLBasis::initPlatform(int id)
 {
   cl::Platform::get(&m_platforms);
   if (m_platforms.size() == 0) {
-    std::cout << " No platforms found. Check OpenCL installation!\n";
-    throw std::exception();
+    throw std::exception("No platform found.");
   }
   setDefaultPlatform(id);
 }
@@ -85,7 +84,7 @@ vup::KernelRunner::KernelRunner(cl::Context context, cl::Device device, const ch
   vup::FileReader file(OPENCL_KERNEL_PATH "/interop.cl");
   m_program = cl::Program(context, file.getSourceChar());
   if (m_program.build({ device }) != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::CLProgramCompilationException(std::string(programPath));
   }
   m_kernels = std::map<std::string, cl::Kernel>();
 }
@@ -103,7 +102,7 @@ void vup::KernelRunner::add(std::string name)
   cl_int clError;
   m_kernels[name] = cl::Kernel(m_program, name.c_str(), &clError);
   if (clError != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::KernelCreationException(name, clError);
   }
 }
 
@@ -115,43 +114,43 @@ cl::Kernel vup::KernelRunner::get(std::string name)
   }
   else
   {
-    // TODO: throw Exception
-    throw std::exception();
+    throw vup::KernelNotFoundException(name);
   }
 }
 
 void vup::KernelRunner::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr)
 {
-  m_queue.enqueueWriteBuffer(b, blocking, offset, size, ptr);
+  cl_int clError =  m_queue.enqueueWriteBuffer(b, blocking, offset, size, ptr);
+  if (clError != CL_SUCCESS) {
+    throw vup::BufferWritingException(clError);
+  }
 }
 
 void vup::KernelRunner::runRangeKernel(std::string name, cl::NDRange offset, cl::NDRange global, cl::NDRange local)
 {
-  cl_int clError;
-  clError = m_queue.enqueueNDRangeKernel(m_kernels[name], offset, global, local);
+  if (!doesKernelExist(name)) {
+    throw KernelNotFoundException(name);
+  }    
+  cl_int clError = m_queue.enqueueNDRangeKernel(m_kernels[name], offset, global, local);
   if (clError != CL_SUCCESS) {
-    std::cout << "WARNING: Error running kernel." << std::endl;
-    // TODO: exception
+    throw std::exception();
   }
 }
 
 void vup::KernelRunner::acquireGL(std::vector<cl::Memory>* mem)
 {
-  cl_int clError;
-  clError = m_queue.enqueueAcquireGLObjects(mem);
+  glFinish();
+  cl_int clError = m_queue.enqueueAcquireGLObjects(mem);
   if (clError != CL_SUCCESS) {
-    std::cout << "WARNING: Error acquiring GL objects." << std::endl;
-    // TODO: exception
+    throw vup::AcquiringGLObjectsException(clError);
   }
 }
 
 void vup::KernelRunner::releaseGL(std::vector<cl::Memory>* mem)
 {
-  cl_int clError;
-  clError = m_queue.enqueueReleaseGLObjects(mem);
+  cl_int clError = m_queue.enqueueReleaseGLObjects(mem);
   if (clError != CL_SUCCESS) {
-    std::cout << "WARNING: Error releasing GL objects." << std::endl;
-    // TODO: exception
+    throw vup::ReleasingGLObjectsException(clError);
   }
 }
 

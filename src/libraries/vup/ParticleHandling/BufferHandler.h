@@ -14,8 +14,11 @@
 #include <CL/cl_gl.h>
 #endif
 #include "vup/Rendering/VBO.h"
+#include "vup/Exceptions/BufferCreationException.h"
+#include "vup/Exceptions/BufferNotFoundException.h"
 #include <vector>
 #include <map>
+#include <set>
 #include <iostream>
 
 namespace vup {
@@ -27,7 +30,7 @@ public:
   ~BufferHandler();
   void add(std::string name, cl_mem_flags flags, int size);
   void add(std::string name, cl::Buffer buffer);
-  void addGL(std::string name, cl_mem_flags flags, std::string vbo);
+  void addGL(std::string name, cl_mem_flags flags, std::string vbo );
   void addGL(std::string name, cl::BufferGL buffer);
   cl::Buffer get(std::string name);
   cl::BufferGL getGL(std::string name);
@@ -53,6 +56,7 @@ private:
   std::vector<cl::Memory> m_glBuffersVector;
   std::map<std::string, vup::VBO> m_vbos;
   std::map<std::string, vup::VBO> m_interopVBOs;
+  std::map<int, std::set<int>> m_typeIndices;
 };
 
 template<typename T>

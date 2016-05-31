@@ -28,21 +28,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   }
 }
 
-inline void checkErr(cl_int err, const char * name) {
-  if (err != CL_SUCCESS) {
-    std::cerr << "ERROR: " << name << " (" << err << ")" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-}
-
 int main()
 {
   GLFWwindow* window = vup::createWindow(WIDTH, HEIGHT, "Instanced Rendering", nullptr, nullptr);
-  vup::initGLEW();
-
-  glViewport(0, 0, WIDTH, HEIGHT);
-
   glfwSetKeyCallback(window, key_callback);
+
+  vup::initGLEW();
+  glViewport(0, 0, WIDTH, HEIGHT);
 
   vup::TrackballCam cam(WIDTH, HEIGHT, 0.01f, 10.0f, 1.0f);
 
@@ -84,17 +76,14 @@ int main()
   vup::BufferHandler buffers(clBasis.getContext());
   buffers.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
   buffers.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
+  vup::KernelRunner queue(clBasis.getContext(), clBasis.getDevice(), OPENCL_KERNEL_PATH "/interop.cl");
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
-  vup::ParticleRenderer renderer(sphere, particle_amount, buffers.getVBOs());
-
-  int test = 0;
+  vup::ParticleRenderer renderer(sphere, particle_amount, buffers.getInteropVBOs());
 
   // OPENCL
-  vup::KernelRunner queue(clBasis.getContext(), clBasis.getDevice(), OPENCL_KERNEL_PATH "/interop.cl");
   //  cl::CommandQueue queue2(queue.getQueue());
-  cl_int clError;
   buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
   queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
@@ -111,6 +100,7 @@ int main()
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   int frames = 0;
+  int test = 0;
 
   // Main loop
   glEnable(GL_DEPTH_TEST);
@@ -127,7 +117,6 @@ int main()
       frames = 0;
       lastTime = currentTime;
     }
-    glFinish();
     if (test > 100) {
       test = 0;
       for (int i = 0; i < particle_amount; i++) {

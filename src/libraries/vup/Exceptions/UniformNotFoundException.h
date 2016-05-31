@@ -10,18 +10,23 @@
 
 namespace vup {
 
-// Is thrown when the shader source compilation fails.
+// Is thrown when a uniform in not found.
 class UniformNotFoundException : public std::exception {
 
 public:
-  UniformNotFoundException(const char* uniform) throw() : exception("Uniform not found.") {
+  UniformNotFoundException(std::string uniform) throw() {
     m_uniform = uniform;
+    m_msg = "Uniform " + m_uniform + " not found.";
   };
-  const char* getUniform() {
+  std::string getUniform() {
     return m_uniform;
   }
+  virtual const char* what() const throw () {
+    return m_msg.c_str();
+  }
 private:
-  const char* m_uniform;
+  std::string m_uniform;
+  std::string m_msg;
 
 };
 

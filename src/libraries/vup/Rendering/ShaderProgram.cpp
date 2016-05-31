@@ -149,7 +149,7 @@ GLint vup::ShaderProgram::findUniform(const GLchar* name)
 {
   GLint loc = glGetUniformLocation(m_program, name);
   if (loc == -1) {
-    throw(vup::UniformNotFoundException(name));
+    throw vup::UniformNotFoundException(name);
   }
   return loc;
 }
@@ -170,7 +170,7 @@ void vup::ShaderProgram::loadFromSource(const char * path, GLuint shaderID)
     std::cout << "SUCCESS: Loading shader source from " << path << std::endl;
   }
   const char* shaderSource = fr.getSourceChar();
-  GLint sourceSize = strlen(shaderSource);
+  GLint sourceSize = fr.length();
   glShaderSource(shaderID, 1, &shaderSource, &sourceSize);
 }
 
@@ -185,7 +185,7 @@ void vup::ShaderProgram::checkShaderStatus(GLuint shaderID)
     glGetShaderInfoLog(shaderID, infoLogLength, NULL, infoLog);
     // When throwing the compilation exception,
     // the info log from the compiler is included.
-    throw(vup::ShaderCompilationException(infoLog));
+    throw vup::ShaderCompilationException(infoLog);
     delete[] infoLog;
   }
   else {
@@ -204,7 +204,7 @@ void vup::ShaderProgram::checkProgramStatus(GLuint programID)
     glGetProgramInfoLog(programID, infoLogLength, NULL, infoLog);
     // When throwing the compilation exception,
     // the info log from the compiler is included.
-    throw(vup::ProgramCompilationException(infoLog));
+    throw vup::ProgramCompilationException(infoLog);
     delete[] infoLog;
   }
   else {

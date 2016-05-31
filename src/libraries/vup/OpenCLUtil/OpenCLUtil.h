@@ -8,6 +8,12 @@
 #include "vup/defs.h"
 #include "vup/particle.h"
 #include "vup/Util/FileReader.h"
+#include "vup/Exceptions/KernelNotFoundException.h"
+#include "vup/Exceptions/KernelCreationException.h"
+#include "vup/Exceptions/CLProgramCompilationException.h"
+#include "vup/Exceptions/AcquiringGLObjectsException.h"
+#include "vup/Exceptions/ReleasingGLObjectsException.h"
+#include "vup/Exceptions/BufferWritingException.h"
 #include "CL/cl.hpp"
 #include "CL/cl_gl.h"
 #include <vector>

@@ -14,14 +14,19 @@ namespace vup {
 class ProgramCompilationException : public std::exception {
 
 public:
-  ProgramCompilationException(const char* infoLog) throw() : exception("Shader source compilation failed.") {
+  ProgramCompilationException(std::string infoLog) throw() {
     m_infoLog = infoLog;
+    m_msg = "Shader program compilation failed.\n" + m_infoLog;
   };
-  const char* getInfoLog() {
+  std::string getInfoLog() {
     return m_infoLog;
   }
+  virtual const char* what() const throw () {
+    return m_msg.c_str();
+  }
 private:
-  const char* m_infoLog;
+  std::string m_infoLog;
+  std::string m_msg;
 
 };
 

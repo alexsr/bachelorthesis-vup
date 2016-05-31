@@ -8,6 +8,7 @@ vup::BufferHandler::BufferHandler(cl::Context defaultContext)
   m_glBuffers = std::map<std::string, cl::BufferGL>();
   m_vbos = std::map<std::string, vup::VBO>();
   m_interopVBOs = std::map<std::string, vup::VBO>();
+  m_typeIndices = std::map<int, std::set<int>>();
 }
 
 vup::BufferHandler::~BufferHandler()
@@ -22,7 +23,7 @@ void vup::BufferHandler::add(std::string name, cl_mem_flags flags, int size)
   cl_int clError;
   m_buffers[name] = cl::Buffer(m_defaultContext, flags, size, NULL, &clError);
   if (clError != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::BufferCreationException(name, clError);
   }
 }
 
@@ -34,7 +35,7 @@ void vup::BufferHandler::add(std::string name, cl::Buffer buffer)
   cl_int clError;
   m_buffers[name] = cl::Buffer(buffer);
   if (clError != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::BufferCreationException(name, clError);
   }
 }
 
@@ -47,7 +48,7 @@ void vup::BufferHandler::addGL(std::string name, cl_mem_flags flags, std::string
   m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, getInteropVBOHandle(vbo), &clError);
   m_glBuffersVector.push_back(m_glBuffers[name]);
   if (clError != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::BufferCreationException(name, clError);
   }
 }
 
@@ -59,7 +60,7 @@ void vup::BufferHandler::addGL(std::string name, cl::BufferGL buffer)
   cl_int clError;
   m_glBuffers[name] = cl::BufferGL(buffer);
   if (clError != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::BufferCreationException(name, clError);
   }
 }
 
@@ -71,8 +72,7 @@ cl::Buffer vup::BufferHandler::get(std::string name)
   }
   else
   {
-    // TODO: throw Exception
-    throw std::exception();
+    throw vup::BufferNotFoundException(name);
   }
 }
 
@@ -84,8 +84,7 @@ cl::BufferGL vup::BufferHandler::getGL(std::string name)
   }
   else
   {
-    // TODO: throw Exception
-    throw std::exception();
+    throw vup::BufferNotFoundException(name);
   }
 }
 
@@ -118,8 +117,7 @@ vup::VBO vup::BufferHandler::getVBO(std::string name)
   }
   else
   {
-    // TODO: throw Exception
-    throw std::exception();
+    throw vup::BufferNotFoundException(name);
   }
 }
 
@@ -132,8 +130,7 @@ vup::VBO vup::BufferHandler::getInteropVBO(std::string name)
   }
   else
   {
-    // TODO: throw Exception
-    throw std::exception();
+    throw vup::BufferNotFoundException(name);
   }
 }
 
