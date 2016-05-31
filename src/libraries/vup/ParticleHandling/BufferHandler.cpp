@@ -6,6 +6,8 @@ vup::BufferHandler::BufferHandler(cl::Context defaultContext)
   m_defaultContext = defaultContext;
   m_buffers = std::map<std::string, cl::Buffer>();
   m_glBuffers = std::map<std::string, cl::BufferGL>();
+  m_vbos = std::map<std::string, vup::VBO>();
+  m_interopVBOs = std::map<std::string, vup::VBO>();
 }
 
 vup::BufferHandler::~BufferHandler()
@@ -24,14 +26,38 @@ void vup::BufferHandler::add(std::string name, cl_mem_flags flags, int size)
   }
 }
 
-void vup::BufferHandler::addGL(std::string name, cl_mem_flags flags, GLuint vboHandle)
+void vup::BufferHandler::add(std::string name, cl::Buffer buffer)
+{
+  if (doesBufferExist(name)) {
+    std::cout << "WARNING: Kernel " << name << "already exists.";
+  }
+  cl_int clError;
+  m_buffers[name] = cl::Buffer(buffer);
+  if (clError != CL_SUCCESS) {
+    throw std::exception();
+  }
+}
+
+void vup::BufferHandler::addGL(std::string name, cl_mem_flags flags, std::string vbo)
 {
   if (doesGLBufferExist(name)) {
     std::cout << "WARNING: Kernel " << name << "already exists.";
   }
   cl_int clError;
-  m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, vboHandle, &clError);
+  m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, getInteropVBOHandle(vbo), &clError);
   m_glBuffersVector.push_back(m_glBuffers[name]);
+  if (clError != CL_SUCCESS) {
+    throw std::exception();
+  }
+}
+
+void vup::BufferHandler::addGL(std::string name, cl::BufferGL buffer)
+{
+  if (doesGLBufferExist(name)) {
+    std::cout << "WARNING: Kernel " << name << "already exists.";
+  }
+  cl_int clError;
+  m_glBuffers[name] = cl::BufferGL(buffer);
   if (clError != CL_SUCCESS) {
     throw std::exception();
   }
@@ -81,4 +107,42 @@ bool vup::BufferHandler::doesGLBufferExist(std::string name)
     return true;
   }
   return false;
+}
+
+vup::VBO vup::BufferHandler::getVBO(std::string name)
+{
+  std::map<std::string, vup::VBO>::iterator it = m_vbos.find(name);
+  if (it != m_vbos.end())
+  {
+    return it->second;
+  }
+  else
+  {
+    // TODO: throw Exception
+    throw std::exception();
+  }
+}
+
+vup::VBO vup::BufferHandler::getInteropVBO(std::string name)
+{
+  std::map<std::string, vup::VBO>::iterator it = m_interopVBOs.find(name);
+  if (it != m_interopVBOs.end())
+  {
+    return it->second;
+  }
+  else
+  {
+    // TODO: throw Exception
+    throw std::exception();
+  }
+}
+
+GLuint vup::BufferHandler::getVBOHandle(std::string name)
+{
+  return getVBO(name).handle;
+}
+
+GLuint vup::BufferHandler::getInteropVBOHandle(std::string name)
+{
+  return getInteropVBO(name).handle;
 }

@@ -5,7 +5,6 @@
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
-#include "vup/ParticleHandling/VBOHandler.h"
 #include "vup/ParticleHandling/BufferHandler.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 
@@ -81,23 +80,22 @@ int main()
 
   }
 
-  vup::VBOHandler vbos;
-  vbos.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
-  vbos.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
+  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
+  vup::BufferHandler buffers(clBasis.getContext());
+  buffers.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
+  buffers.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
-  vup::ParticleRenderer renderer(sphere, particle_amount, vbos.getVBOs());
+  vup::ParticleRenderer renderer(sphere, particle_amount, buffers.getVBOs());
 
   int test = 0;
 
   // OPENCL
-  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
   vup::KernelRunner queue(clBasis.getContext(), clBasis.getDevice(), OPENCL_KERNEL_PATH "/interop.cl");
   //  cl::CommandQueue queue2(queue.getQueue());
-  vup::BufferHandler buffers(clBasis.getContext());
   cl_int clError;
-  buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, vbos.getInteropVBOHandle("pos"));
+  buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
   queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
 
