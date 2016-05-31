@@ -7,7 +7,12 @@
 
 #include "vup/defs.h"
 #include "vup/particle.h"
-#include "vup/Rendering/VBO.h"
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.hpp>
+#include <CL/cl_gl.h>
+#endif
 #include <vector>
 #include <map>
 #include <iostream>
@@ -17,23 +22,24 @@ namespace vup {
 class BufferHandler
 {
 public:
-  BufferHandler();
+  BufferHandler(cl::Context defaultContext);
   ~BufferHandler();
-  template <typename T> void createVBO(std::string name, int loc, int size, int format, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
-  template <typename T> void createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
-  template <typename T> void updateVBO(std::string name, std::vector<T> data);
-  template <typename T> void updateSubVBO(std::string name, std::vector<T> data, int range);
-  std::map<std::string, vup::VBO> getVBOs() { return m_vbos; }
-  std::map<std::string, vup::VBO> getInteropVBOs() { return m_interopVBOs; }
-  vup::VBO getVBO(std::string name);
-  vup::VBO getInteropVBO(std::string name);
-  GLuint getVBOHandle(std::string name);
-  GLuint getInteropVBOHandle(std::string name);
-
+  void add(std::string name, cl_mem_flags flags, int size);
+  void addGL(std::string name, cl_mem_flags flags, GLuint vboHandle);
+  cl::Buffer get(std::string name);
+  cl::BufferGL getGL(std::string name);
+  std::vector<cl::Memory> getGLBuffers() { return m_glBuffersVector; }
+  cl::Context getDefaultContext() { return m_defaultContext; }
+  
 private:
-  std::map<std::string, vup::VBO> m_vbos;
-  std::map<std::string, vup::VBO> m_interopVBOs;
+  bool doesBufferExist(std::string name);
+  bool doesGLBufferExist(std::string name);
+  cl::Context m_defaultContext;
+  std::map<std::string, cl::Buffer> m_buffers;
+  std::map<std::string, cl::BufferGL> m_glBuffers;
+  std::vector<cl::Memory> m_glBuffersVector;
 };
+
 
 }
 

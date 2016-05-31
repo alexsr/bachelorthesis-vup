@@ -1,21 +1,47 @@
 #include "BufferHandler.h"
 
-vup::BufferHandler::BufferHandler()
+
+vup::BufferHandler::BufferHandler(cl::Context defaultContext)
 {
-  m_vbos = std::map<std::string, vup::VBO>();
-  m_interopVBOs = std::map<std::string, vup::VBO>();
+  m_defaultContext = defaultContext;
+  m_buffers = std::map<std::string, cl::Buffer>();
+  m_glBuffers = std::map<std::string, cl::BufferGL>();
 }
 
 vup::BufferHandler::~BufferHandler()
 {
 }
 
-vup::VBO vup::BufferHandler::getVBO(std::string name)
+void vup::BufferHandler::add(std::string name, cl_mem_flags flags, int size)
 {
-  std::map<std::string, vup::VBO>::iterator it = m_vbos.find(name);
-  if (it != m_vbos.end())
+  if (doesBufferExist(name)) {
+    std::cout << "WARNING: Kernel " << name << "already exists.";
+  }
+  cl_int clError;
+  m_buffers[name] = cl::Buffer(m_defaultContext, flags, size, NULL, &clError);
+  if (clError != CL_SUCCESS) {
+    throw std::exception();
+  }
+}
+
+void vup::BufferHandler::addGL(std::string name, cl_mem_flags flags, GLuint vboHandle)
+{
+  if (doesGLBufferExist(name)) {
+    std::cout << "WARNING: Kernel " << name << "already exists.";
+  }
+  cl_int clError;
+  m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, vboHandle, &clError);
+  m_glBuffersVector.push_back(m_glBuffers[name]);
+  if (clError != CL_SUCCESS) {
+    throw std::exception();
+  }
+}
+
+cl::Buffer vup::BufferHandler::get(std::string name)
+{
+  if (doesBufferExist(name))
   {
-    return it->second;
+    return m_buffers[name];
   }
   else
   {
@@ -24,12 +50,11 @@ vup::VBO vup::BufferHandler::getVBO(std::string name)
   }
 }
 
-vup::VBO vup::BufferHandler::getInteropVBO(std::string name)
+cl::BufferGL vup::BufferHandler::getGL(std::string name)
 {
-  std::map<std::string, vup::VBO>::iterator it = m_interopVBOs.find(name);
-  if (it != m_interopVBOs.end())
+  if (doesGLBufferExist(name))
   {
-    return it->second;
+    return m_glBuffers[name];
   }
   else
   {
@@ -38,57 +63,22 @@ vup::VBO vup::BufferHandler::getInteropVBO(std::string name)
   }
 }
 
-GLuint vup::BufferHandler::getVBOHandle(std::string name)
+bool vup::BufferHandler::doesBufferExist(std::string name)
 {
-  return getVBO(name).handle;
-}
-
-GLuint vup::BufferHandler::getInteropVBOHandle(std::string name)
-{
-  return getInteropVBO(name).handle;
-}
-
-template<typename T>
-void vup::BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
-{
-  GLuint vbo;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, NULL, drawType);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  m_vbos[name] = vup::VBO(vbo, loc, format);
-  if (isInterop) {
-    m_interopVBOs[name] = vup::VBO(vbo, loc, format);
+  std::map<std::string, cl::Buffer>::iterator it = m_buffers.find(name);
+  if (it != m_buffers.end())
+  {
+    return true;
   }
+  return false;
 }
 
-template<typename T>
-void vup::BufferHandler::createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop, GLint drawType)
+bool vup::BufferHandler::doesGLBufferExist(std::string name)
 {
-  GLuint vbo;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, &data[0], drawType);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  m_vbos[name] = vup::VBO(vbo, loc, format);
-  if (isInterop) {
-    m_interopVBOs[name] = vup::VBO(vbo, loc, format);
+  std::map<std::string, cl::BufferGL>::iterator it = m_glBuffers.find(name);
+  if (it != m_glBuffers.end())
+  {
+    return true;
   }
-}
-
-template<typename T>
-void vup::BufferHandler::updateVBO(std::string name, std::vector<T> data)
-{
-  glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
-  T * vertexArray = (T *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-  for (int i = 0; i < data->size(); i++) {
-    vertexArray[i] = data->at(i);
-  }
-  glUnmapBuffer(GL_ARRAY_BUFFER);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-template<typename T>
-void vup::BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int range)
-{
+  return false;
 }
