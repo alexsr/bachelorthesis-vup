@@ -5,8 +5,8 @@
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
+#include "vup/ParticleHandling/VBOHandler.h"
 #include "vup/ParticleHandling/BufferHandler.h"
-#include "vup/ParticleHandling/BufferHandler.cpp"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 
 #include <CL/cl.hpp>
@@ -81,53 +81,38 @@ int main()
 
   }
 
-  vup::BufferHandler vboHandler;
-  vboHandler.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
-  vboHandler.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
+  vup::VBOHandler vbos;
+  vbos.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
+  vbos.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
-  vup::ParticleRenderer renderer(sphere, particle_amount, vboHandler.getVBOs());
+  vup::ParticleRenderer renderer(sphere, particle_amount, vbos.getVBOs());
 
   int test = 0;
 
   // OPENCL
-  vup::TBD gpuHandler(0, CL_DEVICE_TYPE_GPU, 0);
-
-  cl::Context context = gpuHandler.getContext();
-  cl::Device default_device = gpuHandler.getDevice();
-
-  cl::CommandQueue queue(context, default_device);
-
-  vup::FileReader file(OPENCL_KERNEL_PATH "/interop.cl");
-
-  cl::Program::Sources source(1, std::make_pair(file.getSourceChar(), file.length() + 1));
-
-  cl::Program program(context, source);
-  if (program.build({ default_device }) != CL_SUCCESS) {
-    std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(default_device) << "\n";
-    exit(-1);
-  }
-  glFinish();
+  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
+  vup::KernelRunner queue(clBasis.getContext(), clBasis.getDevice(), OPENCL_KERNEL_PATH "/interop.cl");
+  //  cl::CommandQueue queue2(queue.getQueue());
+  vup::BufferHandler buffers(clBasis.getContext());
   cl_int clError;
-  cl::BufferGL vbo_cl(context, CL_MEM_READ_WRITE, vboHandler.getInteropVBOHandle("pos"), &clError);
-  std::cout << clError << " Error?" << std::endl;
-  cl::Buffer vel_cl(context, CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size(), NULL, &clError);
-  queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
-  std::cout << clError << " Error?" << std::endl;
+  buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, vbos.getInteropVBOHandle("pos"));
+  buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
+  queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
 
-  std::vector<cl::Memory> openglbuffers = { vbo_cl };
+  std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
 
-  cl::Kernel kernel(program, "move", &clError);
-  std::cout << clError << " Error?" << std::endl;
+  queue.add("move");
+
+  queue.setArg("move", 0, buffers.getGL("pos_vbo"));
+  queue.setArg("move", 1, buffers.get("vel"));
+  queue.setArg("move", 2, 0.01f);
+
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   int frames = 0;
-
-  kernel.setArg(0, vbo_cl);
-  kernel.setArg(1, vel_cl);
-  kernel.setArg(2, 0.01f);
 
   // Main loop
   glEnable(GL_DEPTH_TEST);
@@ -145,7 +130,6 @@ int main()
       lastTime = currentTime;
     }
     glFinish();
-    clError = queue.enqueueAcquireGLObjects(&openglbuffers);
     if (test > 100) {
       test = 0;
       for (int i = 0; i < particle_amount; i++) {
@@ -153,10 +137,11 @@ int main()
         vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
         vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
       }
-      queue.enqueueWriteBuffer(vel_cl, CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
+      queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
     }
-    clError = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(particle_amount), cl::NullRange);
-    clError = queue.enqueueReleaseGLObjects(&openglbuffers);
+    queue.acquireGL(&openglbuffers);
+    queue.runRangeKernel("move", cl::NullRange, cl::NDRange(particle_amount), cl::NullRange);
+    queue.releaseGL(&openglbuffers);
     queue.finish();
     test++;
     cam.update(window);
