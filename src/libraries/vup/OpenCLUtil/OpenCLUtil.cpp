@@ -129,11 +129,11 @@ void vup::KernelRunner::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, 
 void vup::KernelRunner::runRangeKernel(std::string name, cl::NDRange offset, cl::NDRange global, cl::NDRange local)
 {
   if (!doesKernelExist(name)) {
-    throw KernelNotFoundException(name);
+    throw vup::KernelNotFoundException(name);
   }    
   cl_int clError = m_queue.enqueueNDRangeKernel(m_kernels[name], offset, global, local);
   if (clError != CL_SUCCESS) {
-    throw std::exception();
+    throw vup::RunKernelException(name, clError);
   }
 }
 
