@@ -83,7 +83,8 @@ vup::KernelRunner::KernelRunner(cl::Context context, cl::Device device, const ch
   m_queue = cl::CommandQueue(context, device);
   vup::FileReader file(OPENCL_KERNEL_PATH "/interop.cl");
   m_program = cl::Program(context, file.getSourceChar());
-  if (m_program.build({ device }) != CL_SUCCESS) {
+  cl_int clError = m_program.build({ device });
+  if (clError != CL_SUCCESS) {
     throw vup::CLProgramCompilationException(std::string(programPath));
   }
   m_kernels = std::map<std::string, cl::Kernel>();

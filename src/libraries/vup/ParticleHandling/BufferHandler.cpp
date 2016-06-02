@@ -8,7 +8,7 @@ vup::BufferHandler::BufferHandler(cl::Context defaultContext)
   m_glBuffers = std::map<std::string, cl::BufferGL>();
   m_vbos = std::map<std::string, vup::VBO>();
   m_interopVBOs = std::map<std::string, vup::VBO>();
-  m_typeIndices = std::map<int, std::set<int>>();
+  m_typeIndices = std::map<int, std::pair<std::vector<int>, cl::Buffer>>();
 }
 
 vup::BufferHandler::~BufferHandler()
@@ -88,6 +88,50 @@ cl::BufferGL vup::BufferHandler::getGL(std::string name)
   }
 }
 
+void vup::BufferHandler::setTypeIndices(int type, cl_mem_flags flags, std::vector<int> indices)
+{
+  std::sort(indices.begin(), indices.end());
+  indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
+  m_typeIndices[type].first = indices;
+  cl_int clError;
+  m_typeIndices[type].second = cl::Buffer(m_defaultContext, flags, sizeof(int) * indices.size(), &indices[0], &clError);
+  if (clError != CL_SUCCESS) {
+    throw vup::BufferCreationException(std::to_string(type), clError);
+  }
+}
+
+std::vector<int> vup::BufferHandler::getIndicesForType(int type)
+{
+  if(doesTypeExist(type)) {
+    return m_typeIndices[type].first;
+  }
+  return std::vector<int>(0);
+}
+
+cl::Buffer vup::BufferHandler::getIndexBufferForType(int type)
+{
+  if (doesTypeExist(type)) {
+    return m_typeIndices[type].second;
+  }
+  else
+  {
+    throw vup::BufferNotFoundException(std::to_string(type));
+  }
+}
+
+int vup::BufferHandler::sizeOfType(int type)
+{
+  if (doesTypeExist(type)) {
+    return m_typeIndices[type].first.size();
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+
+
 bool vup::BufferHandler::doesBufferExist(std::string name)
 {
   std::map<std::string, cl::Buffer>::iterator it = m_buffers.find(name);
@@ -102,6 +146,16 @@ bool vup::BufferHandler::doesGLBufferExist(std::string name)
 {
   std::map<std::string, cl::BufferGL>::iterator it = m_glBuffers.find(name);
   if (it != m_glBuffers.end())
+  {
+    return true;
+  }
+  return false;
+}
+
+bool vup::BufferHandler::doesTypeExist(int type)
+{
+  std::map<int, std::pair<std::vector<int>, cl::Buffer>>::iterator it = m_typeIndices.find(type);
+  if (it != m_typeIndices.end())
   {
     return true;
   }

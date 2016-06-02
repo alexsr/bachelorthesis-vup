@@ -82,19 +82,26 @@ int main()
   vup::SphereData sphere(size, 20, 20);
   vup::ParticleRenderer renderer(sphere, particle_amount, buffers.getInteropVBOs());
 
+  std::vector<int> fluidIndices;
+  for (int i = 0; i < 1000; i++) {
+    fluidIndices.push_back(i);
+  }
+
   // OPENCL
   //  cl::CommandQueue queue2(queue.getQueue());
   buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
+  buffers.setTypeIndices(0, CL_MEM_READ_WRITE, fluidIndices);
   queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
+  queue.writeBuffer(buffers.getIndexBufferForType(0), CL_TRUE, 0, sizeof(int) * buffers.sizeOfType(0), &buffers.getIndicesForType(0)[0]);
 
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
 
   queue.add("move");
-
   queue.setArg("move", 0, buffers.getGL("pos_vbo"));
   queue.setArg("move", 1, buffers.get("vel"));
   queue.setArg("move", 2, 0.01f);
+  queue.setArg("move", 3, buffers.getIndexBufferForType(0));
 
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
@@ -127,7 +134,7 @@ int main()
       queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
     }
     queue.acquireGL(&openglbuffers);
-    queue.runRangeKernel("move", cl::NullRange, cl::NDRange(particle_amount), cl::NullRange);
+    queue.runRangeKernel("move", cl::NullRange, cl::NDRange(buffers.sizeOfType(0)), cl::NullRange);
     queue.releaseGL(&openglbuffers);
     queue.finish();
     test++;
