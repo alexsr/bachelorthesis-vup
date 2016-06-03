@@ -73,41 +73,41 @@ int main()
   }
 
   vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
-  vup::BufferHandler buffers(clBasis.getContext());
+  vup::BufferHandler buffers(clBasis.context());
   buffers.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
   buffers.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
-  vup::KernelRunner queue(clBasis.getContext(), clBasis.getDevice(), OPENCL_KERNEL_PATH "/interop.cl");
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
   vup::ParticleRenderer renderer(sphere, particle_amount, buffers.getInteropVBOs());
 
   std::vector<int> fluidIndices;
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 100; i++) {
     fluidIndices.push_back(i);
   }
 
   // OPENCL
-  //  cl::CommandQueue queue2(queue.getQueue());
+  cl::CommandQueue queue2(clBasis.context());
+  vup::Queue queue(clBasis.context(), particle_amount);
   buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
-  buffers.setTypeIndices(0, CL_MEM_READ_WRITE, fluidIndices);
-  queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
-  queue.writeBuffer(buffers.getIndexBufferForType(0), CL_TRUE, 0, sizeof(int) * buffers.sizeOfType(0), &buffers.getIndicesForType(0)[0]);
-
+  queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
+  queue.setTypeIndices(0, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
+  
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
 
-  queue.add("move");
-  queue.setArg("move", 0, buffers.getGL("pos_vbo"));
-  queue.setArg("move", 1, buffers.get("vel"));
-  queue.setArg("move", 2, 0.01f);
-  queue.setArg("move", 3, buffers.getIndexBufferForType(0));
-
+  vup::KernelHandler kh(clBasis.context(), OPENCL_KERNEL_PATH "/interop.cl");
+  kh.initKernel("move");
+  kh.setArg("move", 0, buffers.getGL("pos_vbo"));
+  kh.setArg("move", 1, buffers.get("vel"));
+  kh.setArg("move", 2, 0.01f);
+  kh.setArg("move", 3, queue.getIndexBuffer(0));
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   int frames = 0;
   int test = 0;
+  int test2 = 0;
 
   // Main loop
   glEnable(GL_DEPTH_TEST);
@@ -131,10 +131,12 @@ int main()
         vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
         vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
       }
-      queue.writeBuffer(buffers.get("vel"), CL_TRUE, 0, sizeof(glm::vec4) * vel.size(), &vel[0]);
+      queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
+      queue.removeIndices(0, { test2, test2+1, test2+2, test2+3, test2+4 });
+      test2 += 5;
     }
     queue.acquireGL(&openglbuffers);
-    queue.runRangeKernel("move", cl::NullRange, cl::NDRange(buffers.sizeOfType(0)), cl::NullRange);
+    queue.runKernelOnType(kh.get("move"), 0);
     queue.releaseGL(&openglbuffers);
     queue.finish();
     test++;

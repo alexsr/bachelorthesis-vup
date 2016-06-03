@@ -14,23 +14,18 @@ namespace vup {
 class RunKernelException : public std::exception {
 
 public:
-  RunKernelException(std::string name, int error) throw() {
+  RunKernelException(int error) throw() {
     m_error = error;
-    m_name = name;
-    m_msg = "Running kernel " + m_name + " returned error " + std::to_string(m_error);
+    m_msg = "Running kernel returned error " + std::to_string(m_error);
   };
   int getError() {
     return m_error;
-  }
-  std::string getName() {
-    return m_name;
   }
   virtual const char* what() const throw () {
     return m_msg.c_str();
   }
 private:
   int m_error;
-  std::string m_name;
   std::string m_msg;
 };
 

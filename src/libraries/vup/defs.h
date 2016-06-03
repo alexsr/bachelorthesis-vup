@@ -14,4 +14,18 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_access.hpp>
 
+#if defined (__APPLE__) || defined(MACOSX)
+#include <OpenGL/OpenGL.h>
+#else
+#include "CL/cl.hpp"
+#include "CL/cl_gl.h"
+#endif
+
+namespace vup {
+
+enum particleType {fluid, rigidbody, granular, gas, softbody};
+
+}
+
+
 #endif

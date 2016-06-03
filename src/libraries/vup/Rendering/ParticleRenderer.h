@@ -8,7 +8,7 @@
 #include "vup/defs.h"
 #include "vup/Rendering/RenderData/RenderData.h"
 #include "vup/particle.h"
-#include "vup/Rendering/VBO.h"
+#include "vup/ParticleHandling/VBO.h"
 #include <map>
 
 namespace vup {
