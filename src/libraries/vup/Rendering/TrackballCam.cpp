@@ -40,7 +40,7 @@ glm::mat4 vup::TrackballCam::getProjection()
   return m_projection;
 }
 
-void vup::TrackballCam::update(GLFWwindow * window)
+void vup::TrackballCam::update(GLFWwindow * window, float dt)
 {
   double x, y;
   glfwGetCursorPos(window, &x, &y);
@@ -52,8 +52,8 @@ void vup::TrackballCam::update(GLFWwindow * window)
       m_oldY = y;
     }
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    float changeX = ((float)x - m_x) * m_sens;
-    float changeY = ((float)y - m_y) * m_sens;
+    float changeX = ((float)x - m_x) * m_sens * dt;
+    float changeY = ((float)y - m_y) * m_sens * dt;
 
     m_theta -= changeY;
     if (m_theta < 0.01f) {
@@ -81,10 +81,10 @@ void vup::TrackballCam::update(GLFWwindow * window)
   }
   
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-    m_radius -= m_zoomsens;
+    m_radius -= m_zoomsens * dt;
   }
   else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-    m_radius += m_zoomsens;
+    m_radius += m_zoomsens * dt;
   }
   if (m_radius < 0.1f) {
     m_radius = 0.1f;

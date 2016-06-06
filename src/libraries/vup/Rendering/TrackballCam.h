@@ -26,7 +26,7 @@ public:
 
   // Updates the camera view using mouse controls, which is the reason
   // why the window has to be passed.
-  void update(GLFWwindow* window);
+  void update(GLFWwindow* window, float dt);
 
 private:
   
