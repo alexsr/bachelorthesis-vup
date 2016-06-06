@@ -36,12 +36,12 @@ int main()
   vup::initGLEW();
   glViewport(0, 0, WIDTH, HEIGHT);
 
-  vup::TrackballCam cam(WIDTH, HEIGHT, 0.01f, 10.0f, 1.0f);
+  vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f);
 
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 10000;
+  int particle_amount = 1000;
 
   std::vector<glm::vec4> translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
@@ -82,13 +82,13 @@ int main()
   vup::ParticleRenderer renderer(sphere, particle_amount, buffers.getInteropVBOs());
 
   std::vector<int> fluidIndices;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 1000; i++) {
     fluidIndices.push_back(i);
   }
 
   // OPENCL
   cl::CommandQueue queue2(clBasis.context());
-  vup::Queue queue(clBasis.context(), particle_amount);
+  vup::ParticleQueue queue(clBasis.context(), particle_amount);
   buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
   queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
@@ -96,15 +96,17 @@ int main()
   
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
 
+  float dt = 0.01f;
   vup::KernelHandler kh(clBasis.context(), OPENCL_KERNEL_PATH "/interop.cl");
   kh.initKernel("move");
   kh.setArg("move", 0, buffers.getGL("pos_vbo"));
   kh.setArg("move", 1, buffers.get("vel"));
-  kh.setArg("move", 2, 0.01f);
+  kh.setArg("move", 2, dt);
   kh.setArg("move", 3, queue.getIndexBuffer(0));
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
+  double accumulator = 0.0;
   int frames = 0;
   int test = 0;
   int test2 = 0;
@@ -114,6 +116,7 @@ int main()
   while (!glfwWindowShouldClose(window)) {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    accumulator += glfwGetTime() - currentTime;
     currentTime = glfwGetTime();
     frames++;
     if (currentTime - lastTime >= 1.0) {
@@ -124,23 +127,28 @@ int main()
       frames = 0;
       lastTime = currentTime;
     }
-    if (test > 100) {
-      test = 0;
-      for (int i = 0; i < particle_amount; i++) {
-        vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-        vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-        vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+    if (accumulator > dt) {
+      accumulator = 0.0;
+      if (test > 100) {
+        test = 0;
+        for (int i = 0; i < particle_amount; i++) {
+          vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+          vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+          vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+        }
+        queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
+        if (test2 + 50 <= 1000) {
+          queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
+        }
+        test2 += 50;
       }
-      queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
-      queue.removeIndices(0, { test2, test2+1, test2+2, test2+3, test2+4 });
-      test2 += 5;
+      queue.acquireGL(&openglbuffers);
+      queue.runKernelOnType(kh.get("move"), 0);
+      queue.releaseGL(&openglbuffers);
+      queue.finish();
+      test++;
+      cam.update(window, dt);
     }
-    queue.acquireGL(&openglbuffers);
-    queue.runKernelOnType(kh.get("move"), 0);
-    queue.releaseGL(&openglbuffers);
-    queue.finish();
-    test++;
-    cam.update(window);
     simpleShader.updateUniform("view", cam.getView());
     simpleShader.use();
 

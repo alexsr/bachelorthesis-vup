@@ -114,11 +114,10 @@ bool vup::KernelHandler::doesKernelExist(std::string name)
   return false;
 }
 
-vup::Queue::Queue(cl::Context context, int particleAmount)
+vup::Queue::Queue(cl::Context context)
 {
   m_context = context;
   m_queue = cl::CommandQueue(context);
-  m_particleAmount = particleAmount;
 }
 
 vup::Queue::~Queue()
@@ -157,11 +156,6 @@ void vup::Queue::runRangeKernel(cl::Kernel k, cl::NDRange offset, cl::NDRange gl
   }
 }
 
-void vup::Queue::runKernelOnType(cl::Kernel k, int type)
-{
-  runRangeKernel(k, cl::NDRange(m_typeIndices.at(type).range()));
-}
-
 void vup::Queue::acquireGL(std::vector<cl::Memory>* mem)
 {
   glFinish();
@@ -180,14 +174,32 @@ void vup::Queue::releaseGL(std::vector<cl::Memory>* mem)
 }
 
 
-void vup::Queue::setTypeIndices(int type, cl_mem_flags flags, std::vector<int> indices, cl_bool blocking)
+// ParticleQueue
+vup::ParticleQueue::ParticleQueue(cl::Context context, int particleAmount) : vup::Queue(context)
+{
+  m_particleAmount = particleAmount;
+}
+
+vup::ParticleQueue::~ParticleQueue()
+{
+}
+
+void vup::ParticleQueue::runKernelOnType(cl::Kernel k, int type)
+{
+  if (m_typeIndices.at(type).range() != 0) {
+    runRangeKernel(k, cl::NDRange(m_typeIndices.at(type).range()));
+  }
+}
+
+void vup::ParticleQueue::setTypeIndices(int type, cl_mem_flags flags, std::vector<int> indices, cl_bool blocking)
 {
   std::sort(indices.begin(), indices.end());
   indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
   m_typeIndices[type] = vup::TypeBuffer(indices, flags, blocking, m_context, m_particleAmount);
+  writeBuffer(m_typeIndices.at(type).buffer(), m_typeIndices.at(type).size(), m_typeIndices.at(type).getIndexPointer(type));
 }
 
-std::vector<int> vup::Queue::getIndices(int type)
+std::vector<int> vup::ParticleQueue::getIndices(int type)
 {
   if (doesTypeExist(type)) {
     return m_typeIndices.at(type).indices();
@@ -195,7 +207,12 @@ std::vector<int> vup::Queue::getIndices(int type)
   return std::vector<int>(0);
 }
 
-cl::Buffer vup::Queue::getIndexBuffer(int type)
+int vup::ParticleQueue::getIndicesAmount(int type)
+{
+  return m_typeIndices.at(type).range();
+}
+
+cl::Buffer vup::ParticleQueue::getIndexBuffer(int type)
 {
   if (doesTypeExist(type)) {
     return m_typeIndices.at(type).buffer();
@@ -206,7 +223,7 @@ cl::Buffer vup::Queue::getIndexBuffer(int type)
   }
 }
 
-void vup::Queue::addIndices(int type, std::vector<int> indices)
+void vup::ParticleQueue::addIndices(int type, std::vector<int> indices)
 {
   if (doesTypeExist(type)) {
     m_typeIndices.at(type).addIndices(indices);
@@ -214,15 +231,17 @@ void vup::Queue::addIndices(int type, std::vector<int> indices)
   }
 }
 
-void vup::Queue::removeIndices(int type, std::vector<int> indices)
+void vup::ParticleQueue::removeIndices(int type, std::vector<int> indices)
 {
   if (doesTypeExist(type)) {
     m_typeIndices.at(type).removeIndices(indices);
-    writeBuffer(m_typeIndices.at(type).buffer(), m_typeIndices.at(type).size(), m_typeIndices.at(type).getIndexPointer(type));
+    if (m_typeIndices.at(type).range() != 0) {
+      writeBuffer(m_typeIndices.at(type).buffer(), m_typeIndices.at(type).size(), m_typeIndices.at(type).getIndexPointer(type));
+    }
   }
 }
 
-bool vup::Queue::doesTypeExist(int type)
+bool vup::ParticleQueue::doesTypeExist(int type)
 {
   std::map<int, vup::TypeBuffer>::iterator it = m_typeIndices.find(type);
   if (it != m_typeIndices.end())

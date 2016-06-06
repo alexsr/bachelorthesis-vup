@@ -82,30 +82,38 @@ void KernelHandler::setArg(std::string name, int index, T data)
 class Queue
 {
 public:
-  Queue(cl::Context context, int particleAmount);
+  Queue(cl::Context context);
   ~Queue();
   cl::CommandQueue getQueue() { return m_queue; }
   void writeBuffer(cl::Buffer b, int size, const void * ptr);
   void writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr);
   void runRangeKernel(cl::Kernel k, cl::NDRange global);
   void runRangeKernel(cl::Kernel k, cl::NDRange offset, cl::NDRange global, cl::NDRange local);
-  void runKernelOnType(cl::Kernel k, int type);
   void acquireGL(std::vector<cl::Memory> * mem);
   void releaseGL(std::vector<cl::Memory> * mem);
 
   void finish() { m_queue.finish(); }
   void flush() { m_queue.flush(); }
 
+protected:
+  cl::CommandQueue m_queue;
+  cl::Context m_context;
+};
+
+class ParticleQueue : public vup::Queue
+{
+public:
+  ParticleQueue(cl::Context context, int particleAmount);
+  ~ParticleQueue();
+  void runKernelOnType(cl::Kernel k, int type);
   void setTypeIndices(int type, cl_mem_flags flags, std::vector<int> indices, cl_bool blocking);
   std::vector<int> getIndices(int type);
+  int getIndicesAmount(int type);
   cl::Buffer getIndexBuffer(int type);
   void addIndices(int type, std::vector<int> indices);
   void removeIndices(int type, std::vector<int> indices);
-
 private:
   bool doesTypeExist(int type);
-  cl::CommandQueue m_queue;
-  cl::Context m_context;
   std::map<int, vup::TypeBuffer> m_typeIndices;
   int m_particleAmount;
 };
