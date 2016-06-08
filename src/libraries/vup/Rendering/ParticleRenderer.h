@@ -19,14 +19,13 @@ namespace vup {
 class ParticleRenderer
 {
 public:
-  ParticleRenderer(RenderData rd, int size, std::map<std::string, vup::VBO> instancedVBOS);
+  ParticleRenderer(RenderData rd, std::map<std::string, vup::VBO> instancedVBOS);
   ~ParticleRenderer();
   void execute(int amount);
 
 private:
-  int m_size;
-  int m_rdsize;
-  RenderData m_rd;
+  int m_renderDataSize;
+  RenderData m_renderData;
   GLuint m_vao;
   std::map<std::string, vup::VBO> m_instancedVBOS;
 
