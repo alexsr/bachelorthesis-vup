@@ -1,6 +1,6 @@
 #include "vup/defs.h"
-#include "vup/init.h"
 #include "vup/particle.h"
+#include "vup/utils.h"
 #include "vup/Rendering/ShaderProgram.h"
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
@@ -8,15 +8,8 @@
 #include "vup/ParticleHandling/BufferHandler.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 
-#include <CL/cl.hpp>
-#include <CL/cl_gl.h>
-
-#include <iostream>
-#include <fstream>
 #include <string>
-#include <cstdlib>
 #include <ctime>
-#include <sstream>
 
 #define WIDTH 1920
 #define HEIGHT 1080
@@ -43,7 +36,7 @@ int main()
 
   int particle_amount = 1000;
 
-  std::vector<glm::vec4> translations(particle_amount);
+  vup::position translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
     translations[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
@@ -52,21 +45,18 @@ int main()
     translations[i].w = 1.0f;
   }
   srand(static_cast <unsigned> (time(0)));
-  std::vector<glm::vec4> color(particle_amount);
+  vup::color color(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     color[i].r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
     color[i].g = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
     color[i].b = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
     color[i].a = 1.0f;
   }
-  std::vector<glm::vec4> vel(particle_amount);
+  vup::velocity vel(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
-    vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    vel[i].w = 0.0f;
+    vel[i] = glm::vec4(0.0f);
   }
-  std::vector<int> type(particle_amount);
+  vup::type type(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
     type[i] = static_cast<int>(-1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f)));
 

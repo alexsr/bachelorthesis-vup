@@ -7,6 +7,8 @@
 
 #include "vup/defs.h"
 #include <iostream>
+#include <string>
+#include <sstream>
 
 namespace vup {
 
@@ -33,6 +35,22 @@ void initGLEW() {
     std::cout << "Failed to initialize GLEW: " << glewGetErrorString(glewError) << std::endl;
     exit(-1);
   }
+}
+double updateFramerate(double currentTime, double lastTime, GLFWwindow* window, int &frames) {
+  if (currentTime - lastTime >= 1.0) {
+    std::ostringstream strs;
+    strs << frames;
+    std::string title = "FPS: " + strs.str();
+    glfwSetWindowTitle(window, title.c_str());
+    frames = 0;
+    lastTime = currentTime;
+  }
+  return lastTime;
+}
+
+void clearGL() {
+  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 }
