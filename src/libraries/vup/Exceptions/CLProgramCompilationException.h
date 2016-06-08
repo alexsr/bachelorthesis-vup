@@ -14,18 +14,23 @@ namespace vup {
 class CLProgramCompilationException : public std::exception {
 
 public:
-  CLProgramCompilationException(std::string path) throw() {
+  CLProgramCompilationException(std::string path, std::string log) throw() {
     m_path = path;
-    m_msg = "OpenCL program compilation of " + m_path + " failed.";
+    m_log = log;
+    m_msg = "OpenCL program compilation of " + m_path + " failed.\n" + log;
   };
   std::string getPath() {
     return m_path;
+  }
+  std::string getLog() {
+    return m_log;
   }
   virtual const char* what() const throw () {
     return m_msg.c_str();
   }
 private:
   std::string m_path;
+  std::string m_log;
   std::string m_msg;
 
 };
