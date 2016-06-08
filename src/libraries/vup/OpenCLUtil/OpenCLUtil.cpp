@@ -54,14 +54,14 @@ vup::OpenCLBasis::~OpenCLBasis()
 {
 }
 
-vup::KernelHandler::KernelHandler(cl::Context context, const char * path)
+vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path)
 {
-  buildProgram(context, path);
+  buildProgram(context, device, path);
   m_kernels = std::map<std::string, cl::Kernel>();
 }
-vup::KernelHandler::KernelHandler(cl::Context context, const char * path, std::vector<std::string> kernels)
+vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path, std::vector<std::string> kernels)
 {
-  buildProgram(context, path);
+  buildProgram(context, device, path);
   initKernels(kernels);
 }
 vup::KernelHandler::~KernelHandler()
@@ -94,13 +94,14 @@ cl::Kernel vup::KernelHandler::get(std::string name)
   }
 }
 
-void vup::KernelHandler::buildProgram(cl::Context context, const char * path)
+void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, const char * path)
 {
   vup::FileReader file(path);
   m_program = cl::Program(context, file.getSourceChar());
-  cl_int clError = m_program.build();
+  cl_int clError = m_program.build({ device });
   if (clError != CL_SUCCESS) {
-    throw vup::CLProgramCompilationException(std::string(path));
+    std::string buildinfo = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
+    throw vup::CLProgramCompilationException(std::string(path), buildinfo);
   }
 }
 
@@ -140,17 +141,17 @@ void vup::Queue::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int siz
   }
 }
 
-void vup::Queue::runRangeKernel(cl::Kernel k, cl::NDRange global)
+void vup::Queue::runRangeKernel(cl::Kernel k, int global)
 {
-  cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NullRange, global, cl::NullRange);
+  cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NullRange, cl::NDRange(global), cl::NullRange);
   if (clError != CL_SUCCESS) {
     throw vup::RunKernelException(clError);
   }
 }
 
-void vup::Queue::runRangeKernel(cl::Kernel k, cl::NDRange offset, cl::NDRange global, cl::NDRange local)
+void vup::Queue::runRangeKernel(cl::Kernel k, int offset, int global, int local)
 {
-  cl_int clError = m_queue.enqueueNDRangeKernel(k, offset, global, local);
+  cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NDRange(offset), cl::NDRange(global), cl::NDRange(local));
   if (clError != CL_SUCCESS) {
     throw vup::RunKernelException(clError);
   }
@@ -187,7 +188,7 @@ vup::ParticleQueue::~ParticleQueue()
 void vup::ParticleQueue::runKernelOnType(cl::Kernel k, int type)
 {
   if (m_typeIndices.at(type).range() != 0) {
-    runRangeKernel(k, cl::NDRange(m_typeIndices.at(type).range()));
+    runRangeKernel(k, m_typeIndices.at(type).range());
   }
 }
 

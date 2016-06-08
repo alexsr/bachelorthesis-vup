@@ -60,15 +60,15 @@ private:
 class KernelHandler
 {
 public:
-  KernelHandler(cl::Context context, const char* path);
-  KernelHandler(cl::Context context, const char* path, std::vector<std::string> kernels);
+  KernelHandler(cl::Context context, cl::Device device, const char* path);
+  KernelHandler(cl::Context context, cl::Device device, const char* path, std::vector<std::string> kernels);
   ~KernelHandler();
   void initKernels(std::vector<std::string> kernels);
   void initKernel(std::string kernel);
   cl::Kernel get(std::string name);
   template <class T> void setArg(std::string name, int index, T data);
 private:
-  void buildProgram(cl::Context context, const char* path);
+  void buildProgram(cl::Context context, cl::Device device, const char* path);
   bool doesKernelExist(std::string name);
   cl::Program m_program;
   std::map<std::string, cl::Kernel> m_kernels;
@@ -87,8 +87,8 @@ public:
   cl::CommandQueue getQueue() { return m_queue; }
   void writeBuffer(cl::Buffer b, int size, const void * ptr);
   void writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr);
-  void runRangeKernel(cl::Kernel k, cl::NDRange global);
-  void runRangeKernel(cl::Kernel k, cl::NDRange offset, cl::NDRange global, cl::NDRange local);
+  void runRangeKernel(cl::Kernel k, int global);
+  void runRangeKernel(cl::Kernel k, int offset, int global, int local);
   void acquireGL(std::vector<cl::Memory> * mem);
   void releaseGL(std::vector<cl::Memory> * mem);
 
