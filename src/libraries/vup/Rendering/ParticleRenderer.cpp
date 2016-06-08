@@ -9,14 +9,18 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, int size, std::map<std::s
   m_instancedVBOS = instancedVBOS;
 
   // Create vbo for rendering using specified RenderData.
-  GLuint renderVBO;
+  GLuint renderVBO[2];
   glGenVertexArrays(1, &m_vao);
-  glGenBuffers(1, &renderVBO);
+  glGenBuffers(2, renderVBO);
   glBindVertexArray(m_vao);
-  glBindBuffer(GL_ARRAY_BUFFER, renderVBO);
-  glBufferData(GL_ARRAY_BUFFER, m_rd.sizeOfVertices(), &(m_rd.getVertices())[0], GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, renderVBO[0]);
+  glBufferData(GL_ARRAY_BUFFER, m_rd.sizeOfVertices(), &(m_rd.getVertices())[0], GL_STATIC_DRAW);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
+  glBindBuffer(GL_ARRAY_BUFFER, renderVBO[1]);
+  glBufferData(GL_ARRAY_BUFFER, m_rd.sizeOfNormals(), &(m_rd.getNormals())[0], GL_STATIC_DRAW);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
   std::map<std::string, vup::VBO>::iterator it;
   // Use iterator to loop through map. Loc is specified in VBO to allow this behavior,
