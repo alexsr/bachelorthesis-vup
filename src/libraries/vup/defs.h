@@ -21,11 +21,10 @@
 #include "CL/cl_gl.h"
 #endif
 
-namespace vup {
-
-enum particleType {fluid, rigidbody, granular, gas, softbody};
-
-}
-
+#define VUP_FLUID 0
+#define VUP_RIGID 1
+#define VUP_GRANULAR 2
+#define VUP_SOFT 3
+#define VUP_GAS 4
 
 #endif
