@@ -1,11 +1,11 @@
 #include "TrackballCam.h"
 
-vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, float zoomsens, float fov, float near, float far) {
+vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, float zoomsens, glm::vec3 center, float fov, float near, float far) {
   m_sens = sens;
   m_zoomsens = zoomsens;
   m_width = width;
   m_height = height;
-  m_center = glm::vec3(0.0f, 0.0f, 0.0f);
+  m_center = center;
 
   m_width = width;
   m_height = height;

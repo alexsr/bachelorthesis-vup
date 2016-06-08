@@ -18,7 +18,7 @@ class TrackballCam
 {
 public:
   // The given options proved to be reasonable.
-  TrackballCam(int width, int height, float sens = 0.01f, float r = 2.0, float zoomsens = 1.0f, float fov = 60.0f, float near = 0.001f, float far = 1000.0f);
+  TrackballCam(int width, int height, float sens = 0.01f, float r = 2.0, float zoomsens = 1.0f, glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f), float fov = 60.0f, float near = 0.001f, float far = 1000.0f);
   ~TrackballCam();
 
   glm::mat4 getView();
