@@ -39,7 +39,7 @@ public:
   template <typename T> void createVBO(std::string name, int loc, int size, int format, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
   template <typename T> void createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
   template <typename T> void updateVBO(std::string name, std::vector<T> data);
-  template <typename T> void updateSubVBO(std::string name, std::vector<T> data, int range);
+  template <typename T> void updateSubVBO(std::string name, std::vector<T> data, int offset, int length);
   std::map<std::string, vup::VBO> getVBOs() { return m_vbos; }
   std::map<std::string, vup::VBO> getInteropVBOs() { return m_interopVBOs; }
   vup::VBO getVBO(std::string name);
@@ -99,8 +99,16 @@ void vup::BufferHandler::updateVBO(std::string name, std::vector<T> data)
 }
 
 template<typename T>
-void vup::BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int range)
+void vup::BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offset, int length)
 {
+  glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
+  T * vertexArray = (T *)glMapBufferRange(GL_ARRAY_BUFFER, offset, length, GL_WRITE_ONLY);
+  int size = glm::max(data->size(), length);
+  for (int i = 0; i < size; i++) {
+    vertexArray[i] = data->at(i);
+  }
+  glUnmapBuffer(GL_ARRAY_BUFFER);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 }
