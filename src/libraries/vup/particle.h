@@ -9,14 +9,28 @@
 
 namespace vup {
 
+typedef std::vector<glm::vec4> position;
+typedef std::vector<glm::vec4> velocity;
+typedef std::vector<glm::vec4> color;
+typedef std::vector<int> type;
+
 struct particle {
-  glm::vec4 pos;
-  glm::vec4 vel;
+  int id;
   int type;
   float mass;
   float density;
   float viscosity;
-  glm::vec4 color;
+};
+
+template <int C>
+struct connections {
+  int id;
+  struct {
+    int to;
+    float min_length;
+    float max_length;
+    float spring_constant;
+  } connection[C];
 };
 
 }
