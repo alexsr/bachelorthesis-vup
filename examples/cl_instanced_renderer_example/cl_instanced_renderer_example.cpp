@@ -29,12 +29,12 @@ int main()
   vup::initGLEW();
   glViewport(0, 0, WIDTH, HEIGHT);
 
-  vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f);
+  vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f, glm::vec3(0.0f, -4.0f, 0.0f));
 
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 1000;
+  int particle_amount = 500;
 
   vup::position translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
@@ -64,8 +64,8 @@ int main()
 
   vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
   vup::BufferHandler buffers(clBasis.context());
-  buffers.createVBOData("pos", 1, particle_amount, 4, translations, true, GL_STREAM_DRAW);
-  buffers.createVBOData("color", 2, particle_amount, 4, color, true, GL_STATIC_DRAW);
+  buffers.createVBOData("pos", 2, particle_amount, 4, translations, true, GL_STREAM_DRAW);
+  buffers.createVBOData("color", 3, particle_amount, 4, color, true, GL_STATIC_DRAW);
 
   float size = .1f;
   vup::SphereData sphere(size, 20, 20);
@@ -75,70 +75,66 @@ int main()
   for (int i = 0; i < 1000; i++) {
     fluidIndices.push_back(i);
   }
+  std::vector<int> rigidIndices;
+  for (int i = 1000; i < 2000; i++) {
+    rigidIndices.push_back(i);
+  }
 
   // OPENCL
-  cl::CommandQueue queue2(clBasis.context());
   vup::ParticleQueue queue(clBasis.context(), particle_amount);
   buffers.addGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
-  buffers.add("vel", CL_MEM_READ_ONLY, sizeof(glm::vec4) * vel.size());
+  buffers.add("vel", CL_MEM_READ_WRITE, sizeof(glm::vec4) * vel.size());
   queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
-  queue.setTypeIndices(0, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
+ // queue.setTypeIndices(VUP_FLUID, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
+  //queue.setTypeIndices(VUP_RIGID, CL_MEM_READ_WRITE, rigidIndices, particle_amount);
   
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
 
   float dt = 0.01f;
-  vup::KernelHandler kh(clBasis.context(), OPENCL_KERNEL_PATH "/interop.cl");
+  float camdt = 0.01f;
+  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/fakebox.cl", { "test", "fakecollision" });
+  
   kh.initKernel("move");
   kh.setArg("move", 0, buffers.getGL("pos_vbo"));
   kh.setArg("move", 1, buffers.get("vel"));
   kh.setArg("move", 2, dt);
-  kh.setArg("move", 3, queue.getIndexBuffer(0));
+ // kh.setArg("move", 3, queue.getIndexBuffer(VUP_FLUID));
+  //kh.initKernel("test");
+  kh.setArg("test", 0, buffers.getGL("pos_vbo"));
+  kh.setArg("test", 1, buffers.get("vel"));
+  kh.setArg("test", 2, dt);
+ // kh.initKernel("fakecollision");
+  kh.setArg("fakecollision", 0, buffers.getGL("pos_vbo"));
+  kh.setArg("fakecollision", 1, buffers.get("vel"));
+  kh.setArg("fakecollision", 2, dt);
+  kh.setArg("fakecollision", 3, particle_amount);
+  
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   double accumulator = 0.0;
   int frames = 0;
-  int test = 0;
-  int test2 = 0;
 
   // Main loop
   glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    vup::clearGL();
     accumulator += glfwGetTime() - currentTime;
     currentTime = glfwGetTime();
     frames++;
-    if (currentTime - lastTime >= 1.0) {
-      std::ostringstream strs;
-      strs << frames;
-      std::string title = "FPS: " + strs.str();
-      glfwSetWindowTitle(window, title.c_str());
-      frames = 0;
-      lastTime = currentTime;
-    }
+    lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
+
+    // Fixed timestep. Still lagging if rendering is slow. This is intended though.
     if (accumulator > dt) {
       accumulator = 0.0;
-      if (test > 100) {
-        test = 0;
-        for (int i = 0; i < particle_amount; i++) {
-          vel[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-          vel[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-          vel[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-        }
-        queue.writeBuffer(buffers.get("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
-        if (test2 + 50 <= 1000) {
-          queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
-        }
-        test2 += 50;
-      }
+        //  queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
       queue.acquireGL(&openglbuffers);
-      queue.runKernelOnType(kh.get("move"), 0);
+      queue.runRangeKernel(kh.get("fakecollision"), particle_amount);
+      queue.runRangeKernel(kh.get("test"), particle_amount);
       queue.releaseGL(&openglbuffers);
       queue.finish();
-      test++;
-      cam.update(window, dt);
     }
+    cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());
     simpleShader.use();
 
