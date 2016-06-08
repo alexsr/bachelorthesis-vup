@@ -56,16 +56,39 @@ vup::OpenCLBasis::~OpenCLBasis()
 
 vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path)
 {
+  m_context = context;
+  m_device = device;
+  m_path = path;
   buildProgram(context, device, path);
   m_kernels = std::map<std::string, cl::Kernel>();
 }
-vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path, std::vector<std::string> kernels)
+vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path, std::vector<std::string> kernels) : KernelHandler(context, device, path)
 {
-  buildProgram(context, device, path);
   initKernels(kernels);
 }
 vup::KernelHandler::~KernelHandler()
 {
+}
+void vup::KernelHandler::reloadProgram()
+{
+  buildProgram(m_context, m_device, m_path);
+  std::vector<std::string> keys;
+  for (std::map<std::string, cl::Kernel>::iterator it = m_kernels.begin(); it != m_kernels.end(); ++it) {
+    keys.push_back(it->first);
+  }
+  initKernels(keys);
+}
+void vup::KernelHandler::reloadProgram(const char * path)
+{
+  m_path = path;
+  reloadProgram();
+}
+void vup::KernelHandler::reloadProgram(cl::Context context, cl::Device device, const char * path)
+{
+  m_context = context;
+  m_device = device;
+  m_path = path;
+  reloadProgram();
 }
 void vup::KernelHandler::initKernels(std::vector<std::string> kernels)
 {
@@ -76,7 +99,7 @@ void vup::KernelHandler::initKernels(std::vector<std::string> kernels)
 void vup::KernelHandler::initKernel(std::string kernel)
 {
   cl_int clError;
-  m_kernels.emplace(kernel, cl::Kernel(m_program, kernel.c_str(), &clError));
+  m_kernels[kernel] = cl::Kernel(m_program, kernel.c_str(), &clError);
   if (clError != CL_SUCCESS) {
     throw vup::KernelCreationException(kernel, clError);
   }

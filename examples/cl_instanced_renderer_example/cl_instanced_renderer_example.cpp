@@ -123,7 +123,18 @@ int main()
     currentTime = glfwGetTime();
     frames++;
     lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-
+    int state = glfwGetKey(window, GLFW_KEY_R);
+    if (state == GLFW_PRESS) {
+      kh.reloadProgram();
+      kh.setArg("test", 0, buffers.getGL("pos_vbo"));
+      kh.setArg("test", 1, buffers.get("vel"));
+      kh.setArg("test", 2, dt);
+      // kh.initKernel("fakecollision");
+      kh.setArg("fakecollision", 0, buffers.getGL("pos_vbo"));
+      kh.setArg("fakecollision", 1, buffers.get("vel"));
+      kh.setArg("fakecollision", 2, dt);
+      kh.setArg("fakecollision", 3, particle_amount);
+    }
     // Fixed timestep. Still lagging if rendering is slow. This is intended though.
     if (accumulator > dt) {
       accumulator = 0.0;

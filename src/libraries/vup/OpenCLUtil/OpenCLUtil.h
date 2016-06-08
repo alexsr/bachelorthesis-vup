@@ -63,6 +63,9 @@ public:
   KernelHandler(cl::Context context, cl::Device device, const char* path);
   KernelHandler(cl::Context context, cl::Device device, const char* path, std::vector<std::string> kernels);
   ~KernelHandler();
+  void reloadProgram();
+  void reloadProgram(const char* path);
+  void reloadProgram(cl::Context context, cl::Device device, const char* path);
   void initKernels(std::vector<std::string> kernels);
   void initKernel(std::string kernel);
   cl::Kernel get(std::string name);
@@ -70,7 +73,10 @@ public:
 private:
   void buildProgram(cl::Context context, cl::Device device, const char* path);
   bool doesKernelExist(std::string name);
+  cl::Context m_context;
+  cl::Device m_device;
   cl::Program m_program;
+  const char* m_path;
   std::map<std::string, cl::Kernel> m_kernels;
 };
 template<class T>
