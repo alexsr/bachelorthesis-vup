@@ -15,11 +15,11 @@ typedef std::vector<glm::vec4> color;
 typedef std::vector<int> type;
 
 struct particle {
-  int id;
-  int type;
-  float mass;
-  float density;
-  float viscosity;
+  cl_int id;
+  cl_int type;
+  cl_float mass;
+  cl_float density;
+  cl_float viscosity;
 };
 
 template <int C>
