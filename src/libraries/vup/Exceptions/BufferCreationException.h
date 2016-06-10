@@ -10,7 +10,7 @@
 
 namespace vup {
 
-// Is thrown when the buffer creation fails.
+// Is thrown when any buffer creation fails.
 class BufferCreationException : public std::exception {
 
 public:
