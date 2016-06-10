@@ -14,33 +14,21 @@ vup::BufferHandler::~BufferHandler()
 {
 }
 
-void vup::BufferHandler::add(std::string name, cl_mem_flags flags, int size)
+void vup::BufferHandler::addBuffer(std::string name, cl::Buffer buffer)
 {
   if (doesBufferExist(name)) {
     std::cout << "WARNING: Kernel " << name << "already exists.";
   }
   cl_int clError;
-  m_buffers[name] = cl::Buffer(m_defaultContext, flags, size, nullptr, &clError);
+  m_buffers[name] = buffer;
   if (clError != CL_SUCCESS) {
     throw vup::BufferCreationException(name, clError);
   }
 }
 
-void vup::BufferHandler::add(std::string name, cl::Buffer buffer)
+void vup::BufferHandler::createBufferGL(std::string name, cl_mem_flags flags, std::string vbo)
 {
-  if (doesBufferExist(name)) {
-    std::cout << "WARNING: Kernel " << name << "already exists.";
-  }
-  cl_int clError;
-  m_buffers[name] = cl::Buffer(buffer);
-  if (clError != CL_SUCCESS) {
-    throw vup::BufferCreationException(name, clError);
-  }
-}
-
-void vup::BufferHandler::addGL(std::string name, cl_mem_flags flags, std::string vbo)
-{
-  if (doesGLBufferExist(name)) {
+  if (doesBufferGLExist(name)) {
     std::cout << "WARNING: Kernel " << name << "already exists.";
   }
   cl_int clError;
@@ -51,19 +39,19 @@ void vup::BufferHandler::addGL(std::string name, cl_mem_flags flags, std::string
   }
 }
 
-void vup::BufferHandler::addGL(std::string name, cl::BufferGL buffer)
+void vup::BufferHandler::addBufferGL(std::string name, cl::BufferGL buffer)
 {
-  if (doesGLBufferExist(name)) {
+  if (doesBufferGLExist(name)) {
     std::cout << "WARNING: Kernel " << name << "already exists.";
   }
   cl_int clError;
-  m_glBuffers[name] = cl::BufferGL(buffer);
+  m_glBuffers[name] = buffer;
   if (clError != CL_SUCCESS) {
     throw vup::BufferCreationException(name, clError);
   }
 }
 
-cl::Buffer vup::BufferHandler::get(std::string name)
+cl::Buffer vup::BufferHandler::getBuffer(std::string name)
 {
   if (doesBufferExist(name))
   {
@@ -75,9 +63,9 @@ cl::Buffer vup::BufferHandler::get(std::string name)
   }
 }
 
-cl::BufferGL vup::BufferHandler::getGL(std::string name)
+cl::BufferGL vup::BufferHandler::getBufferGL(std::string name)
 {
-  if (doesGLBufferExist(name))
+  if (doesBufferGLExist(name))
   {
     return m_glBuffers[name];
   }
@@ -97,7 +85,7 @@ bool vup::BufferHandler::doesBufferExist(std::string name)
   return false;
 }
 
-bool vup::BufferHandler::doesGLBufferExist(std::string name)
+bool vup::BufferHandler::doesBufferGLExist(std::string name)
 {
   std::map<std::string, cl::BufferGL>::iterator it = m_glBuffers.find(name);
   if (it != m_glBuffers.end())

@@ -22,17 +22,19 @@
 
 namespace vup {
 
+// Manages OpenCL and OpenGL buffers and provides 
+
 class BufferHandler
 {
 public:
   BufferHandler(cl::Context defaultContext);
   ~BufferHandler();
-  void add(std::string name, cl_mem_flags flags, int size);
-  void add(std::string name, cl::Buffer buffer);
-  void addGL(std::string name, cl_mem_flags flags, std::string vbo );
-  void addGL(std::string name, cl::BufferGL buffer);
-  cl::Buffer get(std::string name);
-  cl::BufferGL getGL(std::string name);
+  template <typename T> void createBuffer(std::string name, cl_mem_flags flags, int size);
+  void addBuffer(std::string name, cl::Buffer buffer);
+  void createBufferGL(std::string name, cl_mem_flags flags, std::string vbo);
+  void addBufferGL(std::string name, cl::BufferGL buffer);
+  cl::Buffer getBuffer(std::string name);
+  cl::BufferGL getBufferGL(std::string name);
   std::vector<cl::Memory> getGLBuffers() { return m_glBuffersVector; }
   cl::Context getDefaultContext() { return m_defaultContext; }
 
@@ -49,7 +51,7 @@ public:
   
 private:
   bool doesBufferExist(std::string name);
-  bool doesGLBufferExist(std::string name);
+  bool doesBufferGLExist(std::string name);
   cl::Context m_defaultContext;
   std::map<std::string, cl::Buffer> m_buffers;
   std::map<std::string, cl::BufferGL> m_glBuffers;
@@ -57,6 +59,19 @@ private:
   std::map<std::string, vup::VBO> m_vbos;
   std::map<std::string, vup::VBO> m_interopVBOs;
 };
+
+template<typename T>
+void BufferHandler::createBuffer(std::string name, cl_mem_flags flags, int size)
+{
+  if (doesBufferExist(name)) {
+    std::cout << "WARNING: Kernel " << name << "already exists.";
+  }
+  cl_int clError;
+  m_buffers[name] = cl::Buffer(m_defaultContext, flags, size * sizeof(T), nullptr, &clError);
+  if (clError != CL_SUCCESS) {
+    throw vup::BufferCreationException(name, clError);
+  }
+}
 
 template<typename T>
 void vup::BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
