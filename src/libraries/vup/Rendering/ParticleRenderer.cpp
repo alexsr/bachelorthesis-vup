@@ -1,11 +1,11 @@
 #include "ParticleRenderer.h"
 
-vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup::VBO> instancedVBOS)
+vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup::VBO> instancedVBOs)
 {
   m_renderData = rd;
   m_renderDataSize = rd.getSize();
 
-  m_instancedVBOS = instancedVBOS;
+  m_instancedVBOs = instancedVBOs;
 
   // Create vbo for rendering using specified RenderData.
   GLuint renderVBO[2];
@@ -24,7 +24,7 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup
   std::map<std::string, vup::VBO>::iterator it;
   // Use iterator to loop through map. Loc is specified in VBO to allow this behavior,
   // because without it there would be no way to ensure the right order of vbos.
-  for (it = m_instancedVBOS.begin(); it != m_instancedVBOS.end(); it++) {
+  for (it = m_instancedVBOs.begin(); it != m_instancedVBOs.end(); it++) {
     // it->second is the VBO in the map.
     // The VBOs BufferData is already set in the buffer handler.
     int loc = it->second.location;
