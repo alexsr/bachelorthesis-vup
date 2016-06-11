@@ -1,8 +1,9 @@
 Welcome to VUP's documentation!
 ===================================================================
 
+Table of contents
+********************
 .. toctree::
-   :caption: Table of contents:
    :maxdepth: 3
    :name: mastertoc
 
@@ -12,8 +13,7 @@ Welcome to VUP's documentation!
 
 
 Indices and tables
-=====================
+********************
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

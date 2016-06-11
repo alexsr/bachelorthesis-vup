@@ -1,2 +1,2 @@
-Getting started
+Your first particle simulation project
 ===================================================================
