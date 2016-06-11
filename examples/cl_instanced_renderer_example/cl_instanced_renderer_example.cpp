@@ -30,12 +30,10 @@ int main()
   glViewport(0, 0, WIDTH, HEIGHT);
 
   vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f, glm::vec3(0.0f, -4.0f, 0.0f));
-
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
   int particle_amount = 500;
-
   vup::position translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
@@ -104,10 +102,9 @@ int main()
  // queue.setTypeIndices(VUP_FLUID, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
   //queue.setTypeIndices(VUP_RIGID, CL_MEM_READ_WRITE, rigidIndices, particle_amount);
   
-  std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
-
   float dt = 0.01f;
   float camdt = 0.01f;
+  std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
   vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/fakebox.cl", { "test", "fakecollision" });
   
   kh.initKernel("move");
@@ -140,8 +137,7 @@ int main()
     currentTime = glfwGetTime();
     frames++;
     lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-    int state = glfwGetKey(window, GLFW_KEY_R);
-    if (state == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       kh.reloadProgram();
       kh.setArg("test", 0, buffers.getBufferGL("pos_vbo"));
       kh.setArg("test", 1, buffers.getBuffer("vel"));
