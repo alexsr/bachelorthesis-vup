@@ -4,14 +4,14 @@ vup::SphereData::SphereData(float r, int hres, int vres)
 {
   m_hres = hres;
   m_vres = vres;
-  m_r = r;
+  m_radius = r;
   m_vertices.resize(hres * vres * 6);
   m_normals.resize(hres * vres * 6);
   float d_h = 2 * glm::pi<float>()/((float) hres);
   float d_v = glm::pi<float>()/((float) vres);
   
   int n = 0;
-  
+
   // Vertices are created inside this loop.
   for (int i = 0; i < hres; i++) {
     float h = i * d_h;

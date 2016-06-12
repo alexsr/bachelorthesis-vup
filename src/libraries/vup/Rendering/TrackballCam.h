@@ -17,15 +17,26 @@ namespace vup {
 class TrackballCam
 {
 public:
-  // The given options proved to be reasonable.
+  // Creates an instance of a trackball camera
+  // The default options proved to be reasonable
+  // * int width - window width
+  // * int height - window height
+  // * float sens - mouse movement sensibility
+  // * float r - starting radius for camera
+  // * float zoomsens - sensibility for forward movement of the camera
+  // * glm::vec3 center - center of the trackball camera
+  // * float fov - field of view in degree
+  // * float near - near value for projection
+  // * float far - far value for projection
   TrackballCam(int width, int height, float sens = 0.01f, float r = 2.0, float zoomsens = 1.0f, glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f), float fov = 60.0f, float near = 0.001f, float far = 1000.0f);
   ~TrackballCam();
 
   glm::mat4 getView();
   glm::mat4 getProjection();
 
-  // Updates the camera view using mouse controls, which is the reason
-  // why the window has to be passed.
+  // Updates the camera view using mouse controls
+  // * GLFWwindow* window - window to access mouse position and controls
+  // * float dt - delta time between camera updates
   void update(GLFWwindow* window, float dt);
 
 private:

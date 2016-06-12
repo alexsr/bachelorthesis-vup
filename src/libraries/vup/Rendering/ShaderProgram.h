@@ -30,9 +30,10 @@ public:
   void use();
   GLuint getProgram();
 
-  // Update the uniform at the location of name with
+  // Updates the uniform at the location of name with
   // the second value in the method decleration.
   // These are the essential methods for updating uniforms.
+
   void updateUniform(const GLchar * name, bool b);
   void updateUniform(const GLchar * name, int i);
   void updateUniform(const GLchar * name, float f);

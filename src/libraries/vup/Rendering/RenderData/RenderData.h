@@ -22,10 +22,11 @@ public:
   virtual ~RenderData();
   std::vector<glm::vec4> getVertices() { return m_vertices; }
   std::vector<glm::vec3> getNormals() { return m_normals; }
+  // Vertices are glm::vec4
   int sizeOfVertices() { return sizeof(glm::vec4) * m_vertices.size(); }
+  // Normals are glm::vec3
   int sizeOfNormals() { return sizeof(glm::vec3) * m_normals.size(); }
   int getSize() { return m_size; }
-  virtual int getResolution() { return 0; }
 
 protected:
   std::vector<glm::vec4> m_vertices;

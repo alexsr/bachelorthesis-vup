@@ -19,9 +19,13 @@ namespace vup {
 class ParticleRenderer
 {
 public:
+  // Creates an instance of a ParticleRenderer
+  // * RenderData rd - vertices and normals of the reference object
+  // * instancedVBOs - map containing VBO information utilized to create instanced vertex attrib data
   ParticleRenderer(vup::RenderData rd, std::map<std::string, vup::VBO> instancedVBOs);
   ~ParticleRenderer();
-  void execute(int amount);
+  // Renders n instances of RenderData
+  void execute(int n);
 
 private:
   int m_renderDataSize;

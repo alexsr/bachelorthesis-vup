@@ -12,10 +12,12 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup
   glGenVertexArrays(1, &m_vao);
   glGenBuffers(2, renderVBO);
   glBindVertexArray(m_vao);
+  // Set vertices as attrib
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, renderVBO[0]);
   glBufferData(GL_ARRAY_BUFFER, m_renderData.sizeOfVertices(), &(m_renderData.getVertices())[0], GL_STATIC_DRAW);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+  // Set normals as attrib
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, renderVBO[1]);
   glBufferData(GL_ARRAY_BUFFER, m_renderData.sizeOfNormals(), &(m_renderData.getNormals())[0], GL_STATIC_DRAW);
@@ -43,11 +45,10 @@ vup::ParticleRenderer::~ParticleRenderer()
   glDeleteVertexArrays(1, &m_vao);
 }
 
-// Renders as many instances as specified in amount.
-void vup::ParticleRenderer::execute(int amount)
+void vup::ParticleRenderer::execute(int n)
 {
   glBindVertexArray(m_vao);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, m_renderDataSize, amount);
+  glDrawArraysInstanced(GL_TRIANGLES, 0, m_renderDataSize, n);
   glBindVertexArray(0);
 }
