@@ -4,10 +4,11 @@ Welcome to VUP's documentation!
 Table of contents
 ********************
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :name: mastertoc
 
    tutorial/index
+   bufferhandling/index
    rendering/index
 
 

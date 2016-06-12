@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'VUP'
+project = 'Variable and Unified Particle Framework'
 copyright = '2016, Alexander Scheid-Rehder'
 author = 'Alexander Scheid-Rehder'
 
