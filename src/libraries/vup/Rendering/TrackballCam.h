@@ -21,9 +21,9 @@ public:
   // The default options proved to be reasonable
   // * int width - window width
   // * int height - window height
-  // * float sens - mouse movement sensibility
-  // * float r - starting radius for camera
-  // * float zoomsens - sensibility for forward movement of the camera
+  // * float sens - mouse movement sensitivity
+  // * float r - initial radius for camera
+  // * float zoomsens - sensitivity for forward movement of the camera
   // * glm::vec3 center - center of the trackball camera
   // * float fov - field of view in degree
   // * float near - near value for projection

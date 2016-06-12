@@ -68,9 +68,6 @@ void vup::TrackballCam::update(GLFWwindow * window, float dt)
     } else if (m_phi > 2 * glm::pi<float>()) {
       m_phi -= 2 * glm::pi<float>();
     }
-
-    //m_x = (float) x;
-    //m_y = (float) y;
     glfwSetCursorPos(window, m_oldX, m_oldY);
   }
   else {
