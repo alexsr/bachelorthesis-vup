@@ -5,4 +5,5 @@ Rendering
    :maxdepth: 2
 
    renderdata
+   shaderprogram
    renderer
