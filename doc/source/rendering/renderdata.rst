@@ -42,13 +42,11 @@ Spheres are the common primitive for rendering particles, which is why they are 
 
 .. cpp:class:: vup::SphereData : public vup::RenderData
 
-    .. cpp:function:: SphereData(float r=1.0f, int hres=20, int vres=20)
+    .. cpp:function:: SphereData(float r, int hres, int vres)
 
         Create vertices and normals of a sphere with the specified parameters. The points are created using the sphere equation. This data is created for use with :code:`glDrawArrays()` as there are no indices defined.
 
         :param float r: Radius of the sphere
-
         :param int hres: Horizontal resolution
-
         :param int vres: Vertical resolution
     

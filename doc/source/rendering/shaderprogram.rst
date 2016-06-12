@@ -34,7 +34,6 @@ Shader program handler
         Write b to a boolean uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param bool b: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, int i)
@@ -42,7 +41,6 @@ Shader program handler
         Write i to an int uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param int i: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, float f)
@@ -50,7 +48,6 @@ Shader program handler
         Write f to a float uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param float f: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, double d)
@@ -58,7 +55,6 @@ Shader program handler
         Write d to a double uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param double d: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::vec2 v)
@@ -66,7 +62,6 @@ Shader program handler
         Write a pointer to v to a vec2 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:vec2 v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::vec3 v)
@@ -74,7 +69,6 @@ Shader program handler
         Write a pointer to v to a vec3 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:vec3 v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::vec4 v)
@@ -82,7 +76,6 @@ Shader program handler
         Write a pointer to v to a vec4 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:vec4 v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::ivec2 v)
@@ -90,7 +83,6 @@ Shader program handler
         Write a pointer to v to a ivec2 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:ivec2 v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::ivec3 v)
@@ -98,7 +90,6 @@ Shader program handler
         Write a pointer to v to a ivec3 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:ivec3 v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::ivec4 v)
@@ -106,7 +97,6 @@ Shader program handler
         Write a pointer to v to a ivec4 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:ivec4 v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, std::vector<glm::vec2> v)
@@ -114,7 +104,6 @@ Shader program handler
         Write a pointer to (&v[0])[0] to a vec2 array uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param std\:\:vector<glm\:\:vec2> v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, std::vector<glm::vec3> v)
@@ -122,7 +111,6 @@ Shader program handler
         Write a pointer to (&v[0])[0] to a vec3 array uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param std\:\:vector<glm\:\:vec3> v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, std::vector<glm::vec4> v)
@@ -130,7 +118,6 @@ Shader program handler
         Write a pointer to (&v[0])[0] to a vec4 array uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param std\:\:vector<glm\:\:vec4> v: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::mat2 m)
@@ -138,7 +125,6 @@ Shader program handler
         Write a pointer to m to a mat2 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:mat2 m: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::mat3 m)
@@ -146,7 +132,6 @@ Shader program handler
         Write a pointer to m to a mat3 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:mat3 m: value to write to the uniform
 
     .. cpp:function:: void updateUniform(const GLchar * name, glm::mat4 m)
@@ -154,7 +139,6 @@ Shader program handler
         Write a pointer to m to a mat4 uniform in shader with the specified name
 
         :param const GLchar * name: Name of the uniform in the shader
-
         :param glm\:\:mat4 m: value to write to the uniform
 
 Example usage
