@@ -1,28 +1,11 @@
 #include "ParticleRenderer.h"
 
-vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup::VBO> instancedVBOs)
+vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup::VBO> instancedVBOs) : vup::Renderer(rd)
 {
-  m_renderData = rd;
-  m_renderDataSize = rd.getSize();
-
+  
   m_instancedVBOs = instancedVBOs;
 
-  // Create vbo for rendering using specified RenderData.
-  GLuint renderVBO[2];
-  glGenVertexArrays(1, &m_vao);
-  glGenBuffers(2, renderVBO);
   glBindVertexArray(m_vao);
-  // Set vertices as attrib
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, renderVBO[0]);
-  glBufferData(GL_ARRAY_BUFFER, m_renderData.sizeOfVertices(), &(m_renderData.getVertices())[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-  // Set normals as attrib
-  glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, renderVBO[1]);
-  glBufferData(GL_ARRAY_BUFFER, m_renderData.sizeOfNormals(), &(m_renderData.getNormals())[0], GL_STATIC_DRAW);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
   std::map<std::string, vup::VBO>::iterator it;
   // Use iterator to loop through map. Loc is specified in VBO to allow this behavior,
   // because without it there would be no way to ensure the right order of vbos.
