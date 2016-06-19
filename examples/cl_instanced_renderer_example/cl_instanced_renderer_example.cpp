@@ -108,18 +108,14 @@ int main()
   vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/fakebox.cl", { "test", "fakecollision" });
   
   kh.initKernel("move");
-  kh.setArg("move", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("move", 1, buffers.getBuffer("vel"));
+  kh.setArg({ "move", "test", "fakecollision" }, 0, buffers.getBufferGL("pos_vbo"));
+  kh.setArg({ "move", "test", "fakecollision" }, 1, buffers.getBuffer("vel"));
   kh.setArg("move", 2, dt);
  // kh.setArg("move", 3, queue.getIndexBuffer(VUP_FLUID));
   //kh.initKernel("test");
-  kh.setArg("test", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("test", 1, buffers.getBuffer("vel"));
   kh.setArg("test", 2, buffers.getBuffer("particles"));
   kh.setArg("test", 3, dt);
  // kh.initKernel("fakecollision");
-  kh.setArg("fakecollision", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("fakecollision", 1, buffers.getBuffer("vel"));
   kh.setArg("fakecollision", 2, dt);
   kh.setArg("fakecollision", 3, particle_amount);
   

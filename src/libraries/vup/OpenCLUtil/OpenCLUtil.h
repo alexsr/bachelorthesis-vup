@@ -70,6 +70,7 @@ public:
   void initKernel(std::string kernel);
   cl::Kernel get(std::string name);
   template <class T> void setArg(std::string name, int index, T data);
+  template <class T> void setArg(std::vector<std::string> names, int index, T data);
 private:
   void buildProgram(cl::Context context, cl::Device device, const char* path);
   bool doesKernelExist(std::string name);
@@ -82,7 +83,19 @@ private:
 template<class T>
 void KernelHandler::setArg(std::string name, int index, T data)
 {
-  m_kernels[name].setArg(index, data);
+  if (doesKernelExist(name)) {
+    m_kernels[name].setArg(index, data);
+  } else
+  {
+    throw vup::KernelNotFoundException(name);
+  }
+}
+template<class T>
+void KernelHandler::setArg(std::vector<std::string> names, int index, T data)
+{
+  for (std::string name : names) {
+    setArg(name, index, data);
+  }
 }
 
 class Queue
