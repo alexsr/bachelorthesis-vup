@@ -18,6 +18,12 @@ This base renderer class holds all rendering data mutual to the other renderer c
 
         :param vup\:\:RenderData rd: vertices and normals of the object to be rendered
 
+    .. cpp:function:: Renderer()
+
+            Create an instance of the Renderer and fill the vertex array object with data. Both vertices and normals from the RenderData are added at location 0 and 1.
+
+            :param vup\:\:RenderData rd: vertices and normals of the object to be rendered
+
     .. cpp:function:: execute()
 
         Render the render data using :code:`glDrawArrays()`
@@ -35,7 +41,7 @@ Of course a :cpp:class:`vup::ShaderProgram` has to be created and used with a sh
 
     .. cpp:function:: ParticleRenderer(vup::RenderData rd, std::map<std::string, vup::VBO> instancedVBOs)
 
-        Create an instance of the ParticleRenderer, invoke :cpp:func:`~vup::Renderer::Renderer` and add every vertex buffer object in the map to the vertex array object at the location specified in the :cpp:class:`vup::VBO` and enabled as an instanced attribute by invoking :code:`glVertexAttribDivisor()`.
+        Create an instance of the ParticleRenderer, invoke :cpp:func:`vup::Renderer::Renderer` and add every vertex buffer object in the map to the vertex array object at the location specified in the :cpp:class:`vup::VBO` and enabled as an instanced attribute by invoking :code:`glVertexAttribDivisor()`.
     
         :param vup\:\:RenderData rd: Vertices and normals of the reference object to be rendered
         :param std\:\:map<std\:\:string, vup\:\:VBO> instancedVBOs: Map of VBOs containing additional data unique to every rendered instance of the RenderData
