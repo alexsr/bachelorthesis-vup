@@ -20,12 +20,12 @@ public:
   int getCellAmount() { return m_cellamount; }
   int getMaxGridCapacity() { return m_maxGridCapacity; }
   int getMaxNeighbors() { return m_maxNeighbors; }
-  int get1DSize() { return m_rowsize; }
+  int getLineSize() { return m_lineSize; }
 private:
   int m_maxNeighbors;
   int m_cellamount;
   int m_maxGridCapacity;
-  int m_rowsize;
+  int m_lineSize;
   float m_gridlength;
   float m_cellsize;
   cl::Buffer m_cellBuffer;
