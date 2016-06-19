@@ -6,6 +6,7 @@
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
 #include "vup/ParticleHandling/BufferHandler.h"
+#include "vup/ParticleHandling/UniformGrid.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 
 #include <string>
@@ -33,7 +34,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 5000;
+  int particle_amount = 500;
   vup::position translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
@@ -86,6 +87,7 @@ int main()
   }
 
   // OPENCL
+  vup::UniformGrid grid(100, 0.2f, 12.0f, clBasis.context(), CL_MEM_READ_WRITE);
   vup::ParticleQueue queue(clBasis.context(), particle_amount);
   buffers.createBufferGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.createBuffer<vup::velocity>("vel", CL_MEM_READ_WRITE, vel.size());
@@ -99,7 +101,7 @@ int main()
   float dt = 0.001f;
   float camdt = 0.01f;
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
-  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph.cl", {"move", "integrate", "fakecollision" });
+  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph.cl", {"move", "integrate", "fakecollision", "resetGrid" });
   
  // kh.setArg("move", 3, queue.getIndexBuffer(VUP_FLUID));
   //kh.initKernel("test");
@@ -121,6 +123,8 @@ int main()
   kh.setArg("fakecollision", 3, dt);
   kh.setArg("fakecollision", 4, particle_amount);
   
+  kh.setArg("resetGrid", 0, grid.getNeighborCounterBuffer());
+  queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
