@@ -65,3 +65,17 @@ __kernel void move(__global float4* pos, __global float4* next, __global float4*
   vel[id] = vel[id] + gravity * dt;
   next[id] = pos[id] + vel[id] * dt;
 }
+
+__kernel void resetGrid(__global int* counter) {
+  int id = get_global_id(0);
+  counter[id] = 0;
+}
+
+__kernel void updateGrid(__global float4* pos, __global int* grid, __global int* counter, float cellSize, int lineSize, int cellCapacity) {
+  int id = get_global_id(0);
+  int i = (int) (pos[id].x + lineSize / 2.0f) / cellSize;
+  int j = (int) (pos[id].y + lineSize / 2.0f) / cellSize;
+  int k = (int) (pos[id].z + lineSize / 2.0f) / cellSize;
+  int n = counter[i * lineSize * lineSize + j * lineSize + k]++;
+  grid[i * lineSize * lineSize * cellCapacity + j * lineSize * cellCapacity + k * cellCapacity + n] = id;
+}
