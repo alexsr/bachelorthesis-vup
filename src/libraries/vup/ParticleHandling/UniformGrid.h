@@ -6,6 +6,7 @@
 #define VUP_UNIFORM_GRID
 
 #include "vup/defs.h"
+#include "vup/OpenCLUtil/OpenCLUtil.h"
 #include "vup/Exceptions/BufferCreationException.h"
 
 namespace vup {
@@ -16,11 +17,14 @@ public:
   UniformGrid(int maxNeighbors, float cellsize, float gridradius, cl::Context context, cl_mem_flags flags);
   ~UniformGrid();
   cl::Buffer getGridBuffer() { return m_gridBuffer; }
-  cl::Buffer getNeighborCounterBuffer() { return m_neighborCounterBuffer; }
+  cl::Buffer getCounterBuffer() { return m_counterBuffer; }
   int getCellAmount() { return m_cellamount; }
   int getMaxGridCapacity() { return m_maxGridCapacity; }
-  int getMaxNeighbors() { return m_cellCapacity; }
+  int getCellCapacity() { return m_cellCapacity; }
   int getLineSize() { return m_lineSize; }
+  float getCellSize() { return m_cellsize; }
+  std::vector<int> getGridData() { return m_gridData; }
+  std::vector<int> getCounterData() { return m_counterData; }
 private:
   int m_cellCapacity;
   int m_cellamount;
@@ -29,9 +33,9 @@ private:
   float m_gridradius;
   float m_cellsize;
   cl::Buffer m_gridBuffer;
-  cl::Buffer m_neighborCounterBuffer;
-  std::vector<int> m_cellContents;
-  std::vector<int> m_neighborCounter;
+  cl::Buffer m_counterBuffer;
+  std::vector<int> m_gridData;
+  std::vector<int> m_counterData;
 };
 
 }
