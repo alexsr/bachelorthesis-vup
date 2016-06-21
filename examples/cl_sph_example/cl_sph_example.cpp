@@ -34,13 +34,13 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 500;
+  int particle_amount = 2000;
   vup::position translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
-    translations[i].x = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].y = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].z = -1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+    translations[i].x = -2.0f + 2.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+    translations[i].y = -2.0f + 2.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
+    translations[i].z = -2.0f + 2.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     translations[i].w = 1.0f;
   }
   srand(static_cast <unsigned> (time(0)));
@@ -87,12 +87,15 @@ int main()
   }
 
   // OPENCL
-  vup::UniformGrid grid(100, 0.2f, 12.0f, clBasis.context(), CL_MEM_READ_WRITE);
   vup::ParticleQueue queue(clBasis.context(), particle_amount);
+  vup::UniformGrid grid(200, 0.1f, 5.0f, clBasis.context(), CL_MEM_READ_WRITE);
+  //queue.writeBuffer(grid.getGridBuffer(), sizeof(int) * grid.getMaxGridCapacity(), &grid.getGridData()[0]);
+  //queue.writeBuffer(grid.getCounterBuffer(), sizeof(int) * grid.getCellAmount(), &grid.getCounterData()[0]);
   buffers.createBufferGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.createBuffer<vup::velocity>("vel", CL_MEM_READ_WRITE, vel.size());
-  buffers.createBuffer<vup::position>("nextpos", CL_MEM_READ_WRITE, translations.size());
   queue.writeBuffer(buffers.getBuffer("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
+  buffers.createBuffer<vup::position>("nextpos", CL_MEM_READ_WRITE, translations.size());
+  queue.writeBuffer(buffers.getBuffer("nextpos"), sizeof(glm::vec4) * translations.size(), &translations[0]);
   buffers.createBuffer<vup::particle>("particles", CL_MEM_READ_WRITE, particles.size());
   queue.writeBuffer(buffers.getBuffer("particles"), sizeof(vup::particle) * particles.size(), &particles[0]);
  // queue.setTypeIndices(VUP_FLUID, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
@@ -101,15 +104,21 @@ int main()
   float dt = 0.001f;
   float camdt = 0.01f;
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
-  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph.cl", {"move", "integrate", "fakecollision", "resetGrid" });
+  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph.cl", {"move", "integrate", "fakecollision", "resetGrid", "updateGrid" });
   
  // kh.setArg("move", 3, queue.getIndexBuffer(VUP_FLUID));
   //kh.initKernel("test");
+ // __kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float cellSize, int lineSize, int cellCapacity, float dt) {
   kh.setArg("move", 0, buffers.getBufferGL("pos_vbo"));
   kh.setArg("move", 1, buffers.getBuffer("nextpos"));
   kh.setArg("move", 2, buffers.getBuffer("vel"));
   kh.setArg("move", 3, buffers.getBuffer("particles"));
-  kh.setArg("move", 4, dt);
+  kh.setArg("move", 4, grid.getGridBuffer());
+  kh.setArg("move", 5, grid.getCounterBuffer());
+  kh.setArg("move", 6, grid.getCellSize());
+  kh.setArg("move", 7, grid.getLineSize());
+  kh.setArg("move", 8, grid.getCellCapacity());
+  kh.setArg("move", 9, dt);
 
   kh.setArg("integrate", 0, buffers.getBufferGL("pos_vbo"));
   kh.setArg("integrate", 1, buffers.getBuffer("nextpos"));
@@ -123,32 +132,46 @@ int main()
   kh.setArg("fakecollision", 3, dt);
   kh.setArg("fakecollision", 4, particle_amount);
   
-  kh.setArg("resetGrid", 0, grid.getNeighborCounterBuffer());
-  queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
+  kh.setArg("updateGrid", 0, buffers.getBufferGL("pos_vbo"));
+  kh.setArg("updateGrid", 1, grid.getGridBuffer());
+  kh.setArg("updateGrid", 2, grid.getCounterBuffer());
+  kh.setArg("updateGrid", 3, grid.getCellSize());
+  kh.setArg("updateGrid", 4, grid.getLineSize());
+  kh.setArg("updateGrid", 5, grid.getCellCapacity());
+
+  kh.setArg("resetGrid", 0, grid.getCounterBuffer());
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   double accumulator = 0.0;
   int frames = 0;
-
+  int updates = 200;
   // Main loop
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   while (!glfwWindowShouldClose(window)) {
     vup::clearGL();
     accumulator += glfwGetTime() - currentTime;
     currentTime = glfwGetTime();
     frames++;
     lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-    // Fixed timestep. Still lagging if rendering is slow. This is intended though.
+    // Fixed timestep. Still lagging if rendering is slow. This is intended though
     while (accumulator > dt) {
       accumulator -= dt;
         //  queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
       queue.acquireGL(&openglbuffers);
+      if (updates >= 200) {
+        updates = 0;
+        queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
+        queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
+      }
       queue.runRangeKernel(kh.get("move"), particle_amount);
       queue.runRangeKernel(kh.get("fakecollision"), particle_amount);
       queue.runRangeKernel(kh.get("integrate"), particle_amount);
       queue.releaseGL(&openglbuffers);
       queue.finish();
+      updates++;
     }
     cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());
