@@ -12,6 +12,8 @@ typedef struct {
   float mass;
   float density;
   float viscosity;
+  float lambda;
+  float4 deltaPos;
 } particle;
 
 float4 reflect(float4 d, float4 n) {
@@ -27,29 +29,30 @@ __kernel void fakecollision(__global float4* pos,  __global float4* next, __glob
   float4 old = pos[id];
   float4 newpos = next[id];
   float radius = 0.1f;
-  if (dot(vel[id], up) < 0 && next[id].y < -5.0f+radius) {
-	  newpos.y = -10.0f+2*radius - next[id].y;
-    old.y = -10.0f+2*radius - pos[id].y;
+  float bounds = 2.0f;
+  if (dot(vel[id], up) < 0 && next[id].y < -bounds+radius) {
+	newpos.y = -2*bounds+2*radius - next[id].y;
+    old.y = -2*bounds+2*radius - pos[id].y;
   }
-  if (dot(vel[id], down) < 0 && next[id].y > 5.0f-radius) {
-	  newpos.y = 10.0f-2*radius - next[id].y;
-    old.y = 10.0f-2*radius - pos[id].y;
+  if (dot(vel[id], down) < 0 && next[id].y > bounds-radius) {
+	newpos.y = 2*bounds-2*radius - next[id].y;
+    old.y = 2*bounds-2*radius - pos[id].y;
   }
-  if (dot(vel[id], right) < 0 && next[id].x < -5.0f+radius) {
-	  newpos.x = -10.0f+2*radius - next[id].x;
-    old.x = -10.0f+2*radius - pos[id].x;
+  if (dot(vel[id], right) < 0 && next[id].x < -bounds+radius) {
+	newpos.x = -2*bounds+2*radius - next[id].x;
+    old.x = -2*bounds+2*radius - pos[id].x;
   }
-  if (dot(vel[id], left) < 0 && next[id].x > 5.0f-radius) {
-	  newpos.x = 10.0f-2*radius - next[id].x;
-    old.x = 10.0f-2*radius - pos[id].x;
+  if (dot(vel[id], left) < 0 && next[id].x > bounds-radius) {
+	newpos.x = 2*bounds-2*radius - next[id].x;
+    old.x = 2*bounds-2*radius - pos[id].x;
   }
-  if (dot(vel[id], forth) < 0 && next[id].z < -5.0f+radius) {
-	  newpos.z = -10.0f+2*radius - next[id].z;
-    old.z = -10.0f+2*radius - pos[id].z;
+  if (dot(vel[id], forth) < 0 && next[id].z < -bounds+radius) {
+	newpos.z = -2*bounds+2*radius - next[id].z;
+    old.z = -2*bounds+2*radius - pos[id].z;
   }
-  if (dot(vel[id], back) < 0 && next[id].z > 5.0f-radius) {
-	  newpos.z = 10.0f-2*radius - next[id].z;
-    old.z = 10.0f-2*radius - pos[id].z;
+  if (dot(vel[id], back) < 0 && next[id].z > bounds-radius) {
+	newpos.z = 2*bounds-2*radius - next[id].z;
+    old.z = 2*bounds-2*radius - pos[id].z;
   }
   pos[id] = old;
   next[id] = newpos;
@@ -60,26 +63,22 @@ __kernel void integrate(__global float4* pos, __global float4* next, __global fl
   pos[id] = next[id];
 }
 
-__kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float cellSize, int lineSize, int cellCapacity, float dt) {
+__kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, float dt) {
   int id = get_global_id(0);
-  int current_x = (int)(pos[id].x / cellSize + lineSize / 2.0f);
-  int current_y = (int)(pos[id].y / cellSize + lineSize / 2.0f);
-  int current_z = (int)(pos[id].z / cellSize + lineSize / 2.0f);
-  for (int x = max(current_x - 1, 0); x <= min(current_x + 1, lineSize-1); x++) {
-    int x_counter_offset = x * lineSize * lineSize;
+  int current_x = floor((pos[id].x + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int current_y = floor((pos[id].y + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int current_z = floor((pos[id].z + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  for (int x = max(current_x - 1, 0); x <= min(current_x + 1, cellsPerLine-1); x++) {
+    int x_counter_offset = x * cellsPerLine * cellsPerLine;
     int x_offset = x_counter_offset * cellCapacity;
-    for (int y = max(current_y - 1, 0); y <= min(current_y + 1, lineSize-1); y++) {
-      int y_counter_offset = y * lineSize;
+    for (int y = max(current_y - 1, 0); y <= min(current_y + 1, cellsPerLine-1); y++) {
+      int y_counter_offset = y * cellsPerLine;
       int y_offset = y_counter_offset * cellCapacity;
-      for (int z = max(current_z - 1, 0); z <= min(current_z + 1, lineSize-1); z++) {
-        //printf("x_counter = %d", z);
+      for (int z = max(current_z - 1, 0); z <= min(current_z + 1, cellsPerLine-1); z++) {
         int z_offset = z * cellCapacity;
         int n = counter[x_counter_offset + y_counter_offset + z];
-        //printf("x = %d", x_counter_offset + y_counter_offset + z);
         for (int i = 0; i < n; i++) {
-          //printf("otherid = %d", x_offset + y_offset + z_offset + i);
           int other = grid[x_offset + y_offset + z_offset + i];
-          //printf("other = %d", other);
           if (distance(pos[id], pos[other]) < 0.2f && id != other) {
             float4 n = normalize(pos[id] - pos[other]);
             float4 v1 = vel[id];
@@ -107,11 +106,21 @@ __kernel void resetGrid(__global int* counter) {
   counter[id] = 0;
 }
 
-__kernel void updateGrid(__global float4* pos, __global int* grid, __global volatile int* counter, float cellSize, int lineSize, int cellCapacity) {
+__kernel void updateGrid(__global float4* pos, __global int* grid, __global volatile int* counter, float gridRadius, int cellsPerLine, int cellCapacity) {
   unsigned int id = get_global_id(0);
-  int i = (int) (pos[id].x / cellSize + lineSize / 2.0f);
-  int j = (int) (pos[id].y / cellSize + lineSize / 2.0f);
-  int k = (int) (pos[id].z / cellSize + lineSize / 2.0f);
-  volatile int n = atomic_inc(&counter[i * lineSize * lineSize + j * lineSize + k]);
-  grid[i * lineSize * lineSize * cellCapacity + j * lineSize * cellCapacity + k * cellCapacity + n] = id;
+  int i = floor((pos[id].x + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int j = floor((pos[id].y + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int k = floor((pos[id].z + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  volatile int n = atomic_inc(&counter[i * cellsPerLine * cellsPerLine + j * cellsPerLine + k]);
+  grid[i * cellsPerLine * cellsPerLine * cellCapacity + j * cellsPerLine * cellCapacity + k * cellCapacity + n] = id;
+}
+
+__kernel void printGrid(__global float4* pos, __global int* grid, __global volatile int* counter, float gridRadius, int cellsPerLine, int cellCapacity, __global float4* color) {
+  unsigned int id = get_global_id(0);
+  int i = floor((pos[id].x + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int j = floor((pos[id].y + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int k = floor((pos[id].z + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  color[id].x = i/(float)(cellsPerLine);
+  color[id].y = j/(float)(cellsPerLine);
+  color[id].z = k/(float)(cellsPerLine);
 }
