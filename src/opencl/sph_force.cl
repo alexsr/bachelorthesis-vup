@@ -17,7 +17,7 @@ float4 pVarSpiky(float h, float4 p, float4 pn)
 float pVarVisc(float h, float4 p, float4 pn)
 {
   float r_length = length(p - pn);
-  if (0 <= r_length && r_length <= h)
+  if (0 <= r_length && r_length < h)
     return h - r_length;
   else return 0;
 }
@@ -77,7 +77,8 @@ __kernel void densityPressureCalc(__global float4* pos, __global int* neighbour,
   float4 p = pos[i];
   float rho = 0;
   float pressure_new = 0;
-  float k = 0.00125; //Gaskonstante
+  float k = .04030142;
+  float k2 = 0.5301f;
   float h = smoothingLength;
   float polySix_const = 315.0f / (64.0f * M_PI_F*h*h*h*h*h*h*h*h*h);
 
@@ -89,7 +90,7 @@ __kernel void densityPressureCalc(__global float4* pos, __global int* neighbour,
   rho *= polySix_const * mass[i];
 
   density[i] = rho;
-  pressure_new = k * (rho - rho0); //p = k * (rho-rho0)(k = stoffspezifische Konstante (Wasser 999kg/m�)) 
+  pressure_new = k * rho0/k2 * (pow((rho/rho0), k2) - 1.0f);
 
   pressure[i] = pressure_new;
 }
@@ -101,7 +102,7 @@ __kernel void SPH(__global float4* pos, __global float4* vel, __global int* neig
   float h = smoothingLength;
   float spiky_const = 45.0f / (M_PI_F*h*h*h*h*h*h);
   float4 p = pos[i];
-  float mue = 0.000005; //je gr��er desto mehr zusammenhalt
+  float mue = 0.000004;
 
   float4 f_pressure = 0.0f;
   float4 f_viscosity = 0.0f;
@@ -110,16 +111,14 @@ __kernel void SPH(__global float4* pos, __global float4* vel, __global int* neig
   for (int index = 0; index < counter[i]; index++)
   {
     int j = neighbour[i * neighbor_amount + index];
-    //fpressure calculation
-    f_pressure += (pressure[i] + pressure[j]) / density[j] * pVarSpiky(smoothingLength, p, pos[j]);
+    f_pressure += mass[j] * (pressure[i] / (density[i] * density[i]) + pressure[j] / (density[j] * density[j])) * pVarSpiky(smoothingLength, p, pos[j]);
 
-    //fviscosity calculation
     f_viscosity += (vel[j] - vel[i]) / density[j] * pVarVisc(smoothingLength, p, pos[j]);
   }
 
-  f_pressure *= -1.0f * 1 / 2 * mass[i] * spiky_const;
+  f_pressure *= -mass[i] * spiky_const;
 
-  f_viscosity *= mue * spiky_const/3.0f * mass[i];
+  f_viscosity *= mue * spiky_const * mass[i];
 
   forceIntern[i] = f_pressure + f_viscosity;
   forceIntern[i] /= density[i];
@@ -182,8 +181,6 @@ __kernel void integration(__global float4* pos, __global float4* vel, __global f
     p_new.z = -0.5f;
   }
 
-  //global damping
-  v_new.xyz *= 0.99999f;
 
   //update the arrays with computed values
   pos[i].xyz = p_new.xyz;
