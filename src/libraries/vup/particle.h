@@ -9,21 +9,12 @@
 
 namespace vup {
 
-typedef std::vector<glm::vec4> position;
-typedef std::vector<glm::vec4> velocity;
-typedef std::vector<glm::vec4> color;
-typedef std::vector<int> type;
-typedef std::vector<float> density;
-typedef std::vector<float> viscosity;
-typedef std::vector<float> lambda;
-typedef std::vector<float> mass;
-
 typedef struct {
   cl_float mass;
   cl_float density;
   cl_float viscosity;
-  cl_float lambda;
-  cl_float4 deltaPos;
+  cl_float pressure;
+  cl_float4 force;
 } particle;
 
 template <int C>

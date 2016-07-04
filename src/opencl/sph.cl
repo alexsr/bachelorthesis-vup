@@ -1,17 +1,17 @@
-__constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
+﻿__constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
 __constant float4 down = (float4)(0.0f, -1.0f, 0.0f, 0.0f);
 __constant float4 left = (float4)(-1.0f, 0.0f, 0.0f, 0.0f);
 __constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
 __constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
 __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
-__constant float4 gravity = (float4)(0.0f, -0.981f, 0.0f, 0.0f);
+__constant float4 gravity = (float4)(0.0f, -9.81f, 0.0f, 0.0f);
 
 typedef struct {
   float mass;
   float density;
   float viscosity;
-  float lambda;
-  float4 deltaPos;
+  float pressure;
+  float4 force;
 } particle;
 
 float4 reflect(float4 d, float4 n) {
@@ -22,38 +22,30 @@ float4 reflect(float4 d, float4 n) {
   return r;
 }
 
-__kernel void fakecollision(__global float4* pos,  __global float4* next, __global float4* vel, float dt, float particle_amount) {
+__kernel void fakecollision(__global float4* pos, __global float4* vel, float dt, float particle_amount) {
   unsigned int id = get_global_id(0);
   float4 old = pos[id];
-  float4 newpos = next[id];
   float radius = 0.1f;
   float bounds = 2.0f;
-  if (dot(vel[id], up) < 0 && next[id].y < -bounds+radius) {
-	newpos.y = -2*bounds+2*radius - next[id].y;
-    old.y = -2*bounds+2*radius - pos[id].y;
+  /*if (dot(vel[id], up) < 0 && pos[id].y < -bounds) {
+    vel[id] = reflect(vel[id], up);
   }
-  if (dot(vel[id], down) < 0 && next[id].y > bounds-radius) {
-	newpos.y = 2*bounds-2*radius - next[id].y;
-    old.y = 2*bounds-2*radius - pos[id].y;
+  if (dot(vel[id], down) < 0 && pos[id].y > bounds) {
+    vel[id] = reflect(vel[id], down);
   }
-  if (dot(vel[id], right) < 0 && next[id].x < -bounds+radius) {
-	newpos.x = -2*bounds+2*radius - next[id].x;
-    old.x = -2*bounds+2*radius - pos[id].x;
+  if (dot(vel[id], right) < 0 && pos[id].x < -bounds) {
+    vel[id] = reflect(vel[id], right);
   }
-  if (dot(vel[id], left) < 0 && next[id].x > bounds-radius) {
-	newpos.x = 2*bounds-2*radius - next[id].x;
-    old.x = 2*bounds-2*radius - pos[id].x;
+  if (dot(vel[id], left) < 0 && pos[id].x > bounds) {
+    vel[id] = reflect(vel[id], left);
   }
-  if (dot(vel[id], forth) < 0 && next[id].z < -bounds+radius) {
-	newpos.z = -2*bounds+2*radius - next[id].z;
-    old.z = -2*bounds+2*radius - pos[id].z;
+  if (dot(vel[id], forth) < 0 && pos[id].z < -bounds) {
+    vel[id] = reflect(vel[id], forth);
   }
-  if (dot(vel[id], back) < 0 && next[id].z > bounds-radius) {
-	newpos.z = 2*bounds-2*radius - next[id].z;
-    old.z = 2*bounds-2*radius - pos[id].z;
-  }
-  pos[id] = old;
-  next[id] = newpos;
+  if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
+    vel[id] = reflect(vel[id], back);
+  }*/
+  pos[id] = clamp(old, -bounds, bounds);
 }
 
 __kernel void findNeighbors(__global float4* pos, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
@@ -84,44 +76,73 @@ __kernel void findNeighbors(__global float4* pos, __global int* grid, __global i
       }
     }
   }
+  /*for (int i = 0; i < get_global_size(0); i++) {
+    if (distance(pos[id], pos[i]) <= h && id != i) {
+      neighbors[id * neighbor_amount + neighborCounter[id]] = i;
+      neighborCounter[id]++;
+      if (neighborCounter[id] >= neighbor_amount) {
+        break;
+      }
+    }
+  }*/
 }
 
 float polySix(float h, float4 p, float4 pj) {
   float r = distance(p, pj);
-  if (0 <= r <= h) {
-    return (h*h-r*r)*(h*h-r*r)*(h*h-r*r);
+  if (0 <= r && r <= h) {
+    float h2 = h*h;
+    float r2 = r*r;
+    return (h2-r2)*(h2-r2)*(h2-r2);
   }
   return 0.0f;
 }
 
-__kernel void calcDensity(__global float4* pos, __global particle* particles, __global float4* color, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
+float4 spikyGradient(float h, float4 p, float4 pj) {
+  float r = distance(p, pj);
+  if (0 <= r && r <= h) {
+    return (h - r)*(h - r) * (p - pj) / r;
+  }
+  return 0.0f;
+}
+
+__kernel void calcDensity(__global float4* pos, __global float* density, __global float* pressure, __global float* mass, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h, float rest_density) {
   unsigned int id = get_global_id(0);
   float polySix_const = 315.0f/(64.0f * M_PI_F*h*h*h*h*h*h*h*h*h);
+  float k = 0.00125f;
   float density_id = 0.0f;
   for (int n = 0; n < neighborCounter[id]; n++) {
     int j = neighbors[id * neighbor_amount + n];
-    density_id += particles[j].mass * polySix(h, pos[id], pos[j]);
+    density_id += mass[j] * polySix(h, pos[id], pos[j]);
+    //if (id == 0) {
+    ////  //printf("%d -> %f, %f, %f; ", j, pos[j].x, pos[j].y, pos[j].z);
+    ////  printf("%d -> %f; ", j, distance(pos[id], pos[j]));
+    ////  printf("%f; ", mass[j]);
+    //}
   }
-  density_id *= polySix_const;
-  particles[id].density = density_id;
-  
+  //density_id *= polySix_const;
+  density[id] = polySix_const * density_id;
+  if (id == 0) {
+    printf("%f; ", density[id]);
+  }
+  pressure[id] = k*(density_id-rest_density);
 }
 
-
-__kernel void integrate(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, float dt) {
+__kernel void calcForces(__global float4* pos, __global float4* force, __global float* pressure, __global float* density, __global float* mass, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h, float rest_density) {
   unsigned int id = get_global_id(0);
-  vel[id] = (next[id] - pos[id])/dt;
-  pos[id] = next[id];
+  float spiky_const = 45.0f / (M_PI_F*h*h*h*h*h*h);
+  float4 pressure_force = 0.0f;
+  for (int n = 0; n < neighborCounter[id]; n++) {
+    int j = neighbors[id * neighbor_amount + n];
+    pressure_force += (pressure[id] + pressure[j]) / density[j] * mass[j] * spikyGradient(h, pos[id], pos[j]);
+  }
+  pressure_force *= -0.5f*spiky_const;
+  force[id] = pressure_force;
 }
 
-__kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, float dt) {
+__kernel void integrate(__global float4* pos, __global float4* vel, __global float4* force, __global float* mass, float dt) {
   int id = get_global_id(0);
-  int current_x = floor((pos[id].x + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
-  int current_y = floor((pos[id].y + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
-  int current_z = floor((pos[id].z + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
-  
-  vel[id] = vel[id] + gravity * dt;
-  next[id] = pos[id] + vel[id] * dt;
+  vel[id] += force[id] / mass[id] * dt + gravity * dt;
+  pos[id] += vel[id] * dt;
 }
 
 __kernel void resetGrid(__global int* counter) {

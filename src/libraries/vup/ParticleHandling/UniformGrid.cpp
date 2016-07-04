@@ -14,7 +14,7 @@ vup::UniformGrid::UniformGrid(int cellCapacity, int cellsPerLine, float gridradi
       for (int k = 0; k < m_cellsPerLine; k++) {
         m_counterData[i * m_cellsPerLine * m_cellsPerLine + j * m_cellsPerLine + k] = 0;
         for (int n = 0; n < m_cellCapacity; n++) {
-          m_gridData[i * m_cellsPerLine * m_cellsPerLine * m_cellCapacity + j * m_cellsPerLine * m_cellCapacity + k * m_cellCapacity + n] = -1;
+          m_gridData[i * m_cellsPerLine * m_cellsPerLine * m_cellCapacity + j * m_cellsPerLine * m_cellCapacity + k * m_cellCapacity + n] = 0;
         }
       }
     }
