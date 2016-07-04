@@ -102,7 +102,7 @@ __kernel void SPH(__global float4* pos, __global float4* vel, __global int* neig
   float h = smoothingLength;
   float spiky_const = 45.0f / (M_PI_F*h*h*h*h*h*h);
   float4 p = pos[i];
-  float mue = 0.000004;
+  float mue = 0.000005;
 
   float4 f_pressure = 0.0f;
   float4 f_viscosity = 0.0f;
@@ -161,9 +161,9 @@ __kernel void integration(__global float4* pos, __global float4* vel, __global f
     p_new.y = 1.0f;
   }
 
-  if (p_new.x > 1.0f) {
+  if (p_new.x > 5.0f) {
     v_new.x *= bDamp;
-    p_new.x = 1.0f;
+    p_new.x = 5.0f;
   }
 
   if (p_new.x < xleft) {
@@ -171,9 +171,9 @@ __kernel void integration(__global float4* pos, __global float4* vel, __global f
     p_new.x = xleft;
   }
 
-  if (p_new.z > 1.0f) {
+  if (p_new.z > 0.5f) {
     v_new.z *= bDamp;
-    p_new.z = 1.0f;
+    p_new.z = .5f;
   }
 
   if (p_new.z < -0.5f) {

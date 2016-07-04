@@ -119,7 +119,7 @@ int main()
  // queue.setTypeIndices(VUP_FLUID, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
   //queue.setTypeIndices(VUP_RIGID, CL_MEM_READ_WRITE, rigidIndices, particle_amount);
   
-  float dt = 0.0009f;
+  float dt = 0.0007f;
   float camdt = 0.01f;
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
   vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integration", "SPH", "densityPressureCalc", "neighbours" });
@@ -129,7 +129,7 @@ int main()
  // __kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float cellSize, int lineSize, int cellCapacity, float dt) {
 
   float smoothingLength = 0.2f;
-  float xleft = -1.0f;
+  float xleft = -5.0f;
 /*  __kernel void SPH(__global float4* pos, __global float4* vel, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure,
     __global float* mass, __global float4* forceIntern, float smoothingLength, float neighbor_amount)*/
  
@@ -277,11 +277,11 @@ int main()
       queue.finish();
       updates++;
       xleft -= dt * xsign;
+      if (updates >= 10000) {
+        xleft = -5.0f;
+        updates = 0;
+      }
       kh.setArg("integration", 7, xleft);
-    }
-    if (updates >= 10000) {
-      xleft = -9.0f;
-      updates = 0;
     }
     cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());
