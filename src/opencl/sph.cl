@@ -7,8 +7,6 @@ __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 __constant float4 gravity = (float4)(0.0f, -0.981f, 0.0f, 0.0f);
 
 typedef struct {
-  int id;
-  int type;
   float mass;
   float density;
   float viscosity;
@@ -57,14 +55,10 @@ __kernel void fakecollision(__global float4* pos,  __global float4* next, __glob
   pos[id] = old;
   next[id] = newpos;
 }
-__kernel void integrate(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, float dt) {
-  unsigned int id = get_global_id(0);
-  vel[id] = (next[id] - pos[id])/dt;
-  pos[id] = next[id];
-}
 
-__kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, float dt) {
+__kernel void findNeighbors(__global float4* pos, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
   int id = get_global_id(0);
+  neighborCounter[id] = 0;
   int current_x = floor((pos[id].x + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
   int current_y = floor((pos[id].y + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
   int current_z = floor((pos[id].z + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
@@ -79,24 +73,53 @@ __kernel void move(__global float4* pos, __global float4* next, __global float4*
         int n = counter[x_counter_offset + y_counter_offset + z];
         for (int i = 0; i < n; i++) {
           int other = grid[x_offset + y_offset + z_offset + i];
-          if (distance(pos[id], pos[other]) < 0.2f && id != other) {
-            float4 n = normalize(pos[id] - pos[other]);
-            float4 v1 = vel[id];
-            float4 v2 = vel[other];
-            float a1 = dot(v1, n);
-            float a2 = dot(v2, n);
-            float m1 = 1.0f;
-            float m2 = 1.0f;
-            float optimizedP = (2.0f * (a1 - a2)) / (m1 + m2);
-            v1 = v1 - optimizedP * m2 * n;
-            v2 = v2 + optimizedP * m1 * n;
-            vel[id] = v1;
-            vel[other] = v2;
+          if (distance(pos[id], pos[other]) <= h && id != other) {
+            neighbors[id * neighbor_amount + neighborCounter[id]] = other;
+            neighborCounter[id]++;
+            if (neighborCounter[id] >= neighbor_amount) {
+              return;
+            }
           }
         }
       }
     }
   }
+}
+
+float polySix(float h, float4 p, float4 pj) {
+  float r = distance(p, pj);
+  if (0 <= r <= h) {
+    return (h*h-r*r)*(h*h-r*r)*(h*h-r*r);
+  }
+  return 0.0f;
+}
+
+__kernel void calcDensity(__global float4* pos, __global particle* particles, __global float4* color, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
+  unsigned int id = get_global_id(0);
+  float polySix_const = 315.0f/(64.0f * M_PI_F*h*h*h*h*h*h*h*h*h);
+  float density_id = 0.0f;
+  for (int n = 0; n < neighborCounter[id]; n++) {
+    int j = neighbors[id * neighbor_amount + n];
+    density_id += particles[j].mass * polySix(h, pos[id], pos[j]);
+  }
+  density_id *= polySix_const;
+  particles[id].density = density_id;
+  
+}
+
+
+__kernel void integrate(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, float dt) {
+  unsigned int id = get_global_id(0);
+  vel[id] = (next[id] - pos[id])/dt;
+  pos[id] = next[id];
+}
+
+__kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, float dt) {
+  int id = get_global_id(0);
+  int current_x = floor((pos[id].x + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int current_y = floor((pos[id].y + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  int current_z = floor((pos[id].z + gridRadius)/gridRadius * (cellsPerLine / 2.0f));
+  
   vel[id] = vel[id] + gravity * dt;
   next[id] = pos[id] + vel[id] * dt;
 }

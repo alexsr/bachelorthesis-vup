@@ -34,7 +34,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 1000;
+  int particle_amount = 100;
   vup::position translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
@@ -61,20 +61,29 @@ int main()
   }
   std::vector<vup::particle> particles(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
-    particles[i].id = 0;
-    particles[i].type = 0;
-    particles[i].mass = 18.01528;
+    particles[i].mass = 0.5f;
     particles[i].density = 1000.0f;
-    particles[i].viscosity = 0.890f;
+    particles[i].viscosity = .1f;
+    particles[i].lambda = 0.1f;
+    particles[i].deltaPos = { 0.0f, 0.0f, 0.0f, 0.0f };
   }
 
+  int neighbor_amount = 100;
+  std::vector<int> neighborCounter(particle_amount);
+  for (int i = 0; i < neighborCounter.size(); i++) {
+    neighborCounter[i] = 0;
+  }
+  std::vector<int> neighbors(particle_amount * neighbor_amount);
+  for (int i = 0; i < neighbors.size(); i++) {
+    neighbors[i] = 0;
+  }
+
+  float size = .1f;
+  vup::SphereData sphere(size, 20, 20);
   vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
   vup::BufferHandler buffers(clBasis.context());
   buffers.createVBOData("pos", 2, particle_amount, 4, translations, true, GL_STREAM_DRAW);
   buffers.createVBOData("color", 3, particle_amount, 4, color, true, GL_STREAM_DRAW);
-
-  float size = .1f;
-  vup::SphereData sphere(size, 20, 20);
   vup::ParticleRenderer renderer(sphere, buffers.getInteropVBOs());
 
   std::vector<int> fluidIndices;
@@ -88,7 +97,7 @@ int main()
 
   // OPENCL
   vup::ParticleQueue queue(clBasis.context(), particle_amount);
-  vup::UniformGrid grid(100, 12, 2.0f, clBasis.context(), CL_MEM_READ_WRITE);
+  vup::UniformGrid grid(100, 8, 2.0f, clBasis.context(), CL_MEM_READ_WRITE);
   //queue.writeBuffer(grid.getGridBuffer(), sizeof(int) * grid.getMaxGridCapacity(), &grid.getGridData()[0]);
   //queue.writeBuffer(grid.getCounterBuffer(), sizeof(int) * grid.getCellAmount(), &grid.getCounterData()[0]);
   buffers.createBufferGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
@@ -99,17 +108,24 @@ int main()
   queue.writeBuffer(buffers.getBuffer("nextpos"), sizeof(glm::vec4) * translations.size(), &translations[0]);
   buffers.createBuffer<vup::particle>("particles", CL_MEM_READ_WRITE, particles.size());
   queue.writeBuffer(buffers.getBuffer("particles"), sizeof(vup::particle) * particles.size(), &particles[0]);
+  buffers.createBuffer<int>("neighbors", CL_MEM_READ_WRITE, neighbors.size());
+  queue.writeBuffer(buffers.getBuffer("neighbors"), sizeof(int) * neighbors.size(), &neighbors[0]);
+  buffers.createBuffer<int>("neighborCounter", CL_MEM_READ_WRITE, neighborCounter.size());
+  queue.writeBuffer(buffers.getBuffer("neighborCounter"), sizeof(int) * neighborCounter.size(), &neighborCounter[0]);
  // queue.setTypeIndices(VUP_FLUID, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
   //queue.setTypeIndices(VUP_RIGID, CL_MEM_READ_WRITE, rigidIndices, particle_amount);
   
   float dt = 0.001f;
   float camdt = 0.01f;
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
-  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph.cl", {"move", "integrate", "fakecollision", "resetGrid", "updateGrid" });
+  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph.cl", {"move", "integrate", "fakecollision", "resetGrid", "updateGrid", "calcDensity", "findNeighbors" });
   
  // kh.setArg("move", 3, queue.getIndexBuffer(VUP_FLUID));
   //kh.initKernel("test");
  // __kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float cellSize, int lineSize, int cellCapacity, float dt) {
+
+  float smoothingLength = 0.5f;
+
   kh.setArg("move", 0, buffers.getBufferGL("pos_vbo"));
   kh.setArg("move", 1, buffers.getBuffer("nextpos"));
   kh.setArg("move", 2, buffers.getBuffer("vel"));
@@ -121,11 +137,31 @@ int main()
   kh.setArg("move", 8, grid.getCellCapacity());
   kh.setArg("move", 9, dt);
 
+  kh.setArg("findNeighbors", 0, buffers.getBuffer("nextpos"));
+  kh.setArg("findNeighbors", 1, grid.getGridBuffer());
+  kh.setArg("findNeighbors", 2, grid.getCounterBuffer());
+  kh.setArg("findNeighbors", 3, grid.getGridRadius());
+  kh.setArg("findNeighbors", 4, grid.getCellsPerLine());
+  kh.setArg("findNeighbors", 5, grid.getCellCapacity());
+  kh.setArg("findNeighbors", 6, buffers.getBuffer("neighbors"));
+  kh.setArg("findNeighbors", 7, buffers.getBuffer("neighborCounter"));
+  kh.setArg("findNeighbors", 8, neighbor_amount);
+  kh.setArg("findNeighbors", 9, smoothingLength);
+
   kh.setArg("integrate", 0, buffers.getBufferGL("pos_vbo"));
   kh.setArg("integrate", 1, buffers.getBuffer("nextpos"));
   kh.setArg("integrate", 2, buffers.getBuffer("vel"));
   kh.setArg("integrate", 3, buffers.getBuffer("particles"));
   kh.setArg("integrate", 4, dt);
+
+  kh.setArg("calcDensity", 0, buffers.getBuffer("nextpos"));
+  kh.setArg("calcDensity", 1, buffers.getBuffer("particles"));
+  kh.setArg("calcDensity", 2, buffers.getBufferGL("color"));
+  kh.setArg("calcDensity", 3, buffers.getBuffer("neighbors"));
+  kh.setArg("calcDensity", 4, buffers.getBuffer("neighborCounter"));
+  kh.setArg("calcDensity", 5, neighbor_amount);
+  kh.setArg("calcDensity", 6, smoothingLength);
+
  // kh.initKernel("fakecollision");
   kh.setArg("fakecollision", 0, buffers.getBufferGL("pos_vbo"));
   kh.setArg("fakecollision", 1, buffers.getBuffer("nextpos"));
@@ -171,14 +207,16 @@ int main()
       accumulator -= dt;
         //  queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
       queue.acquireGL(&openglbuffers);
-      if (updates >= 200) {
+      if (updates >= 1) {
         updates = 0;
         queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
         queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
        // queue.runRangeKernel(kh.get("printGrid"), particle_amount);
       }
+      queue.runRangeKernel(kh.get("findNeighbors"), particle_amount);
       queue.runRangeKernel(kh.get("move"), particle_amount);
       queue.runRangeKernel(kh.get("fakecollision"), particle_amount);
+      queue.runRangeKernel(kh.get("calcDensity"), particle_amount);
       queue.runRangeKernel(kh.get("integrate"), particle_amount);
       queue.releaseGL(&openglbuffers);
       queue.finish();
