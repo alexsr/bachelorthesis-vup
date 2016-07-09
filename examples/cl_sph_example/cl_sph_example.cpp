@@ -34,7 +34,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 500;
+  int particle_amount = 100;
   std::vector<glm::vec4> translations(particle_amount);
   srand(static_cast <unsigned> (time(0)));
   for (int i = 0; i < particle_amount; i++) {
@@ -43,6 +43,7 @@ int main()
     translations[i].z = -1.0f + 1.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
     translations[i].w = 1.0f;
   }
+  translations[0].y = 1.0f;
   srand(static_cast <unsigned> (time(0)));
   std::vector<glm::vec4> color(particle_amount);
   for (int i = 0; i < particle_amount; i++) {
@@ -66,7 +67,7 @@ int main()
     force[i] = glm::vec4(0.0f);
   }
 
-  int neighbor_amount = 1000;
+  int neighbor_amount = 20;
   std::vector<int> neighborCounter(particle_amount);
   for (int i = 0; i < neighborCounter.size(); i++) {
     neighborCounter[i] = 0;
@@ -95,7 +96,7 @@ int main()
 
   // OPENCL
   vup::ParticleQueue queue(clBasis.context(), particle_amount);
-  vup::UniformGrid grid(20, 10, 12.0f, clBasis.context(), CL_MEM_READ_WRITE);
+  vup::UniformGrid grid(20, 10, 2.0f, clBasis.context(), CL_MEM_READ_WRITE);
   queue.writeBuffer(grid.getGridBuffer(), sizeof(int) * grid.getMaxGridCapacity(), &grid.getGridData()[0]);
   queue.writeBuffer(grid.getCounterBuffer(), sizeof(int) * grid.getCellAmount(), &grid.getCounterData()[0]);
   buffers.createBufferGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
@@ -110,88 +111,57 @@ int main()
   queue.writeBuffer(buffers.getBuffer("pressure"), sizeof(float) * pressure.size(), &pressure[0]);
   buffers.createBuffer<float>("density", CL_MEM_READ_WRITE, density.size());
   queue.writeBuffer(buffers.getBuffer("density"), sizeof(float) * density.size(), &density[0]);
-  buffers.createBuffer<float>("mass", CL_MEM_READ_WRITE, mass.size());
-  queue.writeBuffer(buffers.getBuffer("mass"), sizeof(float) * mass.size(), &mass[0]);
   buffers.createBuffer<int>("neighbors", CL_MEM_READ_WRITE, neighbors.size());
   queue.writeBuffer(buffers.getBuffer("neighbors"), sizeof(int) * neighbors.size(), &neighbors[0]);
   buffers.createBuffer<int>("neighborCounter", CL_MEM_READ_WRITE, neighborCounter.size());
   queue.writeBuffer(buffers.getBuffer("neighborCounter"), sizeof(int) * neighborCounter.size(), &neighborCounter[0]);
- // queue.setTypeIndices(VUP_FLUID, CL_MEM_READ_WRITE, fluidIndices, particle_amount);
-  //queue.setTypeIndices(VUP_RIGID, CL_MEM_READ_WRITE, rigidIndices, particle_amount);
-  
+
   float dt = 0.0007f;
   float camdt = 0.01f;
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
-  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integration", "SPH", "densityPressureCalc", "neighbours" });
-  
- // kh.setArg("move", 3, queue.getIndexBuffer(VUP_FLUID));
-  //kh.initKernel("test");
- // __kernel void move(__global float4* pos, __global float4* next, __global float4* vel, __global particle* particles, __global int* grid, __global int* counter, float cellSize, int lineSize, int cellCapacity, float dt) {
+  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integrate", "calcForces", "calcPressure", "findNeighbors" });
 
-  float smoothingLength = 0.2f;
-  float xleft = -5.0f;
-/*  __kernel void SPH(__global float4* pos, __global float4* vel, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure,
-    __global float* mass, __global float4* forceIntern, float smoothingLength, float neighbor_amount)*/
- 
-  kh.setArg("SPH", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("SPH", 1, buffers.getBuffer("vel"));
-  kh.setArg("SPH", 2, buffers.getBuffer("neighbors"));
-  kh.setArg("SPH", 3, buffers.getBuffer("neighborCounter"));
-  kh.setArg("SPH", 4, buffers.getBuffer("density"));
-  kh.setArg("SPH", 5, buffers.getBuffer("pressure"));
-  kh.setArg("SPH", 6, buffers.getBuffer("mass"));
-  kh.setArg("SPH", 7, buffers.getBuffer("force"));
-  kh.setArg("SPH", 8, smoothingLength);
-  kh.setArg("SPH", 9, neighbor_amount);
-
-  //__kernel void integration(__global float4* pos, __global float4* vel, __global float* density, __global float* mass, __global float4* force, float rho0, float dt)
-
-  kh.setArg("integration", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("integration", 1, buffers.getBuffer("vel"));
-  kh.setArg("integration", 2, buffers.getBuffer("density"));
-  kh.setArg("integration", 3, buffers.getBuffer("mass"));
-  kh.setArg("integration", 4, buffers.getBuffer("force"));
-  kh.setArg("integration", 5, 0.59f);
-  kh.setArg("integration", 6, dt);
-  kh.setArg("integration", 7, xleft);
-
-  /*__kernel void densityPressureCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure,
-    __global float* mass, float smoothingLength, float neighbor_amount, float rho0)*/
-
-  kh.setArg("densityPressureCalc", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("densityPressureCalc", 1, buffers.getBuffer("neighbors"));
-  kh.setArg("densityPressureCalc", 2, buffers.getBuffer("neighborCounter"));
-  kh.setArg("densityPressureCalc", 3, buffers.getBuffer("density"));
-  kh.setArg("densityPressureCalc", 4, buffers.getBuffer("pressure"));
-  kh.setArg("densityPressureCalc", 5, buffers.getBuffer("mass"));
-  kh.setArg("densityPressureCalc", 6, smoothingLength);
-  kh.setArg("densityPressureCalc", 7, neighbor_amount);
-  kh.setArg("densityPressureCalc", 8, 0.59f);
-
-  //__kernel void neighbours(__global float4* pos, __global int* neighbour, __global int* counter, float smoothingLength, __global float* mass, __global float neighbor_amount)
-
-  kh.setArg("neighbours", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("neighbours", 1, buffers.getBuffer("neighbors"));
-  kh.setArg("neighbours", 2, buffers.getBuffer("neighborCounter"));
-  kh.setArg("neighbours", 3, smoothingLength);
-  kh.setArg("neighbours", 4, buffers.getBuffer("mass"));
-  kh.setArg("neighbours", 5, neighbor_amount);
+  float smoothingLength = size * 2;
+  float defaultDensity = 0.59;
 
   kh.initKernels({ "updateGrid", "printGrid", "resetGrid" });
-  kh.setArg("updateGrid", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("updateGrid", 1, grid.getGridBuffer());
-  kh.setArg("updateGrid", 2, grid.getCounterBuffer());
-  kh.setArg("updateGrid", 3, grid.getGridRadius());
-  kh.setArg("updateGrid", 4, grid.getCellsPerLine());
-  kh.setArg("updateGrid", 5, grid.getCellCapacity());
+  std::vector<std::string> posKernelNames = { "calcPressure", "calcForces", "findNeighbors", "integrate", "updateGrid", "printGrid" };
+  std::vector<std::string> onGridNames = { "findNeighbors", "updateGrid", "printGrid" };
+  std::vector<std::string> calcKernelNames = { "calcPressure", "calcForces" };
 
-  kh.initKernel("printGrid");
-  kh.setArg("printGrid", 0, buffers.getBufferGL("pos_vbo"));
-  kh.setArg("printGrid", 1, grid.getGridBuffer());
-  kh.setArg("printGrid", 2, grid.getCounterBuffer());
-  kh.setArg("printGrid", 3, grid.getGridRadius());
-  kh.setArg("printGrid", 4, grid.getCellsPerLine());
-  kh.setArg("printGrid", 5, grid.getCellCapacity());
+  kh.setArg(posKernelNames, 0, buffers.getBufferGL("pos_vbo"));
+
+  kh.setArg(onGridNames, 1, grid.getGridBuffer());
+  kh.setArg(onGridNames, 2, grid.getCounterBuffer());
+  kh.setArg(onGridNames, 3, grid.getGridRadius());
+  kh.setArg(onGridNames, 4, grid.getCellsPerLine());
+  kh.setArg(onGridNames, 5, grid.getCellCapacity());
+
+  kh.setArg("findNeighbors", 6, buffers.getBuffer("neighbors"));
+  kh.setArg("findNeighbors", 7, buffers.getBuffer("neighborCounter"));
+  kh.setArg("findNeighbors", 8, neighbor_amount);
+  kh.setArg("findNeighbors", 9, smoothingLength);
+
+  kh.setArg(calcKernelNames, 1, buffers.getBuffer("neighbors"));
+  kh.setArg(calcKernelNames, 2, buffers.getBuffer("neighborCounter"));
+  kh.setArg(calcKernelNames, 3, buffers.getBuffer("density"));
+  kh.setArg(calcKernelNames, 4, buffers.getBuffer("pressure"));
+  kh.setArg(calcKernelNames, 5, buffers.getBuffer("mass"));
+  kh.setArg(calcKernelNames, 6, smoothingLength);
+  kh.setArg(calcKernelNames, 7, neighbor_amount);
+
+  kh.setArg("calcPressure", 8, defaultDensity);
+
+  kh.setArg("calcForces", 8, buffers.getBuffer("vel"));
+  kh.setArg("calcForces", 9, buffers.getBuffer("force"));
+
+  kh.setArg("integrate", 1, buffers.getBuffer("vel"));
+  kh.setArg("integrate", 2, buffers.getBuffer("density"));
+  kh.setArg("integrate", 3, buffers.getBuffer("mass"));
+  kh.setArg("integrate", 4, buffers.getBuffer("force"));
+  kh.setArg("integrate", 5, defaultDensity);
+  kh.setArg("integrate", 6, dt);
+
   kh.setArg("printGrid", 6, buffers.getBufferGL("color"));
 
   kh.setArg("resetGrid", 0, grid.getCounterBuffer());
@@ -201,9 +171,6 @@ int main()
   double lastTime = glfwGetTime();
   double accumulator = 0.0;
   int frames = 0;
-  int update_max = 200;
-  int updates = 100000;
-  float xsign = -1.0f;
   // Main loop
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -214,74 +181,28 @@ int main()
     currentTime = glfwGetTime();
     frames++;
     lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-    int state = glfwGetKey(window, GLFW_KEY_R);
-    if (state == GLFW_PRESS) {
-      kh.reloadProgram();
-      kh.setArg("SPH", 0, buffers.getBufferGL("pos_vbo"));
-      kh.setArg("SPH", 1, buffers.getBuffer("vel"));
-      kh.setArg("SPH", 2, buffers.getBuffer("neighbors"));
-      kh.setArg("SPH", 3, buffers.getBuffer("neighborCounter"));
-      kh.setArg("SPH", 4, buffers.getBuffer("density"));
-      kh.setArg("SPH", 5, buffers.getBuffer("pressure"));
-      kh.setArg("SPH", 6, buffers.getBuffer("mass"));
-      kh.setArg("SPH", 7, buffers.getBuffer("force"));
-      kh.setArg("SPH", 8, smoothingLength);
-      kh.setArg("SPH", 9, neighbor_amount);
-
-      //__kernel void integration(__global float4* pos, __global float4* vel, __global float* density, __global float* mass, __global float4* force, float rho0, float dt)
-
-      kh.setArg("integration", 0, buffers.getBufferGL("pos_vbo"));
-      kh.setArg("integration", 1, buffers.getBuffer("vel"));
-      kh.setArg("integration", 2, buffers.getBuffer("density"));
-      kh.setArg("integration", 3, buffers.getBuffer("mass"));
-      kh.setArg("integration", 4, buffers.getBuffer("force"));
-      kh.setArg("integration", 5, 1000.0f);
-      kh.setArg("integration", 6, dt);
-      kh.setArg("integration", 7, xleft);
-
-      /*__kernel void densityPressureCalc(__global float4* pos, __global int* neighbour, __global int* counter, __global float* density, __global float* pressure,
-      __global float* mass, float smoothingLength, float neighbor_amount, float rho0)*/
-
-      kh.setArg("densityPressureCalc", 0, buffers.getBufferGL("pos_vbo"));
-      kh.setArg("densityPressureCalc", 1, buffers.getBuffer("neighbors"));
-      kh.setArg("densityPressureCalc", 2, buffers.getBuffer("neighborCounter"));
-      kh.setArg("densityPressureCalc", 3, buffers.getBuffer("density"));
-      kh.setArg("densityPressureCalc", 4, buffers.getBuffer("pressure"));
-      kh.setArg("densityPressureCalc", 5, buffers.getBuffer("mass"));
-      kh.setArg("densityPressureCalc", 6, smoothingLength);
-      kh.setArg("densityPressureCalc", 7, neighbor_amount);
-      kh.setArg("densityPressureCalc", 8, 1000.0f);
-
-      //__kernel void neighbours(__global float4* pos, __global int* neighbour, __global int* counter, float smoothingLength, __global float* mass, __global float neighbor_amount)
-
-      kh.setArg("neighbours", 0, buffers.getBufferGL("pos_vbo"));
-      kh.setArg("neighbours", 1, buffers.getBuffer("neighbors"));
-      kh.setArg("neighbours", 2, buffers.getBuffer("neighborCounter"));
-      kh.setArg("neighbours", 3, smoothingLength);
-      kh.setArg("neighbours", 4, buffers.getBuffer("mass"));
-      kh.setArg("neighbours", 5, neighbor_amount);
-    }
+    int cycle = 0;
+    int gridUpdate = 0;
     // Fixed timestep. Still lagging if rendering is slow. This is intended though
     while (accumulator > dt) {
       accumulator -= dt;
         //  queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
+      cycle++;
       queue.acquireGL(&openglbuffers);
-      /*queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
-      queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
-      queue.runRangeKernel(kh.get("printGrid"), particle_amount);*/
-      queue.runRangeKernel(kh.get("neighbours"), particle_amount);
-      queue.runRangeKernel(kh.get("densityPressureCalc"), particle_amount);
-      queue.runRangeKernel(kh.get("SPH"), particle_amount);
-      queue.runRangeKernel(kh.get("integration"), particle_amount);
-      queue.releaseGL(&openglbuffers);
-      queue.finish();
-      updates++;
-      xleft -= dt * xsign;
-      if (updates >= 10000) {
-        xleft = -5.0f;
-        updates = 0;
+      if (gridUpdate > 0) {
+        std::cout << cycle << " this should not happen";
+        gridUpdate = 0;
+        //queue.finish();
+        queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
+        queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
+        queue.runRangeKernel(kh.get("printGrid"), particle_amount);
       }
-      kh.setArg("integration", 7, xleft);
+      queue.runRangeKernel(kh.get("findNeighbors"), particle_amount);
+      queue.runRangeKernel(kh.get("calcPressure"), particle_amount);
+      queue.runRangeKernel(kh.get("calcForces"), particle_amount);
+      queue.runRangeKernel(kh.get("integrate"), particle_amount);
+      queue.releaseGL(&openglbuffers);
+      gridUpdate++;
     }
     cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());

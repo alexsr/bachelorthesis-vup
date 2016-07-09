@@ -17,7 +17,7 @@ vup::BufferHandler::~BufferHandler()
 void vup::BufferHandler::addBuffer(std::string name, cl::Buffer buffer)
 {
   if (doesBufferExist(name)) {
-    std::cout << "WARNING: Kernel " << name << "already exists.";
+    std::cout << "WARNING: Buffer " << name << "already exists.";
   }
   cl_int clError;
   m_buffers[name] = buffer;
@@ -29,7 +29,7 @@ void vup::BufferHandler::addBuffer(std::string name, cl::Buffer buffer)
 void vup::BufferHandler::createBufferGL(std::string name, cl_mem_flags flags, std::string vbo)
 {
   if (doesBufferGLExist(name)) {
-    std::cout << "WARNING: Kernel " << name << "already exists.";
+    std::cout << "WARNING: Buffer " << name << "already exists.";
   }
   cl_int clError;
   m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, getInteropVBOHandle(vbo), &clError);
@@ -42,7 +42,7 @@ void vup::BufferHandler::createBufferGL(std::string name, cl_mem_flags flags, st
 void vup::BufferHandler::addBufferGL(std::string name, cl::BufferGL buffer)
 {
   if (doesBufferGLExist(name)) {
-    std::cout << "WARNING: Kernel " << name << "already exists.";
+    std::cout << "WARNING: Buffer " << name << "already exists.";
   }
   cl_int clError;
   m_glBuffers[name] = buffer;

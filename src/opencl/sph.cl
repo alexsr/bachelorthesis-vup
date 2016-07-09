@@ -67,7 +67,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* grid, __global i
           int other = grid[x_offset + y_offset + z_offset + i];
           if (distance(pos[id], pos[other]) <= h && id != other) {
             neighbors[id * neighbor_amount + neighborCounter[id]] = other;
-            neighborCounter[id]++;
+            atomic_inc(&neighborCounter[id]);
             if (neighborCounter[id] >= neighbor_amount) {
               return;
             }

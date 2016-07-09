@@ -69,7 +69,8 @@ public:
   void initKernels(std::vector<std::string> kernels);
   void initKernel(std::string kernel);
   cl::Kernel get(std::string name);
-  template <class T> void setArg(std::string name, int index, T data);
+  template <class T> void setArg(std::vector<std::string> names, int index, T data);
+  template <class T> void setArg(const char* name, int index, T data);
 private:
   void buildProgram(cl::Context context, cl::Device device, const char* path);
   bool doesKernelExist(std::string name);
@@ -80,7 +81,15 @@ private:
   std::map<std::string, cl::Kernel> m_kernels;
 };
 template<class T>
-void KernelHandler::setArg(std::string name, int index, T data)
+void KernelHandler::setArg(std::vector<std::string> names, int index, T data)
+{
+  for (std::string name : names) {
+    m_kernels[name].setArg(index, data);
+  }
+}
+
+template<class T>
+void KernelHandler::setArg(const char* name, int index, T data)
 {
   m_kernels[name].setArg(index, data);
 }

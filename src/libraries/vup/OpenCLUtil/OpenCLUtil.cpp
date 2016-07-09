@@ -151,6 +151,7 @@ vup::Queue::~Queue()
 void vup::Queue::writeBuffer(cl::Buffer b, int size, const void * ptr)
 {
   cl_int clError = m_queue.enqueueWriteBuffer(b, CL_TRUE, 0, size, ptr);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::BufferWritingException(clError);
   }
@@ -159,6 +160,7 @@ void vup::Queue::writeBuffer(cl::Buffer b, int size, const void * ptr)
 void vup::Queue::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr)
 {
   cl_int clError = m_queue.enqueueWriteBuffer(b, blocking, offset, size, ptr);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::BufferWritingException(clError);
   }
@@ -167,6 +169,7 @@ void vup::Queue::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int siz
 void vup::Queue::runRangeKernel(cl::Kernel k, int global)
 {
   cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NullRange, cl::NDRange(global), cl::NullRange);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::RunKernelException(clError);
   }
@@ -175,6 +178,7 @@ void vup::Queue::runRangeKernel(cl::Kernel k, int global)
 void vup::Queue::runRangeKernel(cl::Kernel k, int offset, int global, int local)
 {
   cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NDRange(offset), cl::NDRange(global), cl::NDRange(local));
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::RunKernelException(clError);
   }
@@ -192,6 +196,7 @@ void vup::Queue::acquireGL(std::vector<cl::Memory>* mem)
 void vup::Queue::releaseGL(std::vector<cl::Memory>* mem)
 {
   cl_int clError = m_queue.enqueueReleaseGLObjects(mem);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::ReleasingGLObjectsException(clError);
   }
