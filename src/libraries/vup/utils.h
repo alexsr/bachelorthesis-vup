@@ -29,6 +29,13 @@ GLFWwindow* createWindow(int width, int height, const char* title, GLFWmonitor* 
   return window;
 }
 
+void closeWindowCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+    glfwSetWindowShouldClose(window, GL_TRUE);
+  }
+}
+
 void initGLEW() {
   GLenum glewError = glewInit();
   if (GLEW_OK != glewError) {

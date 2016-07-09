@@ -1,5 +1,11 @@
-﻿float polySix(float h, float r)
-{
+﻿__constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
+__constant float4 down = (float4)(0.0f, -1.0f, 0.0f, 0.0f);
+__constant float4 left = (float4)(-1.0f, 0.0f, 0.0f, 0.0f);
+__constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
+__constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
+__constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
+
+float polySix(float h, float r) {
   if (0 <= r && r <= h) {
     return pow(h*h - r*r, 3);
   }
@@ -8,8 +14,7 @@
   }
 }
 
-float4 spikyGradient(float h, float4 p, float4 pj)
-{
+float4 spikyGradient(float h, float4 p, float4 pj) {
   float4 v = p - pj;
   float r = length(v);
   if (0 <= r && r <= h) {
@@ -20,8 +25,7 @@ float4 spikyGradient(float h, float4 p, float4 pj)
   }
 }
 
-float visc(float h, float r)
-{
+float visc(float h, float r) {
   if (0 <= r && r <= h) {
     return h - r;
   }
@@ -76,7 +80,8 @@ __kernel void printGrid(__global float4* pos, __global int* grid, __global volat
   /*}*/
 }
 
-__kernel void findNeighbors(__global float4* pos, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
+__kernel void findNeighbors(__global float4* pos, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity,
+  __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
   int id = get_global_id(0);
   neighborCounter[id] = 0;
   int current_x = floor((pos[id].x + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
@@ -92,12 +97,11 @@ __kernel void findNeighbors(__global float4* pos, __global int* grid, __global i
         int z_offset = z * cellCapacity;
         int n = counter[x_counter_offset + y_counter_offset + z];
         for (int i = 0; i < n; i++) {
-          int other = grid[x_offset + y_offset + z_offset + i];
-          if (distance(pos[id], pos[other]) <= h && id != other) {
-            neighbors[id * neighbor_amount + neighborCounter[id]] = other;
-            atomic_inc(&neighborCounter[id]);
-            if (neighborCounter[id] >= neighbor_amount) {
-              return;
+          if (neighborCounter[id] < neighbor_amount) {
+            int other = grid[x_offset + y_offset + z_offset + i];
+            if (distance(pos[id], pos[other]) <= h && id != other) {
+              neighbors[id * neighbor_amount + neighborCounter[id]] = other;
+              neighborCounter[id]++;
             }
           }
         }
@@ -107,8 +111,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* grid, __global i
 }
 
 __kernel void calcPressure(__global float4* pos, __global int* neighbor, __global int* counter, __global float* density, __global float* pressure,
-  __global float* mass, float h, int neighbor_amount, float defaultDensity)
-{
+  __global float* mass, float h, int neighbor_amount, float defaultDensity) {
   unsigned int id = get_global_id(0);
   float density_id = 0;
   float pressure_id = 0;
@@ -116,8 +119,7 @@ __kernel void calcPressure(__global float4* pos, __global int* neighbor, __globa
   float k2 = 0.5301f;
   float polySix_const = 315.0f / (64.0f * M_PI_F*h*h*h*h*h*h*h*h*h);
 
-  for (int i = 0; i < counter[id]; i++)
-  {
+  for (int i = 0; i < counter[id]; i++) {
     int j = neighbor[id * neighbor_amount + i];
     density_id += polySix(h, distance(pos[id].xyz, pos[j].xyz));
   }
@@ -130,16 +132,14 @@ __kernel void calcPressure(__global float4* pos, __global int* neighbor, __globa
 }
 
 __kernel void calcForces(__global float4* pos, __global int* neighbor, __global int* counter, __global float* density, __global float* pressure,
-  __global float* mass, float h, int neighbor_amount, __global float4* vel, __global float4* forceIntern)
-{
+  __global float* mass, float h, int neighbor_amount, __global float4* vel, __global float4* forceIntern) {
   unsigned int id = get_global_id(0);
   float spiky_const = 45.0f / (M_PI_F*h*h*h*h*h*h);
   float visc_const = 0.000005;
   float4 pressureForce = 0.0f;
   float4 viscosityForce = 0.0f;
 
-  for (int i = 0; i < counter[id]; i++)
-  {
+  for (int i = 0; i < counter[id]; i++) {
     int j = neighbor[id * neighbor_amount + i];
     pressureForce += mass[j] * (pressure[id] / (density[id] * density[id]) + pressure[j] / (density[j] * density[j])) * spikyGradient(h, pos[id], pos[j]);
     viscosityForce += (vel[j] - vel[id]) / density[j] * visc(h, distance(pos[id].xyz, pos[j].xyz));
@@ -151,14 +151,13 @@ __kernel void calcForces(__global float4* pos, __global int* neighbor, __global 
   forceIntern[id] /= density[id];
 }
 
-__kernel void integrate(__global float4* pos, __global float4* vel, __global float* density, __global float* mass, __global float4* force, float defaultDensity, float dt)
-{
+__kernel void integrate(__global float4* pos, __global float4* vel, __global float* density, __global float* mass, __global float4* force, float defaultDensity, float dt) {
   unsigned int id = get_global_id(0);
 
   float4 forceExtern;
   forceExtern.y = -9.81 * mass[id];
 
-  vel[id] += ((force[id] + forceExtern) / mass[i]) * dt;
+  vel[id] += ((force[id] + forceExtern) / mass[id]) * dt;
   pos[id] += vel[id] * dt;
   
   float bounds = 1.0;
@@ -180,5 +179,5 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
     vel[id] = reflect(vel[id], back);
   }
-  pos[id] = clamp(old, -bounds, bounds);
+  pos[id] = clamp(pos[id], -bounds, bounds);
 }

@@ -15,17 +15,10 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, GL_TRUE);
-  }
-}
-
 int main()
 {
   GLFWwindow* window = vup::createWindow(WIDTH, HEIGHT, "Instanced Rendering", nullptr, nullptr);
-  glfwSetKeyCallback(window, key_callback);
+  glfwSetKeyCallback(window, vup::closeWindowCallback);
 
   vup::initGLEW();
   glViewport(0, 0, WIDTH, HEIGHT);
@@ -181,21 +174,15 @@ int main()
     currentTime = glfwGetTime();
     frames++;
     lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-    int cycle = 0;
     int gridUpdate = 0;
-    // Fixed timestep. Still lagging if rendering is slow. This is intended though
     while (accumulator > dt) {
       accumulator -= dt;
-        //  queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
-      cycle++;
       queue.acquireGL(&openglbuffers);
       if (gridUpdate > 0) {
-        std::cout << cycle << " this should not happen";
         gridUpdate = 0;
-        //queue.finish();
         queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
         queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
-        queue.runRangeKernel(kh.get("printGrid"), particle_amount);
+        //queue.runRangeKernel(kh.get("printGrid"), particle_amount);
       }
       queue.runRangeKernel(kh.get("findNeighbors"), particle_amount);
       queue.runRangeKernel(kh.get("calcPressure"), particle_amount);

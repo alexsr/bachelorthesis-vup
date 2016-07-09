@@ -6,7 +6,7 @@ vup::UniformGrid::UniformGrid(int cellCapacity, int cellsPerLine, float gridradi
   m_gridradius = gridradius;
   m_cellsPerLine = cellsPerLine;
   m_cellamount = m_cellsPerLine * m_cellsPerLine * m_cellsPerLine;
-  m_maxGridCapacity = (int) m_cellCapacity * m_cellamount;
+  m_maxGridCapacity = m_cellCapacity * m_cellamount;
   m_gridData = std::vector<int>(m_maxGridCapacity);
   m_counterData = std::vector<int>(m_cellamount);
   for (int i = 0; i < m_cellsPerLine; i++) {
@@ -20,11 +20,11 @@ vup::UniformGrid::UniformGrid(int cellCapacity, int cellsPerLine, float gridradi
     }
   }
   cl_int clError;
-  m_gridBuffer = cl::Buffer(context, flags, m_gridData.size() * sizeof(int), &m_gridData[0], &clError);
+  m_gridBuffer = cl::Buffer(context, flags, m_gridData.size() * sizeof(int), nullptr, &clError);
   if (clError != CL_SUCCESS) {
     throw vup::BufferCreationException("Uniform grid cell buffer", clError);
   }
-  m_counterBuffer = cl::Buffer(context, flags, m_counterData.size() * sizeof(int), &m_counterData[0], &clError);
+  m_counterBuffer = cl::Buffer(context, flags, m_counterData.size() * sizeof(int), nullptr, &clError);
   if (clError != CL_SUCCESS) {
     throw vup::BufferCreationException("Uniform grid counter buffer", clError);
   }
