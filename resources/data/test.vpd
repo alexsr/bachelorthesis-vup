@@ -1,0 +1,14 @@
+VUP PARTICLE DATA
+500
+CONSTANTS
+restdensity 1f 0.59
+size 1f 0.1
+smoothingLength 1f 0.2
+DATA
+density 1 1f 0.59
+mass 1 1f 0.000055
+vel 1 4f 0 0 0 0
+pressure 1 1f 0
+force 1 4f 0 0 0 0
+pos 1 4f random-1,1 random-1,1 random-1,1 1.0
+color 1 T 4f pos
