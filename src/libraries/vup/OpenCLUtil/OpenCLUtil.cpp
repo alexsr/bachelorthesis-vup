@@ -131,11 +131,7 @@ void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, co
 bool vup::KernelHandler::doesKernelExist(std::string name)
 {
   std::map<std::string, cl::Kernel>::iterator it = m_kernels.find(name);
-  if (it != m_kernels.end())
-  {
-    return true;
-  }
-  return false;
+  return it != m_kernels.end();
 }
 
 vup::Queue::Queue(cl::Context context)
@@ -273,10 +269,6 @@ void vup::ParticleQueue::removeIndices(int type, std::vector<int> indices)
 bool vup::ParticleQueue::doesTypeExist(int type)
 {
   std::map<int, vup::TypeBuffer>::iterator it = m_typeIndices.find(type);
-  if (it != m_typeIndices.end())
-  {
-    return true;
-  }
-  return false;
+  return it != m_typeIndices.end();
 }
 

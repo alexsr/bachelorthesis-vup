@@ -74,7 +74,7 @@ void BufferHandler::createBuffer(std::string name, cl_mem_flags flags, int size)
 }
 
 template<typename T>
-void vup::BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
+void BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
 {
   GLuint vbo;
   glGenBuffers(1, &vbo);
@@ -88,7 +88,7 @@ void vup::BufferHandler::createVBO(std::string name, int loc, int size, int form
 }
 
 template<typename T>
-void vup::BufferHandler::createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop, GLint drawType)
+void BufferHandler::createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop, GLint drawType)
 {
   GLuint vbo;
   glGenBuffers(1, &vbo);
@@ -102,7 +102,7 @@ void vup::BufferHandler::createVBOData(std::string name, int loc, int size, int 
 }
 
 template<typename T>
-void vup::BufferHandler::updateVBO(std::string name, std::vector<T> data)
+void BufferHandler::updateVBO(std::string name, std::vector<T> data)
 {
   glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
   T * vertexArray = (T *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -114,7 +114,7 @@ void vup::BufferHandler::updateVBO(std::string name, std::vector<T> data)
 }
 
 template<typename T>
-void vup::BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offset, int length)
+void BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offset, int length)
 {
   glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
   T * vertexArray = (T *)glMapBufferRange(GL_ARRAY_BUFFER, offset, length, GL_WRITE_ONLY);
