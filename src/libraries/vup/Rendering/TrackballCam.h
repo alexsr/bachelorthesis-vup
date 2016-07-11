@@ -51,10 +51,10 @@ private:
   float m_radius;
   float m_theta;
   float m_phi;
-  float m_x;
-  float m_y;
-  float m_oldX;
-  float m_oldY;
+  double m_x;
+  double m_y;
+  double m_oldX;
+  double m_oldY;
   int m_width;
   int m_height;
   bool m_lmb_pressed;

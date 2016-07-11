@@ -52,29 +52,29 @@ void vup::TrackballCam::update(GLFWwindow * window, float dt)
       m_oldY = y;
     }
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-    float changeX = ((float)x - m_x) * m_sens * dt;
-    float changeY = ((float)y - m_y) * m_sens * dt;
+    double changeX = (x - m_x) * m_sens * dt;
+    double changeY = (y - m_y) * m_sens * dt;
 
     m_theta -= changeY;
     if (m_theta < 0.01f) {
       m_theta = 0.01f;
-    } else if (m_theta > glm::pi<float>() - 0.01f) {
-      m_theta = glm::pi<float>() - 0.01f;
+    } else if (m_theta > glm::pi<double>() - 0.01) {
+      m_theta = glm::pi<double>() - 0.01;
     }
 
     m_phi -= changeX;
     if (m_phi < 0) {
-      m_phi += 2 * glm::pi<float>();
-    } else if (m_phi > 2 * glm::pi<float>()) {
-      m_phi -= 2 * glm::pi<float>();
+      m_phi += 2 * glm::pi<double>();
+    } else if (m_phi > 2 * glm::pi<double>()) {
+      m_phi -= 2 * glm::pi<double>();
     }
     glfwSetCursorPos(window, m_oldX, m_oldY);
   }
   else {
     m_lmb_pressed = false;
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    m_x = (float)x;
-    m_y = (float)y;
+    m_x = x;
+    m_y = y;
   }
   
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
