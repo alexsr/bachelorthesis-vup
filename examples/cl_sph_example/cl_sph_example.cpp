@@ -5,6 +5,7 @@
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
+#include "vup/ParticleHandling/DataLoader.h"
 #include "vup/ParticleHandling/BufferHandler.h"
 #include "vup/ParticleHandling/UniformGrid.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
@@ -27,38 +28,26 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  int particle_amount = 100;
-  std::vector<glm::vec4> translations(particle_amount);
-  srand(static_cast <unsigned> (time(0)));
-  for (int i = 0; i < particle_amount; i++) {
-    translations[i].x = -1.0f + 1.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].y = -1.0f + 1.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].z = -1.0f + 1.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f));
-    translations[i].w = 1.0f;
+  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
+  vup::BufferHandler buffers(clBasis.context());
+  vup::DataLoader pdl(RESOURCES_PATH "/data/test.vpd");
+
+  int particle_amount = pdl.particleAmount();
+  std::vector<glm::vec4> translations = pdl.getVec4Dataset("pos");
+  std::cout << translations.size() << ";" << std::endl;
+  std::vector<glm::vec4> color = pdl.getVec4Dataset("color");
+  std::cout << color.size() << ";" << std::endl;
+  for (int i = 0; i < color.size(); i++) {
+    color[i] = (color.at(i) + glm::vec4(1.0)) / 2.0f;
   }
-  translations[0].y = 1.0f;
-  srand(static_cast <unsigned> (time(0)));
-  std::vector<glm::vec4> color(particle_amount);
-  for (int i = 0; i < particle_amount; i++) {
-    color[i].r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
-    color[i].g = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
-    color[i].b = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
-    color[i].a = 1.0f;
-  }
-  std::vector<glm::vec4> vel(particle_amount);
+  std::vector<glm::vec4> vel = pdl.getVec4Dataset("vel");
+  std::cout << vel.size() << ";" << std::endl;
+  std::vector<float> mass = pdl.getFloatDataset("mass");
+  std::cout << mass.size() << ";" << std::endl;
   std::vector<int> type(particle_amount);
-  std::vector<float> mass(particle_amount);
-  std::vector<float> density(particle_amount);
-  std::vector<float> pressure(particle_amount);
-  std::vector<glm::vec4> force(particle_amount);
-  for (int i = 0; i < particle_amount; i++) {
-    vel[i] = glm::vec4(0.0f);
-    type[i] = static_cast<int>(-1.0f + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 2.0f)));
-    mass[i] = .000055f;
-    density[i] = 0.59f;
-    pressure[i] = 0.0f;
-    force[i] = glm::vec4(0.0f);
-  }
+  std::vector<float> density = pdl.getFloatDataset("density");
+  std::vector<float> pressure = pdl.getFloatDataset("pressure");
+  std::vector<glm::vec4> force = pdl.getVec4Dataset("force");
 
   int neighbor_amount = 20;
   std::vector<int> neighborCounter(particle_amount);
@@ -70,10 +59,7 @@ int main()
     neighbors[i] = 0;
   }
 
-  float size = .1f;
-  vup::SphereData sphere(size, 12, 12);
-  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
-  vup::BufferHandler buffers(clBasis.context());
+  vup::SphereData sphere(pdl.getFloatConst("size"), 12, 12);
   buffers.createVBOData("pos", 2, particle_amount, 4, translations, true, GL_STREAM_DRAW);
   buffers.createVBOData("color", 3, particle_amount, 4, color, true, GL_STREAM_DRAW);
   vup::ParticleRenderer renderer(sphere, buffers.getInteropVBOs());
@@ -114,8 +100,8 @@ int main()
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
   vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integrate", "calcForces", "calcPressure", "findNeighbors" });
 
-  float smoothingLength = size * 2;
-  float defaultDensity = 0.59;
+  float smoothingLength = pdl.getFloatConst("smoothingLength");
+  float restDensity = pdl.getFloatConst("restDensity");
 
   kh.initKernels({ "updateGrid", "printGrid", "resetGrid" });
   std::vector<std::string> posKernelNames = { "calcPressure", "calcForces", "findNeighbors", "integrate", "updateGrid", "printGrid" };
@@ -143,7 +129,7 @@ int main()
   kh.setArg(calcKernelNames, 6, smoothingLength);
   kh.setArg(calcKernelNames, 7, neighbor_amount);
 
-  kh.setArg("calcPressure", 8, defaultDensity);
+  kh.setArg("calcPressure", 8, restDensity);
 
   kh.setArg("calcForces", 8, buffers.getBuffer("vel"));
   kh.setArg("calcForces", 9, buffers.getBuffer("force"));
@@ -152,7 +138,7 @@ int main()
   kh.setArg("integrate", 2, buffers.getBuffer("density"));
   kh.setArg("integrate", 3, buffers.getBuffer("mass"));
   kh.setArg("integrate", 4, buffers.getBuffer("force"));
-  kh.setArg("integrate", 5, defaultDensity);
+  kh.setArg("integrate", 5, restDensity);
   kh.setArg("integrate", 6, dt);
 
   kh.setArg("printGrid", 6, buffers.getBufferGL("color"));
@@ -187,7 +173,7 @@ int main()
       queue.runRangeKernel(kh.get("findNeighbors"), particle_amount);
       queue.runRangeKernel(kh.get("calcPressure"), particle_amount);
       queue.runRangeKernel(kh.get("calcForces"), particle_amount);
-      queue.runRangeKernel(kh.get("integrate"), particle_amount);
+      //queue.runRangeKernel(kh.get("integrate"), particle_amount);
       queue.releaseGL(&openglbuffers);
       gridUpdate++;
     }
