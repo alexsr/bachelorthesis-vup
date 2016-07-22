@@ -34,16 +34,12 @@ int main()
 
   int particle_amount = pdl.particleAmount();
   std::vector<glm::vec4> translations = pdl.getVec4Dataset("pos");
-  std::cout << translations.size() << ";" << std::endl;
   std::vector<glm::vec4> color = pdl.getVec4Dataset("color");
-  std::cout << color.size() << ";" << std::endl;
   for (int i = 0; i < color.size(); i++) {
     color[i] = (color.at(i) + glm::vec4(1.0)) / 2.0f;
   }
   std::vector<glm::vec4> vel = pdl.getVec4Dataset("vel");
-  std::cout << vel.size() << ";" << std::endl;
   std::vector<float> mass = pdl.getFloatDataset("mass");
-  std::cout << mass.size() << ";" << std::endl;
   std::vector<int> type(particle_amount);
   std::vector<float> density = pdl.getFloatDataset("density");
   std::vector<float> pressure = pdl.getFloatDataset("pressure");
@@ -75,7 +71,7 @@ int main()
 
   // OPENCL
   vup::ParticleQueue queue(clBasis.context(), particle_amount);
-  vup::UniformGrid grid(20, 10, 2.0f, clBasis.context(), CL_MEM_READ_WRITE);
+  vup::UniformGrid grid(100, 10, 2.0f, clBasis.context(), CL_MEM_READ_WRITE);
   queue.writeBuffer(grid.getGridBuffer(), sizeof(int) * grid.getMaxGridCapacity(), &grid.getGridData()[0]);
   queue.writeBuffer(grid.getCounterBuffer(), sizeof(int) * grid.getCellAmount(), &grid.getCounterData()[0]);
   buffers.createBufferGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
@@ -101,7 +97,7 @@ int main()
   vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integrate", "calcForces", "calcPressure", "findNeighbors" });
 
   float smoothingLength = pdl.getFloatConst("smoothingLength");
-  float restDensity = pdl.getFloatConst("restDensity");
+  float restDensity = pdl.getFloatConst("restdensity");
 
   kh.initKernels({ "updateGrid", "printGrid", "resetGrid" });
   std::vector<std::string> posKernelNames = { "calcPressure", "calcForces", "findNeighbors", "integrate", "updateGrid", "printGrid" };
@@ -154,26 +150,31 @@ int main()
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
+  int gridUpdate = 1;
+  queue.acquireGL(&openglbuffers);
+  queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
+  queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
+  queue.releaseGL(&openglbuffers);
   while (!glfwWindowShouldClose(window)) {
     vup::clearGL();
     accumulator += glfwGetTime() - currentTime;
     currentTime = glfwGetTime();
     frames++;
     lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-    int gridUpdate = 0;
     while (accumulator > dt) {
       accumulator -= dt;
       queue.acquireGL(&openglbuffers);
-      if (gridUpdate > 0) {
-        gridUpdate = 0;
+      //if (gridUpdate > 0) {
+        std::cout << "GRID UPDATE NO " << gridUpdate << std::endl;
+
         queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
         queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
         //queue.runRangeKernel(kh.get("printGrid"), particle_amount);
-      }
+      //}
       queue.runRangeKernel(kh.get("findNeighbors"), particle_amount);
       queue.runRangeKernel(kh.get("calcPressure"), particle_amount);
       queue.runRangeKernel(kh.get("calcForces"), particle_amount);
-      //queue.runRangeKernel(kh.get("integrate"), particle_amount);
+      queue.runRangeKernel(kh.get("integrate"), particle_amount);
       queue.releaseGL(&openglbuffers);
       gridUpdate++;
     }
