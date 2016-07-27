@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_access.hpp>
+#include <map>
 
 #if defined (__APPLE__) || defined(MACOSX)
 #include <OpenGL/OpenGL.h>
@@ -21,10 +22,20 @@
 #include "CL/cl_gl.h"
 #endif
 
-#define VUP_FLUID 0
-#define VUP_RIGID 1
-#define VUP_GRANULAR 2
-#define VUP_SOFT 3
-#define VUP_GAS 4
+namespace vup {
+
+typedef std::vector<float> floatdata;
+typedef std::vector<glm::vec4> vec4data;
+
+enum datatype { EMPTY, INT, FLOAT, VEC4 };
+
+typedef std::pair<datatype, std::string> datavalue;
+
+typedef std::map<std::string, datavalue> datamap;
+typedef std::vector<std::string> identifiers;
+typedef std::map<std::string, datatype> typeIdentifiers;
+
+
+}
 
 #endif

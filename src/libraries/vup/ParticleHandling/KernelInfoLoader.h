@@ -32,11 +32,12 @@ public:
   ~DataLoader();
   void load(const char* path);
   float getParticleSize() { return m_size; }
+  int getLoc() { return m_loc; }
   std::map<std::string, vup::ParticleType> getTypes() { return m_types; }
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> getSystems() { return m_systems; }
   std::map<std::string, vup::ParticleSystem> getSystemsOfType(std::string type);
   typeIdentifiers getGlobalIdentifiers() { return m_globalIdentifiers; }
-  std::map<std::string, std::pair<int, datatype>> getInteropIdentifiers() { return m_interopIdentifiers; }
+  typeIdentifiers getInteropIdentifiers() { return m_interopIdentifiers; }
   int getParticleCount() { return m_overallParticleCount; }
   std::map<std::string, int> getTypeParticleCounts() { return m_typeParticleCount; }
   int getTypeParticleCount(std::string type);
@@ -44,12 +45,13 @@ public:
 private:
   const char* m_path;
   float m_size;
+  int m_loc;
   int m_overallParticleCount;
   std::map<std::string, vup::ParticleType> m_types;
   std::map<std::string, int> m_typeParticleCount;
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
   typeIdentifiers m_globalIdentifiers;
-  std::map<std::string, std::pair<int, datatype>> m_interopIdentifiers;
+  typeIdentifiers m_interopIdentifiers;
   void extractTypes(rapidjson::Value &a);
   void extractSystems(rapidjson::Value &a);
 

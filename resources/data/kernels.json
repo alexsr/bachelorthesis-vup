@@ -1,0 +1,24 @@
+{
+	"kernels": [
+		{
+			"name": "findNeighbors",
+			"onSystems": ["Fluid1"],
+			"onTypes": []
+		},
+		{
+			"name": "calcPressure",
+			"onSystems": ["Fluid1"],
+			"onTypes": []
+		},
+		{
+			"name": "calcForces",
+			"onSystems": ["Fluid1"],
+			"onTypes": []
+		},
+		{
+			"name": "integrate",
+			"onSystems": [],
+			"onTypes": []
+		}
+	]
+}

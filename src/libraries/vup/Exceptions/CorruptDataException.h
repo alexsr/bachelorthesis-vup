@@ -14,10 +14,9 @@ namespace vup {
 class CorruptDataException : public std::exception {
 
 public:
-  CorruptDataException(std::string path, std::string msg = "", int line = 1) throw() {
+  CorruptDataException(std::string path, std::string msg = "") throw() {
     m_path = path;
-    m_msg = "Corrupt data in file: " + m_path + "\n"
-      + "Error at line " + std::to_string(line) + ".\n" + msg;
+    m_msg = "Corrupt data in file: " + m_path + "\n" + msg;
   }
   std::string getPath() {
     return m_path;

@@ -65,13 +65,13 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
       int i = floor((pos[id].x + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
       int j = floor((pos[id].y + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
       int k = floor((pos[id].z + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      printf("\nid %d\n", id);
-      printf("cell %d, %d, %d;\n------\n", i, j, k);
-      printf("others in the cell:\n");
+      //printf("\nid %d\n", id);
+      //printf("cell %d, %d, %d;\n------\n", i, j, k);
+      //printf("others in the cell:\n");
       volatile int n = counter[i * cellsPerLine * cellsPerLine + j * cellsPerLine + k];
       for (int o = 0; o < n; o++) {
         int other = grid[i * cellsPerLine * cellsPerLine * cellCapacity + j * cellsPerLine * cellCapacity + k * cellCapacity + o];
-        printf("%d; ", other);
+        //printf("%d; ", other);
       }
     }
   }
@@ -118,7 +118,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* grid, __global i
       break;
   }
   /*if (neighborCounter[id] != 0) {
-    printf("c %d = %d; ", id, neighborCounter[id]);
+    //printf("c %d = %d; ", id, neighborCounter[id]);
   }*/
 
   //unsigned int i = get_global_id(0);

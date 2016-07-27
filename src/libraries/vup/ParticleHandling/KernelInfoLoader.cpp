@@ -4,7 +4,7 @@ vup::DataLoader::DataLoader(const char* path)
 {
   //m_floatConstants = std::map<std::string, float>();
   //m_intConstants = std::map<std::string, int>();
-  m_overallParticleCount = 0;
+  //m_particleAmount = 0;
   load(path);
 }
 
@@ -27,6 +27,9 @@ void vup::DataLoader::load(const char * path)
     }
     if (!doc.HasMember("size") || !doc["size"].IsNumber()) {
       throw new CorruptDataException(m_path, "No particle size specified!");
+    }
+    if (!doc.HasMember("loc") || !doc["loc"].IsInt()) {
+      throw new CorruptDataException(m_path, "No interop start location specified!");
     }
     if (!doc.HasMember("types") || !doc["types"].IsArray()) {
       throw new CorruptDataException(m_path, "No particle types specified!");
@@ -55,28 +58,21 @@ void vup::DataLoader::load(const char * path)
       throw new CorruptDataException(m_path, "Interop variables have to be declared.");
     }
     for (rapidjson::Value::ConstMemberIterator typeIter = doc["interopVariables"].GetObject().MemberBegin(); typeIter != doc["interopVariables"].GetObject().MemberEnd(); ++typeIter) {
-      if (!typeIter->value.IsObject()) {
-        throw new CorruptDataException(m_path, "Interop var specification has to be an object.");
+      if (!typeIter->value.IsInt()) {
+        throw new CorruptDataException(m_path, "Data format has to be an integer.");
       }
-      rapidjson::Value interop = doc["interopVariables"].GetObject()[typeIter->name.GetString()].GetObject();
-      if (!interop.HasMember("loc") || !interop["loc"].IsInt()) {
-        throw new CorruptDataException(m_path, "Interop variable location has to be an int.");
+      if (typeIter->value.GetInt() == 1) {
+        m_interopIdentifiers[typeIter->name.GetString()] = vup::FLOAT;
       }
-      if (!interop.HasMember("format") || !interop["format"].IsInt()) {
-        throw new CorruptDataException(m_path, "Interop variable format has to be an int.");
-      }
-      int loc = interop["loc"].GetInt();
-      if (interop["format"].GetInt() == 1) {
-        m_interopIdentifiers[typeIter->name.GetString()] = std::make_pair(loc, vup::FLOAT);
-      }
-      else if (interop["format"].GetInt() <= 4 && interop["format"].GetInt() > 1) {
-        m_interopIdentifiers[typeIter->name.GetString()] = std::make_pair(loc, vup::VEC4);
+      else if (typeIter->value.GetInt() <= 4 && typeIter->value.GetInt() > 1) {
+        m_interopIdentifiers[typeIter->name.GetString()] = vup::VEC4;
       }
       else {
         throw new CorruptDataException(m_path, "Data format incorrect.");
       }
     }
     m_size = doc["size"].GetFloat();
+    m_loc = doc["loc"].GetInt();
     extractTypes(doc["types"]);
     extractSystems(doc["systems"]);
   }
@@ -230,7 +226,6 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
       throw new CorruptDataException(m_path, "Type " + type + " not found.");
     }
     int count = o["particles"].GetInt();
-    m_overallParticleCount += count;
     m_typeParticleCount[type] += count;
     vup::ParticleSystem p(name, count, m_types[type]);
     std::cout << "Loading " << name << ": " << count << " particles of type " << type << std::endl;

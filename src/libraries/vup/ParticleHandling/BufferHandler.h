@@ -64,7 +64,7 @@ template<typename T>
 void BufferHandler::createBuffer(std::string name, cl_mem_flags flags, int size)
 {
   if (doesBufferExist(name)) {
-    std::cout << "WARNING: Kernel " << name << "already exists.";
+    throw new BufferCreationException(name, -1);
   }
   cl_int clError;
   m_buffers[name] = cl::Buffer(m_defaultContext, flags, size * sizeof(T), nullptr, &clError);
@@ -118,10 +118,8 @@ void BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offs
 {
   glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
   T * vertexArray = (T *)glMapBufferRange(GL_ARRAY_BUFFER, offset, length, GL_WRITE_ONLY);
-  int size = glm::max(data->size(), length);
-  for (int i = 0; i < size; i++) {
-    vertexArray[i] = data->at(i);
-  }
+  int size = length;
+  vertexArray = &data[0];
   glUnmapBuffer(GL_ARRAY_BUFFER);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

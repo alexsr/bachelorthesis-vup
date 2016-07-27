@@ -21,6 +21,9 @@
 #include <map>
 #include <algorithm>
 #include <iostream>
+#include <functional> 
+#include <cctype>
+#include <locale>
 
 #ifdef _WIN32
 #  define WINDOWS_LEAN_AND_MEAN
@@ -40,6 +43,26 @@
 
 namespace vup {
 
+// https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+    std::not1(std::ptr_fun<int, int>(std::isspace))));
+  return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+    std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+  return ltrim(rtrim(s));
+}
+
 class OpenCLBasis
 {
 public:
@@ -55,6 +78,13 @@ private:
   cl::Device m_defaultDevice;
   std::vector<cl::Device> m_devices;
   cl::Context m_context;
+};
+
+struct KernelArgument {
+  int index = 0;
+  std::string name = "";
+  datatype type = vup::EMPTY;
+  bool constant = false;
 };
 
 class KernelHandler
@@ -73,12 +103,15 @@ public:
   template <class T> void setArg(const char* name, int index, T data);
 private:
   void buildProgram(cl::Context context, cl::Device device, const char* path);
+  void extractArguments(const char* path);
   bool doesKernelExist(std::string name);
+  std::vector<std::string> splitParams(const char* str, char split);
   cl::Context m_context;
   cl::Device m_device;
   cl::Program m_program;
   const char* m_path;
   std::map<std::string, cl::Kernel> m_kernels;
+  std::map<std::string, std::vector<KernelArgument>> m_arguments;
 };
 template<class T>
 void KernelHandler::setArg(std::vector<std::string> names, int index, T data)
