@@ -6,6 +6,7 @@
 #define VUP_DATALOADER_H
 
 #include "vup/defs.h"
+#include "datadefs.h"
 #include "vup/Util/FileReader.h"
 #include "vup/Exceptions/CorruptDataException.h"
 #include "vup/ParticleHandling/ParticleSystem.h"
@@ -36,7 +37,7 @@ public:
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> getSystems() { return m_systems; }
   std::map<std::string, vup::ParticleSystem> getSystemsOfType(std::string type);
   typeIdentifiers getGlobalIdentifiers() { return m_globalIdentifiers; }
-  std::map<std::string, std::pair<int, datatype>> getInteropIdentifiers() { return m_interopIdentifiers; }
+  typeIdentifiers getInteropIdentifiers() { return m_interopIdentifiers; }
   int getParticleCount() { return m_overallParticleCount; }
   std::map<std::string, int> getTypeParticleCounts() { return m_typeParticleCount; }
   int getTypeParticleCount(std::string type);
@@ -49,9 +50,14 @@ private:
   std::map<std::string, int> m_typeParticleCount;
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
   typeIdentifiers m_globalIdentifiers;
-  std::map<std::string, std::pair<int, datatype>> m_interopIdentifiers;
+  typeIdentifiers m_interopIdentifiers;
   void extractTypes(rapidjson::Value &a);
   void extractSystems(rapidjson::Value &a);
+
+  datatype evalDatatype(std::string s);
+  datatype findFormat(std::string f, typeIdentifiers typeVars);
+  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers typeVars);
+  void extractVars(rapidjson::Value o, typeIdentifiers &typeMap);
 
   float createFloatRandom(const char* str);
   float randomFloat(float lower, float upper) {

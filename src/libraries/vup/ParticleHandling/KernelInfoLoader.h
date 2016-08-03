@@ -2,14 +2,12 @@
 // Author: Alexander Scheid-Rehder
 // Email: alexsr@uni-koblenz.de
 
-#ifndef VUP_DATALOADER_H
-#define VUP_DATALOADER_H
+#ifndef VUP_KERNELINFOLOADER_H
+#define VUP_KERNELINFOLOADER_H
 
 #include "vup/defs.h"
 #include "vup/Util/FileReader.h"
 #include "vup/Exceptions/CorruptDataException.h"
-#include "vup/ParticleHandling/ParticleSystem.h"
-#include "vup/ParticleHandling/ParticleType.h"
 #include <vector>
 #include <map>
 #include <string>
@@ -25,66 +23,39 @@ namespace vup {
 
 // Manages OpenCL and OpenGL buffers and provides 
 
-class DataLoader
+struct KernelInfo {
+  std::vector<int> pos = std::vector<int>();
+  bool global = false;
+  std::vector<std::string> onSystems = std::vector<std::string>();
+  std::vector<std::string> onTypes = std::vector<std::string>();
+  std::map<std::string, float> constants = std::map<std::string, float>();
+  int iterations = 1;
+};
+
+class KernelInfoLoader
 {
 public:
-  DataLoader(const char* path);
-  ~DataLoader();
-  void load(const char* path);
-  float getParticleSize() { return m_size; }
-  int getLoc() { return m_loc; }
-  std::map<std::string, vup::ParticleType> getTypes() { return m_types; }
-  std::map<std::string, std::map<std::string, vup::ParticleSystem>> getSystems() { return m_systems; }
-  std::map<std::string, vup::ParticleSystem> getSystemsOfType(std::string type);
-  typeIdentifiers getGlobalIdentifiers() { return m_globalIdentifiers; }
-  typeIdentifiers getInteropIdentifiers() { return m_interopIdentifiers; }
-  int getParticleCount() { return m_overallParticleCount; }
-  std::map<std::string, int> getTypeParticleCounts() { return m_typeParticleCount; }
-  int getTypeParticleCount(std::string type);
-
+  KernelInfoLoader(const char* path);
+  ~KernelInfoLoader();
+  std::map<std::string, vup::KernelInfo> getKernelInfos() { return m_kernelInfos; }
+  
 private:
+  void load(const char* path);
   const char* m_path;
-  float m_size;
-  int m_loc;
-  int m_overallParticleCount;
-  std::map<std::string, vup::ParticleType> m_types;
-  std::map<std::string, int> m_typeParticleCount;
-  std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
-  typeIdentifiers m_globalIdentifiers;
-  typeIdentifiers m_interopIdentifiers;
-  void extractTypes(rapidjson::Value &a);
-  void extractSystems(rapidjson::Value &a);
-
-  float createFloatRandom(const char* str);
-  float randomFloat(float lower, float upper) {
-    return lower + (upper-lower) * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
-  }
-
-  bool isFloat(std::string str) {
-    std::istringstream iss(str);
-    double d;
-    char c;
-    return iss >> d && !(iss >> c);
-  }
-  //bool isInt(std::string str) {
-  //  std::istringstream iss(str);
-  //  int i;
-  //  char c;
-  //  return iss >> i && !(iss >> c);
-  //}
+  std::map<std::string, vup::KernelInfo> m_kernelInfos;
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
   template <typename T> std::string toString(T any);
 };
 
 template<typename T>
-inline bool DataLoader::doesKeyExist(std::string key, std::map<std::string, T> m)
+inline bool KernelInfoLoader::doesKeyExist(std::string key, std::map<std::string, T> m)
 {
   std::map<std::string, T>::iterator it = m.find(key);
   return it != m.end();
 }
 
 template<typename T>
-inline std::string DataLoader::toString(T any)
+inline std::string KernelInfoLoader::toString(T any)
 {
   std::ostringstream buff;
   buff << any;

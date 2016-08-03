@@ -26,12 +26,10 @@ int main()
   glViewport(0, 0, WIDTH, HEIGHT);
 
   vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f, glm::vec3(0.0f, 0.0f, 0.0f));
-  vup::ShaderProgram simpleShader(SHADERS_PATH "/instanced.vert", SHADERS_PATH "/instanced.frag");
+  vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
-  vup::BufferHandler buffers(clBasis.context());
-  vup::ParticleSimulation pdl(OPENCL_KERNEL_PATH "/sph_force.cl", RESOURCES_PATH "/data/kernels.json", RESOURCES_PATH "/data/particles.json");
+  vup::ParticleSimulation ps(OPENCL_KERNEL_PATH "/sph_force.cl", RESOURCES_PATH "/data/kernels.json", RESOURCES_PATH "/data/particles.json");
 
   //int particle_amount = pdl.particleAmount();
   //std::vector<glm::vec4> translations = pdl.getVec4Dataset("pos");
@@ -56,10 +54,8 @@ int main()
   //  neighbors[i] = 0;
   //}
 
-  //vup::SphereData sphere(pdl.getFloatConst("size"), 12, 12);
-  //buffers.createVBOData("pos", 2, particle_amount, 4, translations, true, GL_STREAM_DRAW);
-  //buffers.createVBOData("color", 3, particle_amount, 4, color, true, GL_STREAM_DRAW);
-  //vup::ParticleRenderer renderer(sphere, buffers.getInteropVBOs());
+  vup::SphereData sphere(ps.getSize(), 12, 12);
+  vup::ParticleRenderer renderer(sphere, ps.getInteropVBOs());
 
   //std::vector<int> fluidIndices;
   //for (int i = 0; i < 1000; i++) {
@@ -92,8 +88,8 @@ int main()
   //buffers.createBuffer<int>("neighborCounter", CL_MEM_READ_WRITE, neighborCounter.size());
   //queue.writeBuffer(buffers.getBuffer("neighborCounter"), sizeof(int) * neighborCounter.size(), &neighborCounter[0]);
 
-  //float dt = 0.0007f;
-  //float camdt = 0.01f;
+  float dt = 0.01f;
+  float camdt = 0.01f;
   //std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
   //vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integrate", "calcForces", "calcPressure", "findNeighbors" });
 
@@ -142,28 +138,32 @@ int main()
 
   //kh.setArg("resetGrid", 0, grid.getCounterBuffer());
 
-  //glfwSetTime(0.0);
-  //double currentTime = glfwGetTime();
-  //double lastTime = glfwGetTime();
-  //double accumulator = 0.0;
-  //int frames = 0;
-  //// Main loop
-  //glEnable(GL_DEPTH_TEST);
-  //glEnable(GL_CULL_FACE);
-  //glCullFace(GL_BACK);
+  glfwSetTime(0.0);
+  double currentTime = glfwGetTime();
+  double lastTime = glfwGetTime();
+  double accumulator = 0.0;
+  int frames = 0;
+  float left = 2.0;
+  float sign = 1;
+  int leftUpdate = 0;
+  // Main loop
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   //int gridUpdate = 1;
   //queue.acquireGL(&openglbuffers);
   //queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
   //queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
   //queue.releaseGL(&openglbuffers);
   while (!glfwWindowShouldClose(window)) {
-    //vup::clearGL();
-    //accumulator += glfwGetTime() - currentTime;
-    //currentTime = glfwGetTime();
-    //frames++;
-    //lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
-    //while (accumulator > dt) {
-    //  accumulator -= dt;
+    vup::clearGL();
+    accumulator += glfwGetTime() - currentTime;
+    currentTime = glfwGetTime();
+    frames++;
+    lastTime = vup::updateFramerate(currentTime, lastTime, window, frames);
+    while (accumulator > dt) {
+      ps.run();
+      accumulator -= dt;
     //  queue.acquireGL(&openglbuffers);
     //  //if (gridUpdate > 0) {
     //    std::cout << "GRID UPDATE NO " << gridUpdate << std::endl;
@@ -178,12 +178,19 @@ int main()
     //  queue.runRangeKernel(kh.get("integrate"), particle_amount);
     //  queue.releaseGL(&openglbuffers);
     //  gridUpdate++;
-    //}
-    //cam.update(window, camdt);
-    //simpleShader.updateUniform("view", cam.getView());
-    //simpleShader.use();
+      leftUpdate++;
+      left += sign * 0.001;
+      ps.updateConstant("integrate", 5, left);
+    }
+    if (leftUpdate > 5000) {
+      leftUpdate = 0;
+      sign *= -1;
+    }
+    cam.update(window, camdt);
+    simpleShader.updateUniform("view", cam.getView());
+    simpleShader.use();
 
-    //renderer.execute(particle_amount);
+    renderer.execute(ps.getParticleCount());
     glfwPollEvents();
     glfwSwapBuffers(window);
   }

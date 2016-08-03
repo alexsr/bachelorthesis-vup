@@ -1,42 +1,69 @@
 {
 	"size": 0.1,
 	"variables": {
-		"vel": 4,
-		"force": 4,
-		"mass": 1
+		"vel": {
+			"format": "4f",
+			"instances": 1
+		},
+		"forceIntern": {
+			"format": "4f",
+			"instances": 1
+		},
+		"mass": {
+			"format": "1f",
+			"instances": 1
+		}
 	},
-	"interopVariables" : {
-		"pos" : {
+	"interopVariables": {
+		"pos": {
 			"loc": 2,
-			"format": 4
+			"format": "4f",
+			"instances": 1
 		},
 		"color": {
 			"loc": 3,
-			"format": 4
+			"format": "4f",
+			"instances": 1
 		}
 	},
 	"types": [
 		{
 			"name": "F",
 			"variables": {
-				"density" : 1,
-				"pressure": 1
-			},
-			"constants": {
-				"restDensity": 0.59,
-				"smoothingLength": 0.2
+				"density": {
+					"format": "1f",
+					"instances": 1
+				},
+				"pressure": {
+					"format": "1f",
+					"instances": 1
+				},
+				"neighbors":  {
+					"format": "1f",
+					"instances": 20
+				},
+				"neighborCounter":  {
+					"format": "1f",
+					"instances": 1
+				}
 			},
 			"data": {
-				"density": 0.59,
-				"pressure": 0.0,
-				"mass": 0.000055,
+				"density": [
+					0.59
+				],
+				"pressure": [
+					0.0
+				],
+				"mass": [
+					0.02
+				],
 				"vel": [
 					0.0,
 					0.0,
 					0.0,
 					0.0
 				],
-				"force": [
+				"forceIntern": [
 					0.0,
 					0.0,
 					0.0,
@@ -47,6 +74,12 @@
 					0.0,
 					1.0,
 					1.0
+				],
+				"neighbors": [
+					0
+				],
+				"neighborCounter": [
+					0
 				]
 			}
 		}
@@ -55,15 +88,79 @@
 		{
 			"name": "Fluid1",
 			"type": "F",
+			"particles": 1000,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-1.5,1.5",
+						"random-3,0",
+						"random-1.5,1.5",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						0,
+						0,
+						1,
+						1.0
+					]
+				}
+			}
+		},
+		{
+			"name": "Fluid2",
+			"type": "F",
 			"particles": 500,
 			"data": {
 				"pos": {
 					"frequency": 1,
-					"format": 4,
 					"values": [
-						"random-1,1",
-						"random-1,1",
-						"random-1,1",
+						"random-1.5,1.5",
+						"random1.5,3",
+						"random-1.5,1.5",
+						1.0
+					]
+				},
+				"mass": {
+					"frequency": 1,
+					"values": [
+						0.02
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						1,
+						0,
+						0,
+						1.0
+					]
+				}
+			}
+		},
+		{
+			"name": "Fluid3",
+			"type": "F",
+			"particles": 1000,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-1.5,1.5",
+						"random0,1.5",
+						"random-1.5,1.5",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						0,
+						1,
+						0,
 						1.0
 					]
 				}

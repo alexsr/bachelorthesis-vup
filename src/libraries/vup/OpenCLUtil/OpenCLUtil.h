@@ -8,6 +8,7 @@
 #include "vup/defs.h"
 #include "vup/particle.h"
 #include "vup/Util/FileReader.h"
+#include "vup/ParticleHandling/datadefs.h"
 #include "vup/Exceptions/KernelNotFoundException.h"
 #include "vup/Exceptions/KernelCreationException.h"
 #include "vup/Exceptions/RunKernelException.h"
@@ -82,9 +83,8 @@ private:
 
 struct KernelArgument {
   int index = 0;
-  std::string name = "";
   datatype type = vup::EMPTY;
-  bool constant = false;
+  bool constant = true;
 };
 
 class KernelHandler
@@ -99,6 +99,7 @@ public:
   void initKernels(std::vector<std::string> kernels);
   void initKernel(std::string kernel);
   cl::Kernel get(std::string name);
+  std::map<std::string, std::map<std::string, KernelArgument>> getKernelArguments() { return m_arguments; }
   template <class T> void setArg(std::vector<std::string> names, int index, T data);
   template <class T> void setArg(const char* name, int index, T data);
 private:
@@ -111,7 +112,7 @@ private:
   cl::Program m_program;
   const char* m_path;
   std::map<std::string, cl::Kernel> m_kernels;
-  std::map<std::string, std::vector<KernelArgument>> m_arguments;
+  std::map<std::string, std::map<std::string, KernelArgument>> m_arguments;
 };
 template<class T>
 void KernelHandler::setArg(std::vector<std::string> names, int index, T data)

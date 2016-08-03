@@ -5,6 +5,10 @@ __constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
 __constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
 __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
+__constant float smoothingLength = 0.2;
+__constant float restDensity = 1000.0;
+__constant int neighbor_amount = 20;
+
 float polySix(float h, float r) {
   if (0 <= r && r <= h) {
     return pow(h*h - r*r, 3);
@@ -83,9 +87,8 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   /*}*/
 }
 
-__kernel void findNeighbors(__global float4* pos, __global int* grid, __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity,
-  __global int* neighbors, __global int* neighborCounter, int neighbor_amount, float h) {
-  int id = get_global_id(0);
+__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter) {
+  /*int id = get_global_id(0);
   neighborCounter[id] = 0;
   int current_x = floor((pos[id].x + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
   int current_y = floor((pos[id].y + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
@@ -116,97 +119,89 @@ __kernel void findNeighbors(__global float4* pos, __global int* grid, __global i
     }
     if (neighborCounter[id] >= neighbor_amount - 1)
       break;
-  }
-  /*if (neighborCounter[id] != 0) {
-    //printf("c %d = %d; ", id, neighborCounter[id]);
   }*/
 
-  //unsigned int i = get_global_id(0);
-  //printf("n = %d;", neighborCounter[i]);
+  unsigned int i = get_global_id(0);
 
-  //float4 p = pos[i];
+  float4 p = pos[i];
 
-  //neighborCounter[i] = 0;
-  ////save neighbours of THIS particle in an array 
-  ////array size is 50(n) times bigger than pos[]
-  //for (int index = 0; index < get_global_size(0); index++)
-  //{
-  //  if (distance(p.xyz, pos[index].xyz) <= h) // < smoothingLength
-  //  {
-  //    neighbors[i * neighbor_amount + neighborCounter[i]] = index;
-  //    neighborCounter[i]++;
-  //    //only saves values with distance < smoothing Lenght --> [0,smoothingLength]
-  //  }
-  //  //stop when 50(n) neighbours of i are found
-  //  if (neighborCounter[i] >= neighbor_amount - 1)
-  //    break;
-  //}
+  neighborCounter[i] = 0;
+  //save neighbours of THIS particle in an array %
+  //array size is 50(n) times bigger than pos[]
+  for (int index = 0; index < get_global_size(0); index++)
+  {
+    if (distance(p.xyz, pos[index].xyz) <= smoothingLength) // < smoothingLength
+    {
+      neighbors[i * neighbor_amount + neighborCounter[i]] = index;
+      neighborCounter[i]++;
+      //only saves values with distance < smoothing Lenght --> [0,smoothingLength]
+    }
+    //stop when 50(n) neighbours of i are found
+    if (neighborCounter[i] >= neighbor_amount - 1)
+      break;
+  }
 }
 
-__kernel void calcPressure(__global float4* pos, __global int* neighbor, __global int* counter, __global float* density, __global float* pressure,
-  __global float* mass, float h, int neighbor_amount, float defaultDensity) {
+__kernel void calcPressure(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass) {
   unsigned int id = get_global_id(0);
   float density_id = 0;
   float pressure_id = 0;
-  float k = .04030142;
-  float k2 = 0.5301f;
-  float polySix_const = 315.0f / (64.0f * M_PI_F*h*h*h*h*h*h*h*h*h);
-
-  for (int i = 0; i < counter[id]; i++) {
-    int j = neighbor[id * neighbor_amount + i];
-    density_id += polySix(h, distance(pos[id].xyz, pos[j].xyz));
+  float k = 2000.0;
+  float polySix_const = 315.0f / (64.0f * M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
+  for (int i = 0; i < neighborCounter[id]; i++) {
+    int j = neighbors[id * neighbor_amount + i];
+    density_id += polySix(smoothingLength, distance(pos[id].xyz, pos[j].xyz));
   }
   density_id *= polySix_const * mass[id];
 
   density[id] = density_id;
-  pressure_id = k * defaultDensity / k2 * (pow((density_id / defaultDensity), k2) - 1.0f);
+  //pressure_id = k * (density_id - restDensity);
+  pressure_id = k * (pow((density_id / restDensity), 7) - 1.0);
 
   pressure[id] = pressure_id;
 }
 
-__kernel void calcForces(__global float4* pos, __global int* neighbor, __global int* counter, __global float* density, __global float* pressure,
-  __global float* mass, float h, int neighbor_amount, __global float4* vel, __global float4* forceIntern) {
+__kernel void calcForces(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* vel, __global float4* forceIntern) {
   unsigned int id = get_global_id(0);
-  float spiky_const = 45.0f / (M_PI_F*h*h*h*h*h*h);
-  float visc_const = 0.000005;
+  float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
+  float visc_const = 0.02f;
   float4 pressureForce = 0.0f;
   float4 viscosityForce = 0.0f;
-
-  for (int i = 0; i < counter[id]; i++) {
-    int j = neighbor[id * neighbor_amount + i];
+  for (int i = 0; i < neighborCounter[id]; i++) {
+    int j = neighbors[id * neighbor_amount + i];
     //if (density[id] != 0.0 && density[j] != 0.0) {
-      pressureForce += mass[j] * (pressure[id] / (density[id] * density[id]) + pressure[j] / (density[j] * density[j])) * spikyGradient(h, pos[id], pos[j]);
+      pressureForce += mass[j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spikyGradient(smoothingLength, pos[id], pos[j]);
     //}
     //if (density[j] != 0.0) {
-      viscosityForce += (vel[j] - vel[id]) / density[j] * visc(h, distance(pos[id].xyz, pos[j].xyz));
+      viscosityForce += mass[j] * (vel[j] - vel[id]) / density[j] * visc(smoothingLength, distance(pos[id].xyz, pos[j].xyz));
     //}
   }
   pressureForce *= -mass[id] * spiky_const;
-  viscosityForce *= visc_const * mass[id] * spiky_const;
+  viscosityForce *= visc_const * spiky_const;
 
   //if (density[id] != 0.0) {
-    forceIntern[id] = pressureForce + viscosityForce;
-    forceIntern[id] /= density[id];
+  forceIntern[id] = pressureForce + viscosityForce;
+  forceIntern[id] /= density[id];
   //}
 }
 
-__kernel void integrate(__global float4* pos, __global float4* vel, __global float* density, __global float* mass, __global float4* force, float defaultDensity, float dt) {
+__kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, float dt, float xleft) {
   unsigned int id = get_global_id(0);
-
-  float4 forceExtern;
-  forceExtern.y = -9.81 * mass[id];
-
-  vel[id] += ((force[id] + forceExtern) / mass[id]) * dt;
+  float4 forceExtern = 0.0f;
+  forceExtern.y = -9.81f * mass[id];
+ // printf("%f, ", mass[id]);
+  vel[id] += ((forceIntern[id] + forceExtern) / mass[id]) * dt;
   pos[id] += vel[id] * dt;
   
-  float bounds = 1.0;
-  if (dot(vel[id], up) < 0 && pos[id].y < -bounds) {
+  float bounds = 2.0;
+  float ybounds = 3.0;
+  if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up);
   }
-  if (dot(vel[id], down) < 0 && pos[id].y > bounds) {
+  if (dot(vel[id], down) < 0 && pos[id].y > ybounds) {
     vel[id] = reflect(vel[id], down);
   }
-  if (dot(vel[id], right) < 0 && pos[id].x < -bounds) {
+  if (dot(vel[id], right) < 0 && pos[id].x < -xleft) {
     vel[id] = reflect(vel[id], right);
   }
   if (dot(vel[id], left) < 0 && pos[id].x > bounds) {
@@ -218,5 +213,7 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
     vel[id] = reflect(vel[id], back);
   }
-  pos[id] = clamp(pos[id], -bounds, bounds);
+  pos[id].x = clamp(pos[id].x, -xleft, bounds);
+  pos[id].y = clamp(pos[id].y, -ybounds, ybounds);
+  pos[id].z = clamp(pos[id].z, -bounds, bounds);
 }

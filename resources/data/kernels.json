@@ -2,23 +2,45 @@
 	"kernels": [
 		{
 			"name": "findNeighbors",
-			"onSystems": ["Fluid1"],
-			"onTypes": []
+			"onSystems": [],
+			"onTypes": ["F"]
 		},
 		{
 			"name": "calcPressure",
-			"onSystems": ["Fluid1"],
-			"onTypes": []
+			"onSystems": [],
+			"onTypes": ["F"]
 		},
 		{
 			"name": "calcForces",
-			"onSystems": ["Fluid1"],
-			"onTypes": []
+			"onSystems": [],
+			"onTypes": ["F"]
 		},
 		{
 			"name": "integrate",
+			"constants": {
+				"dt": 0.0001,
+				"xleft": 2.0
+			},
 			"onSystems": [],
 			"onTypes": []
+		},
+		{
+			"name": "calcPressure"
+		},
+		{
+			"name": "calcForces"
+		},
+		{
+			"name": "integrate"
+		},
+		{
+			"name": "calcPressure"
+		},
+		{
+			"name": "calcForces"
+		},
+		{
+			"name": "integrate"
 		}
 	]
 }

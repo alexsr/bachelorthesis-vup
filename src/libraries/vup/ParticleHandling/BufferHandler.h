@@ -79,6 +79,7 @@ void BufferHandler::createVBO(std::string name, int loc, int size, int format, b
   GLuint vbo;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  int test = sizeof(T);
   glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, NULL, drawType);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   m_vbos[name] = vup::VBO(vbo, loc, format);
@@ -93,6 +94,7 @@ void BufferHandler::createVBOData(std::string name, int loc, int size, int forma
   GLuint vbo;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  int test = sizeof(T);
   glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, &data[0], drawType);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   m_vbos[name] = vup::VBO(vbo, loc, format);
@@ -116,11 +118,9 @@ void BufferHandler::updateVBO(std::string name, std::vector<T> data)
 template<typename T>
 void BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offset, int length)
 {
+  int test = sizeof(T);
   glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
-  T * vertexArray = (T *)glMapBufferRange(GL_ARRAY_BUFFER, offset, length, GL_WRITE_ONLY);
-  int size = length;
-  vertexArray = &data[0];
-  glUnmapBuffer(GL_ARRAY_BUFFER);
+  glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(T), length * sizeof(T), &data[0]);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

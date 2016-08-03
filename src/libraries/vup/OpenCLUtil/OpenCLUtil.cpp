@@ -144,39 +144,41 @@ void vup::KernelHandler::extractArguments(const char * path)
     paramStr.erase(std::remove(paramStr.begin(), paramStr.end(), '\n'), paramStr.end());
     paramStr.erase(std::remove(paramStr.begin(), paramStr.end(), '\r'), paramStr.end());
     std::cout << "Kernel " << kernelName << " has the following parameter string: ";
-    m_arguments[kernelName] = std::vector<KernelArgument>();
+    m_arguments[kernelName] = std::map<std::string, KernelArgument>();
     std::vector<std::string> params = splitParams(paramStr.c_str(), ',');
     int index = 0;
     for (auto &param : params) {
-      std::vector<std::string> parts = splitParams(paramStr.c_str(), ' ');
+      std::vector<std::string> parts = splitParams(param.c_str(), ' ');
+      if (parts.size() < 2) {
+        throw new std::exception();
+      }
       KernelArgument karg;
-      std::string name = parts.at(1);
+      std::string name = parts.at(parts.size()-1);
       datatype type = vup::EMPTY;
-      std::string typestring = parts.at(1);
-      if (parts.size() == 2) {
-        karg.constant = true;
-        typestring = parts.at(0);
-        name = parts.at(1);
+      std::string typestring = parts.at(parts.size()-2);
+      if (typestring.find("*") != std::string::npos) {
+        karg.constant = false;
       }
       typestring.erase(std::remove(typestring.begin(), typestring.end(), '*'), typestring.end());
-      if (typestring == "int") {
-        type = vup::INT;
-      }
-      else if (typestring == "float") {
+      if (typestring == "float") {
         type = vup::FLOAT;
       }
-      karg.name = name;
+      else if (typestring == "int") {
+        type = vup::INT;
+      }
+      else if (typestring == "float4") {
+        type = vup::VEC4;
+      }
       karg.type = type;
       karg.index = index;
       index++;
-      m_arguments[kernelName].push_back(karg);
+      m_arguments[kernelName][name] = karg;
     }
     for (auto &str : params) {
       std::cout << str << ", ";
     }
     std::cout << std::endl;
   }
-  //m_arguments = 
 }
 
 bool vup::KernelHandler::doesKernelExist(std::string name)
@@ -229,7 +231,6 @@ void vup::Queue::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int siz
 void vup::Queue::runRangeKernel(cl::Kernel k, int global)
 {
   cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NullRange, cl::NDRange(global), cl::NullRange);
-  finish();
   if (clError != CL_SUCCESS) {
     throw vup::RunKernelException(clError);
   }
@@ -238,7 +239,6 @@ void vup::Queue::runRangeKernel(cl::Kernel k, int global)
 void vup::Queue::runRangeKernel(cl::Kernel k, int offset, int global, int local)
 {
   cl_int clError = m_queue.enqueueNDRangeKernel(k, cl::NDRange(offset), cl::NDRange(global), cl::NDRange(local));
-  finish();
   if (clError != CL_SUCCESS) {
     throw vup::RunKernelException(clError);
   }

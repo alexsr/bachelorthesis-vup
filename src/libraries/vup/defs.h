@@ -22,20 +22,4 @@
 #include "CL/cl_gl.h"
 #endif
 
-namespace vup {
-
-typedef std::vector<float> floatdata;
-typedef std::vector<glm::vec4> vec4data;
-
-enum datatype { EMPTY, INT, FLOAT, VEC4 };
-
-typedef std::pair<datatype, std::string> datavalue;
-
-typedef std::map<std::string, datavalue> datamap;
-typedef std::vector<std::string> identifiers;
-typedef std::map<std::string, datatype> typeIdentifiers;
-
-
-}
-
 #endif
