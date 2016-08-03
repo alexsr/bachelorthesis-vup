@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_access.hpp>
+#include <map>
 
 #if defined (__APPLE__) || defined(MACOSX)
 #include <OpenGL/OpenGL.h>
@@ -20,11 +21,5 @@
 #include "CL/cl.hpp"
 #include "CL/cl_gl.h"
 #endif
-
-#define VUP_FLUID 0
-#define VUP_RIGID 1
-#define VUP_GRANULAR 2
-#define VUP_SOFT 3
-#define VUP_GAS 4
 
 #endif

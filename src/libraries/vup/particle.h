@@ -9,18 +9,13 @@
 
 namespace vup {
 
-typedef std::vector<glm::vec4> position;
-typedef std::vector<glm::vec4> velocity;
-typedef std::vector<glm::vec4> color;
-typedef std::vector<int> type;
-
-struct particle {
-  cl_int id;
-  cl_int type;
+typedef struct {
   cl_float mass;
   cl_float density;
   cl_float viscosity;
-};
+  cl_float pressure;
+  cl_float4 force;
+} particle;
 
 template <int C>
 struct connections {

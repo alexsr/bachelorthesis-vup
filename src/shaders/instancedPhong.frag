@@ -9,7 +9,7 @@ out vec4 frag;
 void main()
 {
   vec3 lightPosition = vec3(0.0,1000.0,100.0);
-	vec4 ambientLight = vec4(0.0, 0.0, 0.0, 1.0);
+	vec4 ambientLight = vec4(0.2, 0.2, 0.2, 1.0);
 	
 	vec3 lightVec = normalize(lightPosition-pPos);
 	
@@ -18,5 +18,5 @@ void main()
 	
 	float cos_phi = max(dot(pNormal, lightVec), 0.0f);
 	
-	frag = ambientLight + color * cos_phi;
+	frag = color * ambientLight + color * cos_phi;
 }

@@ -60,6 +60,7 @@ vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const 
   m_device = device;
   m_path = path;
   buildProgram(context, device, path);
+  extractArguments(path);
   m_kernels = std::map<std::string, cl::Kernel>();
 }
 vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path, std::vector<std::string> kernels) : KernelHandler(context, device, path)
@@ -128,14 +129,75 @@ void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, co
   }
 }
 
+void vup::KernelHandler::extractArguments(const char * path)
+{
+  vup::FileReader file(path);
+  std::string src = file.getSource();
+  int kernelPos = 0;
+  while ((kernelPos = (src.find("__kernel void", kernelPos))) != std::string::npos) {
+    kernelPos += 1;
+    int namePos = kernelPos + 13;
+    int endOfName = src.find("(", namePos);
+    std::string kernelName = src.substr(namePos, endOfName - namePos);
+    int endOfParams = src.find(")", endOfName);
+    std::string paramStr = src.substr(endOfName + 1, endOfParams - endOfName - 1);
+    paramStr.erase(std::remove(paramStr.begin(), paramStr.end(), '\n'), paramStr.end());
+    paramStr.erase(std::remove(paramStr.begin(), paramStr.end(), '\r'), paramStr.end());
+    std::cout << "Kernel " << kernelName << " has the following parameter string: ";
+    m_arguments[kernelName] = std::map<std::string, KernelArgument>();
+    std::vector<std::string> params = splitParams(paramStr.c_str(), ',');
+    int index = 0;
+    for (auto &param : params) {
+      std::vector<std::string> parts = splitParams(param.c_str(), ' ');
+      if (parts.size() < 2) {
+        throw new std::exception();
+      }
+      KernelArgument karg;
+      std::string name = parts.at(parts.size()-1);
+      datatype type = vup::EMPTY;
+      std::string typestring = parts.at(parts.size()-2);
+      if (typestring.find("*") != std::string::npos) {
+        karg.constant = false;
+      }
+      typestring.erase(std::remove(typestring.begin(), typestring.end(), '*'), typestring.end());
+      if (typestring == "float") {
+        type = vup::FLOAT;
+      }
+      else if (typestring == "int") {
+        type = vup::INT;
+      }
+      else if (typestring == "float4") {
+        type = vup::VEC4;
+      }
+      karg.type = type;
+      karg.index = index;
+      index++;
+      m_arguments[kernelName][name] = karg;
+    }
+    for (auto &str : params) {
+      std::cout << str << ", ";
+    }
+    std::cout << std::endl;
+  }
+}
+
 bool vup::KernelHandler::doesKernelExist(std::string name)
 {
   std::map<std::string, cl::Kernel>::iterator it = m_kernels.find(name);
-  if (it != m_kernels.end())
-  {
-    return true;
-  }
-  return false;
+  return it != m_kernels.end();
+}
+
+std::vector<std::string> vup::KernelHandler::splitParams(const char * str, char split)
+{
+  std::vector<std::string> params;
+  do {
+    const char *begin = str;
+    while (*str != split && *str){
+      str++;
+    }
+    params.push_back(vup::trim(std::string(begin, str)));
+  } while (0 != *str++);
+  return params;
 }
 
 vup::Queue::Queue(cl::Context context)
@@ -151,6 +213,7 @@ vup::Queue::~Queue()
 void vup::Queue::writeBuffer(cl::Buffer b, int size, const void * ptr)
 {
   cl_int clError = m_queue.enqueueWriteBuffer(b, CL_TRUE, 0, size, ptr);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::BufferWritingException(clError);
   }
@@ -159,6 +222,7 @@ void vup::Queue::writeBuffer(cl::Buffer b, int size, const void * ptr)
 void vup::Queue::writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr)
 {
   cl_int clError = m_queue.enqueueWriteBuffer(b, blocking, offset, size, ptr);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::BufferWritingException(clError);
   }
@@ -192,6 +256,7 @@ void vup::Queue::acquireGL(std::vector<cl::Memory>* mem)
 void vup::Queue::releaseGL(std::vector<cl::Memory>* mem)
 {
   cl_int clError = m_queue.enqueueReleaseGLObjects(mem);
+  finish();
   if (clError != CL_SUCCESS) {
     throw vup::ReleasingGLObjectsException(clError);
   }
@@ -268,10 +333,6 @@ void vup::ParticleQueue::removeIndices(int type, std::vector<int> indices)
 bool vup::ParticleQueue::doesTypeExist(int type)
 {
   std::map<int, vup::TypeBuffer>::iterator it = m_typeIndices.find(type);
-  if (it != m_typeIndices.end())
-  {
-    return true;
-  }
-  return false;
+  return it != m_typeIndices.end();
 }
 

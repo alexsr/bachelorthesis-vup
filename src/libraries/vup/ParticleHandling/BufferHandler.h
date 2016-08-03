@@ -64,7 +64,7 @@ template<typename T>
 void BufferHandler::createBuffer(std::string name, cl_mem_flags flags, int size)
 {
   if (doesBufferExist(name)) {
-    std::cout << "WARNING: Kernel " << name << "already exists.";
+    throw new BufferCreationException(name, -1);
   }
   cl_int clError;
   m_buffers[name] = cl::Buffer(m_defaultContext, flags, size * sizeof(T), nullptr, &clError);
@@ -74,11 +74,12 @@ void BufferHandler::createBuffer(std::string name, cl_mem_flags flags, int size)
 }
 
 template<typename T>
-void vup::BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
+void BufferHandler::createVBO(std::string name, int loc, int size, int format, bool isInterop, GLint drawType)
 {
   GLuint vbo;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  int test = sizeof(T);
   glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, NULL, drawType);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   m_vbos[name] = vup::VBO(vbo, loc, format);
@@ -88,11 +89,12 @@ void vup::BufferHandler::createVBO(std::string name, int loc, int size, int form
 }
 
 template<typename T>
-void vup::BufferHandler::createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop, GLint drawType)
+void BufferHandler::createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop, GLint drawType)
 {
   GLuint vbo;
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  int test = sizeof(T);
   glBufferData(GL_ARRAY_BUFFER, sizeof(T) * size, &data[0], drawType);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   m_vbos[name] = vup::VBO(vbo, loc, format);
@@ -102,7 +104,7 @@ void vup::BufferHandler::createVBOData(std::string name, int loc, int size, int 
 }
 
 template<typename T>
-void vup::BufferHandler::updateVBO(std::string name, std::vector<T> data)
+void BufferHandler::updateVBO(std::string name, std::vector<T> data)
 {
   glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
   T * vertexArray = (T *)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
@@ -114,15 +116,11 @@ void vup::BufferHandler::updateVBO(std::string name, std::vector<T> data)
 }
 
 template<typename T>
-void vup::BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offset, int length)
+void BufferHandler::updateSubVBO(std::string name, std::vector<T> data, int offset, int length)
 {
+  int test = sizeof(T);
   glBindBuffer(GL_ARRAY_BUFFER, getVBOHandle(name));
-  T * vertexArray = (T *)glMapBufferRange(GL_ARRAY_BUFFER, offset, length, GL_WRITE_ONLY);
-  int size = glm::max(data->size(), length);
-  for (int i = 0; i < size; i++) {
-    vertexArray[i] = data->at(i);
-  }
-  glUnmapBuffer(GL_ARRAY_BUFFER);
+  glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(T), length * sizeof(T), &data[0]);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
