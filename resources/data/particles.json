@@ -172,7 +172,7 @@
 		{
 			"name": "Granular1",
 			"type": "A",
-			"particles": 1,
+			"particles": 100,
 			"data": {
 				"pos": {
 					"frequency": 1,
