@@ -157,9 +157,9 @@ void vup::KernelHandler::extractArguments(const char * path)
       datatype type = vup::EMPTY;
       std::string typestring = parts.at(parts.size()-2);
       if (typestring.find("*") != std::string::npos) {
+        typestring.erase(std::remove(typestring.begin(), typestring.end(), '*'), typestring.end());
         karg.constant = false;
       }
-      typestring.erase(std::remove(typestring.begin(), typestring.end(), '*'), typestring.end());
       if (typestring == "float") {
         type = vup::FLOAT;
       }
