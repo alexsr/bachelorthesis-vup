@@ -54,7 +54,7 @@ int main()
   //  neighbors[i] = 0;
   //}
 
-  vup::SphereData sphere(ps.getSize(), 12, 12);
+  vup::SphereData sphere(ps.getSize(), 10, 10);
   vup::ParticleRenderer renderer(sphere, ps.getInteropVBOs());
 
   //std::vector<int> fluidIndices;
@@ -88,7 +88,7 @@ int main()
   //buffers.createBuffer<int>("neighborCounter", CL_MEM_READ_WRITE, neighborCounter.size());
   //queue.writeBuffer(buffers.getBuffer("neighborCounter"), sizeof(int) * neighborCounter.size(), &neighborCounter[0]);
 
-  float dt = 0.01f;
+  float dt = 0.003f;
   float camdt = 0.01f;
   //std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
   //vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integrate", "calcForces", "calcPressure", "findNeighbors" });

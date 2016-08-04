@@ -254,14 +254,14 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             throw new CorruptDataException(m_path, "No values specified.");
           }
           int frequency = dataset["frequency"].GetInt();
-          vup::datatype format = findFormat(dataIdentifier, m_types[type].getTypeSpecificIdentifiers());
+          vup::DataSpecification spec = getDataSpec(dataIdentifier, m_types[type].getTypeSpecificIdentifiers());
           rapidjson::Value values = dataset["values"].GetArray();
-          if (format == vup::FLOAT) {
+          if (spec.format == vup::FLOAT) {
             if (values.Size() <= 0 && frequency == values.Size()) {
               throw new CorruptDataException(m_path, "Wrong number of data in values array.");
             }
             std::vector<float> datavec;
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count * spec.instances; i++) {
               int f = i % frequency;
               int offset = f;
               float v = 0.0;
@@ -285,12 +285,12 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             p.addData(dataIdentifier, datavec);
             std::cout << "Data " << dataIdentifier << " loaded." << std::endl;
           }
-          else if (format == vup::INT) {
+          else if (spec.format == vup::INT) {
             if (values.Size() <= 0 && frequency == values.Size()) {
               throw new CorruptDataException(m_path, "Wrong number of data in values array.");
             }
             std::vector<int> datavec;
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count * spec.instances; i++) {
               int f = i % frequency;
               int offset = f;
               float v = 0.0;
@@ -314,12 +314,12 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             p.addData(dataIdentifier, datavec);
             std::cout << "Data " << dataIdentifier << " loaded." << std::endl;
           }
-          else if (format == vup::VEC4) {
-            if (values.Size() <= 0 && frequency * 4 == values.Size()) {
+          else if (spec.format == vup::VEC4) {
+            if (values.Size() <= 0) {
               throw new CorruptDataException(m_path, "Wrong number of data in values array.");
             }
             std::vector<glm::vec4> datavec;
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count * spec.instances; i++) {
               int f = i % frequency;
               int offset = f * 4;
               glm::vec4 result(0);

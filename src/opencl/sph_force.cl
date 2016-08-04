@@ -87,7 +87,7 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   /*}*/
 }
 
-__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter) {
+__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
   /*int id = get_global_id(0);
   neighborCounter[id] = 0;
   int current_x = floor((pos[id].x + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
@@ -121,7 +121,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
       break;
   }*/
 
-  unsigned int i = get_global_id(0);
+  unsigned int i = globalIndices[get_global_id(0)];
 
   float4 p = pos[i];
 
@@ -142,8 +142,8 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
   }
 }
 
-__kernel void calcPressure(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass) {
-  unsigned int id = get_global_id(0);
+__kernel void calcPressure(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global int* globalIndices) {
+  unsigned int id = globalIndices[get_global_id(0)];
   float density_id = 0;
   float pressure_id = 0;
   float k = 2000.0;
@@ -161,8 +161,8 @@ __kernel void calcPressure(__global float4* pos, __global int* neighbors, __glob
   pressure[id] = pressure_id;
 }
 
-__kernel void calcForces(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* vel, __global float4* forceIntern) {
-  unsigned int id = get_global_id(0);
+__kernel void calcForces(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* vel, __global float4* forceIntern, __global int* globalIndices) {
+  unsigned int id = globalIndices[get_global_id(0)];
   float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   float visc_const = 0.02f;
   float4 pressureForce = 0.0f;

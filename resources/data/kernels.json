@@ -23,24 +23,6 @@
 			},
 			"onSystems": [],
 			"onTypes": []
-		},
-		{
-			"name": "calcPressure"
-		},
-		{
-			"name": "calcForces"
-		},
-		{
-			"name": "integrate"
-		},
-		{
-			"name": "calcPressure"
-		},
-		{
-			"name": "calcForces"
-		},
-		{
-			"name": "integrate"
 		}
 	]
 }

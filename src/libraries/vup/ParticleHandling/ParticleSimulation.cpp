@@ -40,7 +40,16 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
   typeIdentifiers global = dataloader.getGlobalIdentifiers();
   for (auto &id : global) {
     int offset = 0;
-    if (id.second.format == vup::FLOAT) {
+    if (id.second.format == vup::INT) {
+      m_buffers->createBuffer<int>(id.first, CL_MEM_READ_WRITE, m_particleCount * id.second.instances);
+      for (auto &t : dataloader.getSystems()) {
+        for (auto &s : t.second) {
+          m_queue->writeBuffer(m_buffers->getBuffer(id.first), true, offset * sizeof(int), s.second.getCount() * sizeof(int) * id.second.instances, &(s.second.getIntData(id.first))[0]);
+          offset += s.second.getCount() * id.second.instances;
+        }
+      }
+    }
+    else if (id.second.format == vup::FLOAT) {
       m_buffers->createBuffer<float>(id.first, CL_MEM_READ_WRITE, m_particleCount * id.second.instances);
       for (auto &t : dataloader.getSystems()) {
         for (auto &s : t.second) {
@@ -137,7 +146,6 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
     }
     for (auto &onType : kinf.second.onTypes) {
       for (auto &onSystem : dataloader.getSystemsOfType(onType)) {
-        typeIndices.insert(typeIndices.end(), m_typeIndices[onSystem.first].begin(), m_typeIndices[onSystem.first].end());
         globalIndices.insert(globalIndices.end(), m_globalIndices[onSystem.first].begin(), m_globalIndices[onSystem.first].end());
       }
     }
@@ -145,12 +153,24 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
     if (globalIndices.size() == 0) {
       m_kernelSize[kinf.first] = m_particleCount;
     }
+    else {
+      m_buffers->createBuffer<int>("globalIndices" + kinf.first, CL_MEM_READ_WRITE, globalIndices.size());
+      m_queue->writeBuffer(m_buffers->getBuffer("globalIndices" + kinf.first), globalIndices.size(), &globalIndices[0]);
+    }
+    if (typeIndices.size() != 0) {
+      m_buffers->createBuffer<int>("typeIndices" + kinf.first, CL_MEM_READ_WRITE, typeIndices.size());
+      m_queue->writeBuffer(m_buffers->getBuffer("typeIndices" + kinf.first), typeIndices.size(), &typeIndices[0]);
+    }
     for (auto &arg : arguments[kinf.first]) {
       if (arg.first == "globalIndices") {
-        m_kernels->setArg(kinf.first.c_str(), arg.second.index, globalIndices);
+        if (globalIndices.size() != 0) {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("globalIndices" + kinf.first));
+        }
       }
       else if (arg.first == "typeIndices") {
-        m_kernels->setArg(kinf.first.c_str(), arg.second.index, typeIndices);
+        if (typeIndices.size() != 0) {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("typeIndices" + kinf.first));
+        }
       }
       else if (arg.second.constant) {
         if (doesKeyExist(arg.first, kinf.second.constants)) {
