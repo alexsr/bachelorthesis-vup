@@ -114,13 +114,6 @@ private:
   std::map<std::string, cl::Kernel> m_kernels;
   std::map<std::string, std::map<std::string, KernelArgument>> m_arguments;
 };
-template<class T>
-void KernelHandler::setArg(std::vector<std::string> names, int index, T data)
-{
-  for (std::string name : names) {
-    m_kernels[name].setArg(index, data);
-  }
-}
 
 template<class T>
 void KernelHandler::setArg(const char* name, int index, T data)

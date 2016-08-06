@@ -155,11 +155,11 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
     }
     else {
       m_buffers->createBuffer<int>("globalIndices" + kinf.first, CL_MEM_READ_WRITE, globalIndices.size());
-      m_queue->writeBuffer(m_buffers->getBuffer("globalIndices" + kinf.first), globalIndices.size(), &globalIndices[0]);
+      m_queue->writeBuffer(m_buffers->getBuffer("globalIndices" + kinf.first), globalIndices.size() * sizeof(int), &globalIndices[0]);
     }
     if (typeIndices.size() != 0) {
       m_buffers->createBuffer<int>("typeIndices" + kinf.first, CL_MEM_READ_WRITE, typeIndices.size());
-      m_queue->writeBuffer(m_buffers->getBuffer("typeIndices" + kinf.first), typeIndices.size(), &typeIndices[0]);
+      m_queue->writeBuffer(m_buffers->getBuffer("typeIndices" + kinf.first), typeIndices.size() * sizeof(int), &typeIndices[0]);
     }
     for (auto &arg : arguments[kinf.first]) {
       if (arg.first == "globalIndices") {

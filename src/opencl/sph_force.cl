@@ -121,67 +121,73 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
       break;
   }*/
 
-  unsigned int i = globalIndices[get_global_id(0)];
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
 
-  float4 p = pos[i];
+  float4 p = pos[g_id];
 
-  neighborCounter[i] = 0;
+  neighborCounter[id] = 0;
   //save neighbours of THIS particle in an array %
   //array size is 50(n) times bigger than pos[]
   for (int index = 0; index < get_global_size(0); index++)
   {
-    if (distance(p.xyz, pos[index].xyz) <= smoothingLength) // < smoothingLength
+    if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength) // < smoothingLength
     {
-      neighbors[i * neighbor_amount + neighborCounter[i]] = index;
-      neighborCounter[i]++;
+      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
+      neighborCounter[id]++;
       //only saves values with distance < smoothing Lenght --> [0,smoothingLength]
     }
     //stop when 50(n) neighbours of i are found
-    if (neighborCounter[i] >= neighbor_amount - 1)
+    if (neighborCounter[id] >= neighbor_amount - 1)
       break;
   }
 }
 
 __kernel void calcPressure(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global int* globalIndices) {
-  unsigned int id = globalIndices[get_global_id(0)];
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
   float density_id = 0;
   float pressure_id = 0;
-  float k = 2000.0;
+  float k = 13.0;
   float polySix_const = 315.0f / (64.0f * M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
-    density_id += polySix(smoothingLength, distance(pos[id].xyz, pos[j].xyz));
+    int g_j = globalIndices[j];
+    density_id += polySix(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
   }
-  density_id *= polySix_const * mass[id];
+  density_id *= polySix_const * mass[g_id];
 
   density[id] = density_id;
-  //pressure_id = k * (density_id - restDensity);
-  pressure_id = k * (pow((density_id / restDensity), 7) - 1.0);
+  pressure_id = k * (density_id - restDensity);
+  //printf("id = %d, density = %f;", id, density_id);
+  //pressure_id = k * (pow((density_id / restDensity), 7) - 1.0);
 
   pressure[id] = pressure_id;
 }
 
 __kernel void calcForces(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* vel, __global float4* forceIntern, __global int* globalIndices) {
-  unsigned int id = globalIndices[get_global_id(0)];
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
   float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
-  float visc_const = 0.02f;
+  float visc_const = 0.66f;
   float4 pressureForce = 0.0f;
   float4 viscosityForce = 0.0f;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
+    int g_j = globalIndices[j];
     //if (density[id] != 0.0 && density[j] != 0.0) {
-      pressureForce += mass[j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spikyGradient(smoothingLength, pos[id], pos[j]);
+      pressureForce += mass[g_j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spikyGradient(smoothingLength, pos[g_id], pos[g_j]);
     //}
     //if (density[j] != 0.0) {
-      viscosityForce += mass[j] * (vel[j] - vel[id]) / density[j] * visc(smoothingLength, distance(pos[id].xyz, pos[j].xyz));
+      viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
     //}
   }
-  pressureForce *= -mass[id] * spiky_const;
+  pressureForce *= -mass[g_id] * spiky_const;
   viscosityForce *= visc_const * spiky_const;
 
   //if (density[id] != 0.0) {
-  forceIntern[id] = pressureForce + viscosityForce;
-  forceIntern[id] /= density[id];
+  forceIntern[g_id] = pressureForce + viscosityForce;
+  forceIntern[g_id] /= density[id];
   //}
 }
 
@@ -194,7 +200,7 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   pos[id] += vel[id] * dt;
   
   float bounds = 2.0;
-  float ybounds = 3.0;
+  float ybounds = 2.0;
   if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up);
   }

@@ -85,8 +85,7 @@
 		},
 		{
 			"name": "A",
-			"variables": {
-			},
+			"variables": {},
 			"data": {
 				"mass": [
 					0.02
@@ -141,7 +140,7 @@
 		{
 			"name": "Fluid2",
 			"type": "F",
-			"particles": 500,
+			"particles": 250,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -197,7 +196,7 @@
 		{
 			"name": "AGranular1",
 			"type": "A",
-			"particles":2,
+			"particles": 200,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -211,9 +210,9 @@
 				"color": {
 					"frequency": 1,
 					"values": [
-						1,
-						1,
-						0,
+						1.0,
+						0.5,
+						0.0,
 						1.0
 					]
 				}
