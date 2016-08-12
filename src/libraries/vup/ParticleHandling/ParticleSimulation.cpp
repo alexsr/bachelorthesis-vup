@@ -128,25 +128,41 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
   KernelInfoLoader kinfLoader(kernelinfopath);
   std::map<std::string, vup::KernelInfo> kernelinfos = kinfLoader.getKernelInfos();
   for (auto &kinf : kernelinfos) {
-    m_kernelorder.resize(m_kernelorder.size() + kinf.second.pos.size());
+    if (!kinf.second.init) {
+      m_kernelorder.resize(m_kernelorder.size() + kinf.second.pos.size());
+    }
   }
   for (auto &kinf : kernelinfos) {
     if (!doesKeyExist(kinf.first, arguments)) {
       throw new CorruptDataException("", "Kernel does not exist.");
     }
     m_kernels->initKernel(kinf.first);
-    for (int i = 0; i < kinf.second.pos.size(); i++) {
-      m_kernelorder.at(kinf.second.pos.at(i)) = kinf.first;
+    if (!kinf.second.init) {
+      for (int i = 0; i < kinf.second.pos.size(); i++) {
+        m_kernelorder.at(kinf.second.pos.at(i)) = kinf.first;
+      }
+    }
+    else {
+      m_initkernels.push_back(kinf.first);
     }
     std::vector<int> typeIndices;
     std::vector<int> globalIndices;
+    std::vector<int> systemIDs;
+    std::vector<int> systemSizes;
+    int sysID = 0;
     for (auto &onSystem : kinf.second.onSystems) {
       typeIndices.insert(typeIndices.end(), m_typeIndices[onSystem].begin(), m_typeIndices[onSystem].end());
       globalIndices.insert(globalIndices.end(), m_globalIndices[onSystem].begin(), m_globalIndices[onSystem].end());
+      systemIDs.insert(systemIDs.end(), m_typeIndices[onSystem].size(), sysID);
+      sysID++;
+      systemSizes.insert(systemSizes.end(), m_typeIndices[onSystem].size(), m_typeIndices[onSystem].size());
     }
     for (auto &onType : kinf.second.onTypes) {
       for (auto &onSystem : dataloader.getSystemsOfType(onType)) {
         globalIndices.insert(globalIndices.end(), m_globalIndices[onSystem.first].begin(), m_globalIndices[onSystem.first].end());
+        systemIDs.insert(systemIDs.end(), m_globalIndices[onSystem.first].size(), sysID);
+        sysID++;
+        systemSizes.insert(systemSizes.end(), m_globalIndices[onSystem.first].size(), m_globalIndices[onSystem.first].size());
       }
     }
     m_kernelSize[kinf.first] = globalIndices.size();
@@ -161,6 +177,14 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
       m_buffers->createBuffer<int>("typeIndices" + kinf.first, CL_MEM_READ_WRITE, typeIndices.size());
       m_queue->writeBuffer(m_buffers->getBuffer("typeIndices" + kinf.first), typeIndices.size() * sizeof(int), &typeIndices[0]);
     }
+    if (systemIDs.size() != 0) {
+      m_buffers->createBuffer<int>("systemIDs" + kinf.first, CL_MEM_READ_WRITE, systemIDs.size());
+      m_queue->writeBuffer(m_buffers->getBuffer("systemIDs" + kinf.first), systemIDs.size() * sizeof(int), &systemIDs[0]);
+    }
+    if (systemSizes.size() != 0) {
+      m_buffers->createBuffer<int>("systemSizes" + kinf.first, CL_MEM_READ_WRITE, systemSizes.size());
+      m_queue->writeBuffer(m_buffers->getBuffer("systemSizes" + kinf.first), systemSizes.size() * sizeof(int), &systemSizes[0]);
+    }
     for (auto &arg : arguments[kinf.first]) {
       if (arg.first == "globalIndices") {
         if (globalIndices.size() != 0) {
@@ -170,6 +194,16 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
       else if (arg.first == "typeIndices") {
         if (typeIndices.size() != 0) {
           m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("typeIndices" + kinf.first));
+        }
+      }
+      else if (arg.first == "systemIDs") {
+        if (systemIDs.size() != 0) {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("systemIDs" + kinf.first));
+        }
+      }
+      else if (arg.first == "systemSizes") {
+        if (systemSizes.size() != 0) {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("systemSizes" + kinf.first));
         }
       }
       else if (arg.second.constant) {
@@ -196,6 +230,16 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
 
 vup::ParticleSimulation::~ParticleSimulation()
 {
+}
+
+void vup::ParticleSimulation::init()
+{
+  glFinish();
+  m_queue->acquireGL(&(m_buffers->getGLBuffers()));
+  for (std::string &kernel : m_initkernels) {
+    m_queue->runRangeKernel(m_kernels->get(kernel), m_kernelSize.at(kernel));
+  }
+  m_queue->releaseGL(&(m_buffers->getGLBuffers()));
 }
 
 void vup::ParticleSimulation::run()

@@ -39,9 +39,14 @@ void vup::KernelInfoLoader::load(const char * path)
         //throw new CorruptDataException(m_path, "Multiple declerations of kernel " + name + " found.");
       }
       KernelInfo kinf;
-      kinf.pos.push_back(pos);
-      std::cout << "Position of " << name << ": " << pos << std::endl;
-      pos++;
+      if (o.HasMember("init") && o["init"].IsBool()) {
+        kinf.init = o["init"].GetBool();
+      }
+      else {
+        kinf.pos.push_back(pos);
+        std::cout << "Position of " << name << ": " << pos << std::endl;
+        pos++;
+      }
       if (!o.HasMember("onSystems") || !o["onSystems"].IsArray()) {
         throw new CorruptDataException(m_path, "Systems kernel is run on have to be declared.");
       }

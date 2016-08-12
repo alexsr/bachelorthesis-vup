@@ -42,7 +42,7 @@ float4 reflect(float4 d, float4 n) {
   if (dot(d, n) > 0) {
     d = d*-1.0f;
   }
-  float4 r = d - 2.0f*dot(d, n)*n;
+  float4 r = d - 2.0f*dot(n, d)*n;
   return r;
 }
 
@@ -148,19 +148,19 @@ __kernel void calcPressure(__global float4* pos, __global int* neighbors, __glob
   unsigned int g_id = globalIndices[id];
   float density_id = 0;
   float pressure_id = 0;
-  float k = 13.0;
+  float k = 2200.0;
   float polySix_const = 315.0f / (64.0f * M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];
-    density_id += polySix(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
+    density_id += mass[g_id] * polySix(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
   }
-  density_id *= polySix_const * mass[g_id];
+  density_id *= polySix_const;
 
   density[id] = density_id;
-  pressure_id = k * (density_id - restDensity);
+  //pressure_id = k * (density_id - restDensity);
   //printf("id = %d, density = %f;", id, density_id);
-  //pressure_id = k * (pow((density_id / restDensity), 7) - 1.0);
+  pressure_id = k * (pow((density_id / restDensity), 7) - 1.0);
 
   pressure[id] = pressure_id;
 }
@@ -169,25 +169,24 @@ __kernel void calcForces(__global float4* pos, __global int* neighbors, __global
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
   float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
-  float visc_const = 0.66f;
+  float visc_const = 0.4f;
   float4 pressureForce = 0.0f;
   float4 viscosityForce = 0.0f;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];
     //if (density[id] != 0.0 && density[j] != 0.0) {
-      pressureForce += mass[g_j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spikyGradient(smoothingLength, pos[g_id], pos[g_j]);
+    pressureForce += mass[g_j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spiky_const * spikyGradient(smoothingLength, pos[g_id], pos[g_j]);
     //}
     //if (density[j] != 0.0) {
-      viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
+    viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * spiky_const * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
     //}
   }
-  pressureForce *= -mass[g_id] * spiky_const;
-  viscosityForce *= visc_const * spiky_const;
+  pressureForce *= -1.0f / density[id] * mass[g_id];
+  viscosityForce *= visc_const * mass[g_id];
 
   //if (density[id] != 0.0) {
   forceIntern[g_id] = pressureForce + viscosityForce;
-  forceIntern[g_id] /= density[id];
   //}
 }
 

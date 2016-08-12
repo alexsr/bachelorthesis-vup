@@ -29,7 +29,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  vup::ParticleSimulation ps(OPENCL_KERNEL_PATH "/sph_force.cl", RESOURCES_PATH "/data/kernels.json", RESOURCES_PATH "/data/particles.json");
+  vup::ParticleSimulation ps(OPENCL_KERNEL_PATH "/bodies.cl", RESOURCES_PATH "/data/kernels_bodies.json", RESOURCES_PATH "/data/particles_bodies.json");
 
   //int particle_amount = pdl.particleAmount();
   //std::vector<glm::vec4> translations = pdl.getVec4Dataset("pos");
@@ -88,7 +88,7 @@ int main()
   //buffers.createBuffer<int>("neighborCounter", CL_MEM_READ_WRITE, neighborCounter.size());
   //queue.writeBuffer(buffers.getBuffer("neighborCounter"), sizeof(int) * neighborCounter.size(), &neighborCounter[0]);
 
-  float dt = 0.003f;
+  float dt = 0.001f;
   float camdt = 0.01f;
   //std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
   //vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/sph_force.cl", {"integrate", "calcForces", "calcPressure", "findNeighbors" });
@@ -144,7 +144,7 @@ int main()
   double accumulator = 0.0;
   int frames = 0;
   float left = 2.0;
-  float sign = 1;
+  float sign = 1.0;
   int leftUpdate = 0;
   // Main loop
   glEnable(GL_DEPTH_TEST);
@@ -155,6 +155,7 @@ int main()
   //queue.runRangeKernel(kh.get("resetGrid"), grid.getCellAmount());
   //queue.runRangeKernel(kh.get("updateGrid"), particle_amount);
   //queue.releaseGL(&openglbuffers);
+  ps.init();
   while (!glfwWindowShouldClose(window)) {
     vup::clearGL();
     accumulator += glfwGetTime() - currentTime;
@@ -179,12 +180,12 @@ int main()
     //  queue.releaseGL(&openglbuffers);
     //  gridUpdate++;
       leftUpdate++;
-      left += sign * 0.001;
-      ps.updateConstant("integrate", 5, left);
+      left += sign * 0.004;
+      //ps.updateConstant("integrate", 6, sign);
     }
-    if (leftUpdate > 5000) {
+    if (leftUpdate > 6000) {
       leftUpdate = 0;
-      sign *= -1;
+      sign *= -1.0;
     }
     cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());

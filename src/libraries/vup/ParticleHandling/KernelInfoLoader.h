@@ -26,6 +26,7 @@ namespace vup {
 struct KernelInfo {
   std::vector<int> pos = std::vector<int>();
   bool global = false;
+  bool init = false;
   std::vector<std::string> onSystems = std::vector<std::string>();
   std::vector<std::string> onTypes = std::vector<std::string>();
   std::map<std::string, float> constants = std::map<std::string, float>();

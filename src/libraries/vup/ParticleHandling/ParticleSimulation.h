@@ -22,6 +22,7 @@ class ParticleSimulation
 public:
   ParticleSimulation(const char* kernelpath, const char * kernelinfopath, const char* datapath);
   ~ParticleSimulation();
+  void init();
   void run();
   float getSize() { return m_size; }
   int getParticleCount() { return m_particleCount; }
@@ -36,6 +37,7 @@ private:
   OpenCLBasis* m_clBasis;
   BufferHandler* m_buffers;
   std::vector<std::string> m_kernelorder;
+  std::vector<std::string> m_initkernels;
   std::map<std::string, int> m_kernelSize;
   KernelHandler* m_kernels;
   ParticleQueue* m_queue;

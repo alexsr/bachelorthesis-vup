@@ -18,7 +18,7 @@
 		{
 			"name": "integrate",
 			"constants": {
-				"dt": 0.0001,
+				"dt": 0.001,
 				"xleft": 2.0
 			},
 			"onSystems": [],

@@ -262,7 +262,7 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             }
             std::vector<float> datavec;
             for (int i = 0; i < count * spec.instances; i++) {
-              int f = i % frequency;
+              int f = i % (frequency * spec.instances);
               int offset = f;
               float v = 0.0;
               if (values[offset].IsString()) {
@@ -291,7 +291,7 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             }
             std::vector<int> datavec;
             for (int i = 0; i < count * spec.instances; i++) {
-              int f = i % frequency;
+              int f = i % (frequency * spec.instances);
               int offset = f;
               float v = 0.0;
               if (values[offset].IsString()) {
@@ -320,7 +320,7 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             }
             std::vector<glm::vec4> datavec;
             for (int i = 0; i < count * spec.instances; i++) {
-              int f = i % frequency;
+              int f = i % (frequency * spec.instances);
               int offset = f * 4;
               glm::vec4 result(0);
               for (int h = 0; h < 4; h++) {
