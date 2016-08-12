@@ -1,0 +1,58 @@
+{
+	"kernels": [
+		{
+			"name": "predict",
+			"constants": {
+				"dt": 0.001,
+				"sign": 1.0
+			},
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "findNeighbors",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcLambda",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcDelta",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+		
+			"name": "findNeighbors",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcLambda",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcDelta",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "integrate",
+			"constants": {
+				"dt": 0.001,
+				"xleft": 2.0
+			},
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "viscosity",
+			"onSystems": [],
+			"onTypes": ["F"]
+		}	
+	]
+}
