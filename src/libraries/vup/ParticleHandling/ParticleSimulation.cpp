@@ -4,12 +4,60 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
 {
   m_clBasis = new OpenCLBasis(1, CL_DEVICE_TYPE_GPU, 0);
   m_buffers = new BufferHandler(m_clBasis->context());
+  m_queue = new Queue(m_clBasis->context());
+  m_datapath = datapath;
+  m_kernelpath = kernelpath;
+  m_kernelinfopath = kernelinfopath;
+  reload();
+  init();
+}
 
+vup::ParticleSimulation::~ParticleSimulation()
+{
+}
+
+void vup::ParticleSimulation::init()
+{
+  glFinish();
+  m_queue->acquireGL(&(m_buffers->getGLBuffers()));
+  for (std::string &kernel : m_initkernels) {
+    m_queue->runRangeKernel(m_kernels->get(kernel), m_kernelSize.at(kernel));
+  }
+  m_queue->releaseGL(&(m_buffers->getGLBuffers()));
+}
+
+void vup::ParticleSimulation::run()
+{
+  glFinish();
+  m_queue->acquireGL(&(m_buffers->getGLBuffers()));
+  for (std::string &kernel : m_kernelorder) {
+    //std::cout << "Running " << kernel << std::endl;
+    m_queue->runRangeKernel(m_kernels->get(kernel), m_kernelSize.at(kernel));
+    //std::cout << std::endl;
+  }
+  m_queue->releaseGL(&(m_buffers->getGLBuffers()));
+}
+
+void vup::ParticleSimulation::updateConstant(const char * name, int index, float c)
+{
+  m_kernels->setArg(name, index, c);
+}
+
+void vup::ParticleSimulation::reload()
+{
   // Use data from DataLoader to populate clBuffers
-  DataLoader dataloader(datapath);
+  m_kernelorder.clear();
+  m_initkernels.clear();
+  m_kernelSize.clear();
+  m_buffers->clear();
+  DataLoader dataloader(m_datapath);
   m_particleCount = dataloader.getParticleCount();
   m_size = dataloader.getParticleSize();
-  m_queue = new ParticleQueue(m_clBasis->context(), m_particleCount);
+  vup::SpeedupStructure speedup = dataloader.getSpeedupStructure();
+  for (auto &speedupdata : speedup.getData()) {
+    m_buffers->createBuffer<int>(speedupdata.first, CL_MEM_READ_WRITE, speedupdata.second.size());
+    m_queue->writeBuffer(m_buffers->getBuffer(speedupdata.first), speedupdata.second.size() * sizeof(int), &speedupdata.second[0]);
+  }
   typeIdentifiers interop = dataloader.getInteropIdentifiers();
   for (auto &id : interop) {
     int offset = 0;
@@ -121,11 +169,9 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
       globalOffset += indexCount;
     }
   }
-
-
-  m_kernels = new KernelHandler(m_clBasis->context(), m_clBasis->device(), kernelpath);
+  m_kernels = new KernelHandler(m_clBasis->context(), m_clBasis->device(), m_kernelpath);
   std::map<std::string, std::map<std::string, KernelArgument>> arguments = m_kernels->getKernelArguments();
-  KernelInfoLoader kinfLoader(kernelinfopath);
+  KernelInfoLoader kinfLoader(m_kernelinfopath);
   std::map<std::string, vup::KernelInfo> kernelinfos = kinfLoader.getKernelInfos();
   for (auto &kinf : kernelinfos) {
     if (!kinf.second.init) {
@@ -154,24 +200,38 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
       typeIndices.insert(typeIndices.end(), m_typeIndices[onSystem].begin(), m_typeIndices[onSystem].end());
       globalIndices.insert(globalIndices.end(), m_globalIndices[onSystem].begin(), m_globalIndices[onSystem].end());
       systemIDs.insert(systemIDs.end(), m_typeIndices[onSystem].size(), sysID);
-      sysID++;
+      sysID += m_typeIndices[onSystem].size();
       systemSizes.insert(systemSizes.end(), m_typeIndices[onSystem].size(), m_typeIndices[onSystem].size());
     }
     for (auto &onType : kinf.second.onTypes) {
       for (auto &onSystem : dataloader.getSystemsOfType(onType)) {
-        globalIndices.insert(globalIndices.end(), m_globalIndices[onSystem.first].begin(), m_globalIndices[onSystem.first].end());
-        systemIDs.insert(systemIDs.end(), m_globalIndices[onSystem.first].size(), sysID);
-        sysID++;
-        systemSizes.insert(systemSizes.end(), m_globalIndices[onSystem.first].size(), m_globalIndices[onSystem.first].size());
+        if (std::find(kinf.second.onSystems.begin(), kinf.second.onSystems.end(), onSystem.first) == kinf.second.onSystems.end()) {
+          globalIndices.insert(globalIndices.end(), m_globalIndices[onSystem.first].begin(), m_globalIndices[onSystem.first].end());
+          systemIDs.insert(systemIDs.end(), m_globalIndices[onSystem.first].size(), sysID);
+          sysID += m_globalIndices[onSystem.first].size();
+          systemSizes.insert(systemSizes.end(), m_globalIndices[onSystem.first].size(), m_globalIndices[onSystem.first].size());
+        }
       }
     }
     m_kernelSize[kinf.first] = globalIndices.size();
     if (globalIndices.size() == 0) {
       m_kernelSize[kinf.first] = m_particleCount;
+      sysID = 0;
+      for (auto &t : dataloader.getSystems()) {
+        for (auto &s : t.second) {
+          int indexCount = s.second.getCount();
+          systemIDs.insert(systemIDs.end(), indexCount, sysID);
+          systemSizes.insert(systemSizes.end(), indexCount, indexCount);
+          sysID += indexCount;
+        }
+      }
     }
     else {
       m_buffers->createBuffer<int>("globalIndices" + kinf.first, CL_MEM_READ_WRITE, globalIndices.size());
       m_queue->writeBuffer(m_buffers->getBuffer("globalIndices" + kinf.first), globalIndices.size() * sizeof(int), &globalIndices[0]);
+    }
+    if (kinf.second.onStructure) {
+      m_kernelSize[kinf.first] = speedup.getCount();
     }
     if (typeIndices.size() != 0) {
       m_buffers->createBuffer<int>("typeIndices" + kinf.first, CL_MEM_READ_WRITE, typeIndices.size());
@@ -207,10 +267,26 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
         }
       }
       else if (arg.second.constant) {
+        identifiers speedupConstantIdentifiers = speedup.getConstantIdentifiers();
         if (doesKeyExist(arg.first, kinf.second.constants)) {
           m_kernels->setArg(kinf.first.c_str(), arg.second.index, kinf.second.constants[arg.first]);
           std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
-        } else {
+        }
+        else if (std::find(speedupConstantIdentifiers.begin(), speedupConstantIdentifiers.end(), arg.first) != speedupConstantIdentifiers.end()) {
+          if (arg.second.type == vup::INT) {
+            m_kernels->setArg(kinf.first.c_str(), arg.second.index, speedup.getIntConstant(arg.first));
+            std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+          }
+          else if (arg.second.type == vup::FLOAT) {
+            m_kernels->setArg(kinf.first.c_str(), arg.second.index, speedup.getFloatConstant(arg.first));
+            std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+          }
+          else if (arg.second.type == vup::VEC4) {
+            m_kernels->setArg(kinf.first.c_str(), arg.second.index, speedup.getVec4Constant(arg.first));
+            std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+          }
+        }
+        else {
           std::cout << arg.first << " not found." << std::endl;
         }
       }
@@ -226,35 +302,4 @@ vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char 
       }
     }
   }
-}
-
-vup::ParticleSimulation::~ParticleSimulation()
-{
-}
-
-void vup::ParticleSimulation::init()
-{
-  glFinish();
-  m_queue->acquireGL(&(m_buffers->getGLBuffers()));
-  for (std::string &kernel : m_initkernels) {
-    m_queue->runRangeKernel(m_kernels->get(kernel), m_kernelSize.at(kernel));
-  }
-  m_queue->releaseGL(&(m_buffers->getGLBuffers()));
-}
-
-void vup::ParticleSimulation::run()
-{
-  glFinish();
-  m_queue->acquireGL(&(m_buffers->getGLBuffers()));
-  for (std::string &kernel : m_kernelorder) {
-    //std::cout << "Running " << kernel << std::endl;
-    m_queue->runRangeKernel(m_kernels->get(kernel), m_kernelSize.at(kernel));
-    //std::cout << std::endl;
-  }
-  m_queue->releaseGL(&(m_buffers->getGLBuffers()));
-}
-
-void vup::ParticleSimulation::updateConstant(const char * name, int index, float c)
-{
-  m_kernels->setArg(name, index, c);
 }

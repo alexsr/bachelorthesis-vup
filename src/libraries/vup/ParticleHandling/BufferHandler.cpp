@@ -71,6 +71,15 @@ cl::BufferGL vup::BufferHandler::getBufferGL(std::string name)
   }
 }
 
+void vup::BufferHandler::clear()
+{
+  m_buffers.clear();
+  m_glBuffers.clear();
+  m_vbos.clear();
+  m_interopVBOs.clear();
+  m_glBuffersVector.clear();
+}
+
 bool vup::BufferHandler::doesBufferExist(std::string name)
 {
   std::map<std::string, cl::Buffer>::iterator it = m_buffers.find(name);

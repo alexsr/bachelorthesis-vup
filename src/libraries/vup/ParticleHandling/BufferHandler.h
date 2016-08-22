@@ -37,6 +37,7 @@ public:
   cl::BufferGL getBufferGL(std::string name);
   std::vector<cl::Memory> getGLBuffers() { return m_glBuffersVector; }
   cl::Context getDefaultContext() { return m_defaultContext; }
+  void clear();
 
   template <typename T> void createVBO(std::string name, int loc, int size, int format, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);
   template <typename T> void createVBOData(std::string name, int loc, int size, int format, std::vector<T> data, bool isInterop = false, GLint drawType = GL_STATIC_DRAW);

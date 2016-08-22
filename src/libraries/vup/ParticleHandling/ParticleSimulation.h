@@ -28,10 +28,12 @@ public:
   int getParticleCount() { return m_particleCount; }
   std::map<std::string, vup::VBO> getInteropVBOs() { return m_buffers->getInteropVBOs(); }
   void updateConstant(const char* name, int index, float c);
+  void reload();
 
 private:
   const char* m_kernelpath;
   const char* m_datapath;
+  const char* m_kernelinfopath;
   int m_particleCount;
   float m_size;
   OpenCLBasis* m_clBasis;
@@ -40,7 +42,7 @@ private:
   std::vector<std::string> m_initkernels;
   std::map<std::string, int> m_kernelSize;
   KernelHandler* m_kernels;
-  ParticleQueue* m_queue;
+  Queue* m_queue;
   std::map<std::string, vup::ParticleType> m_types;
   std::map<std::string, std::vector<int>> m_globalIndices;
   std::map<std::string, std::vector<int>> m_typeIndices;

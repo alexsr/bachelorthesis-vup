@@ -11,6 +11,7 @@
 #include "vup/Exceptions/CorruptDataException.h"
 #include "vup/ParticleHandling/ParticleSystem.h"
 #include "vup/ParticleHandling/ParticleType.h"
+#include "vup/ParticleHandling/SpeedupStructure.h"
 #include <vector>
 #include <map>
 #include <string>
@@ -41,6 +42,7 @@ public:
   int getParticleCount() { return m_overallParticleCount; }
   std::map<std::string, int> getTypeParticleCounts() { return m_typeParticleCount; }
   int getTypeParticleCount(std::string type);
+  vup::SpeedupStructure getSpeedupStructure() { return m_speedupStructure; }
 
 private:
   const char* m_path;
@@ -49,10 +51,12 @@ private:
   std::map<std::string, vup::ParticleType> m_types;
   std::map<std::string, int> m_typeParticleCount;
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
+  vup::SpeedupStructure m_speedupStructure;
   typeIdentifiers m_globalIdentifiers;
   typeIdentifiers m_interopIdentifiers;
   void extractTypes(rapidjson::Value &a);
   void extractSystems(rapidjson::Value &a);
+  void extractSpeedupStructure(rapidjson::Value &o);
 
   datatype evalDatatype(std::string s);
   datatype findFormat(std::string f, typeIdentifiers typeVars);

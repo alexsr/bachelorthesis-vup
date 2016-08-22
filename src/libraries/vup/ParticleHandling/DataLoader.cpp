@@ -45,6 +45,9 @@ void vup::DataLoader::load(const char * path)
     m_size = doc["size"].GetFloat();
     extractTypes(doc["types"]);
     extractSystems(doc["systems"]);
+    if (doc.HasMember("speedupstructure") && doc["speedupstructure"].IsObject()) {
+      extractSpeedupStructure(doc["speedupstructure"]);
+    }
   }
 }
 
@@ -83,48 +86,6 @@ void vup::DataLoader::extractTypes(rapidjson::Value &a)
     vup::ParticleType p(type, typeVars);
     m_typeParticleCount[type] = 0;
     std::cout << "Loading type " << type << std::endl;
-    /*if (o.HasMember("constants")) {
-      if (!o["constants"].IsObject()) {
-        throw new CorruptDataException(m_path, "Constants has to be a JSON Object");
-      }
-      std::cout << "Constants:" << std::endl;
-      rapidjson::Value c = o["constants"].GetObject();
-      for (rapidjson::Value::ConstMemberIterator cit = c.MemberBegin(); cit != c.MemberEnd(); ++cit) {
-        if (cit->value.IsNumber()) {
-          if (cit->value.IsInt()) {
-            p.addConstant(cit->name.GetString(), vup::datatype::INT, toString(cit->value.GetInt()));
-          }
-          else {
-            p.addConstant(cit->name.GetString(), vup::datatype::FLOAT, toString(cit->value.GetFloat()));
-          }
-          std::cout << cit->name.GetString() << " = " << toString(cit->value.GetFloat()) << std::endl;
-        }
-        else if (cit->value.IsArray()) {
-          std::string vec = "";
-          if (cit->value.GetArray().Size() > 4) {
-            throw new CorruptDataException(m_path, "Constanct vectors have to be vec4.");
-          }
-          rapidjson::SizeType i = 0;
-          for (i = 0; i < cit->value.GetArray().Size(); i++) {
-            if (!cit->value.GetArray()[i].IsNumber()) {
-              throw new CorruptDataException(m_path, "Constant array data values have to be numeric.");
-            }
-            vec += toString(cit->value.GetArray()[i].GetFloat()) + ",";
-          }
-          while (i < 4) {
-            i++;
-            vec += "0,";
-          }
-          vec = vec.substr(0, vec.length() - 1);
-          vec += "";
-          std::cout << cit->name.GetString() << " = " << vec << std::endl;
-          p.addConstant(cit->name.GetString(), vup::datatype::VEC4, vec);
-        }
-        else {
-          std::cout << "Type not recognized: skipping " << cit->name.GetString() << std::endl;
-        }
-      }
-    }*/
     if (o.HasMember("data")) {
       if (!o["data"].IsObject()) {
         throw new CorruptDataException(m_path, "Data has to be a JSON Object");
@@ -200,43 +161,6 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
     m_typeParticleCount[type] += count;
     vup::ParticleSystem p(name, count, m_types[type]);
     std::cout << "Loading " << name << ": " << count << " particles of type " << type << std::endl;
-   /* if (o.HasMember("constants")) {
-      if (!o["constants"].IsObject()) {
-        throw new CorruptDataException(m_path, "Constants has to be a JSON Object");
-      }
-      std::cout << "Constants:" << std::endl;
-      rapidjson::Value c = o["constants"].GetObject();
-      for (rapidjson::Value::ConstMemberIterator cit = c.MemberBegin(); cit != c.MemberEnd(); ++cit) {
-        if (cit->value.IsNumber()) {
-          p.migrateConstant(cit->name.GetString(), vup::datatype::FLOAT, toString(cit->value.GetFloat()));
-          std::cout << cit->name.GetString() << " = " << toString(cit->value.GetFloat()) << std::endl;
-        }
-        else if (cit->value.IsArray()) {
-          std::string vec = "";
-          if (cit->value.GetArray().Size() > 4) {
-            throw new CorruptDataException(m_path, "Constanct vectors have to be vec4.");
-          }
-          rapidjson::SizeType i = 0;
-          for (i = 0; i < cit->value.GetArray().Size(); i++) {
-            if (!cit->value.GetArray()[i].IsNumber()) {
-              throw new CorruptDataException(m_path, "Constant array data values have to be numeric.");
-            }
-            vec += toString(cit->value.GetArray()[i].GetFloat()) + ",";
-          }
-          while (i < 4) {
-            i++;
-            vec += "0,";
-          }
-          vec = vec.substr(0, vec.length() - 1);
-          vec += "";
-          std::cout << cit->name.GetString() << " = " << vec << std::endl;
-          p.migrateConstant(cit->name.GetString(), vup::datatype::VEC4, vec);
-        }
-        else {
-          std::cout << "Type not recognized: skipping " << cit->name.GetString() << std::endl;
-        }
-      }
-    }*/
     if (o.HasMember("data")) {
       if (!o["data"].IsObject()) {
         throw new CorruptDataException(m_path, "Data has to be a JSON Object");
@@ -350,30 +274,6 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
           else {
             throw new CorruptDataException(m_path, "Data format not supported.");
           }
-          /*if (cit->value.IsObject()) {
-            p.addData(cit->name.GetString(), vup::datatype::FLOAT, toString(cit->value.GetFloat()));
-            std::cout << cit->name.GetString() << " = " << toString(cit->value.GetFloat()) << std::endl;
-          }
-          else if (cit->value.IsArray()) {
-            std::string vec = "";
-            if (cit->value.GetArray().Size() > 4) {
-              throw new CorruptDataException(m_path, "Type specific data vectors have to be vec4.");
-            }
-            rapidjson::SizeType i = 0;
-            for (i = 0; i < cit->value.GetArray().Size(); i++) {
-              if (!cit->value.GetArray()[i].IsNumber()) {
-                throw new CorruptDataException(m_path, "Data array data values have to be numeric.");
-              }
-              vec += toString(cit->value.GetArray()[i].GetFloat()) + ",";
-            }
-            while (i < 4) {
-              i++;
-              vec += "0,";
-            }
-            vec = vec.substr(0, vec.length() - 1);
-            vec += "";
-            std::cout << cit->name.GetString() << " = " << vec << std::endl;
-            p.addData(cit->name.GetString(), vup::datatype::VEC4, vec);*/
         }
         else {
           throw new CorruptDataException(m_path, "Datasets have to be a JSON object.");
@@ -381,6 +281,75 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
       }
     }
     m_systems[type][name] = p;
+  }
+}
+
+void vup::DataLoader::extractSpeedupStructure(rapidjson::Value &o)
+{
+  if (!o.HasMember("name") || !o.IsObject()) {
+    throw new CorruptDataException(m_path, "Missing speedup structure name.");
+  }
+  if (!o.HasMember("size")) {
+    throw new CorruptDataException(m_path, "No structure size specified.");
+  }
+  std::string name = o["name"].GetString();
+  if (!o["size"].IsInt()) {
+    throw new CorruptDataException(m_path, "Size should be an integer.");
+  }
+  int count = o["size"].GetInt();
+  m_speedupStructure = vup::SpeedupStructure(name, count);
+  std::cout << "Loading speedup structure " << name << ": " << count << " capacity." << std::endl;
+  if (!o.HasMember("constants") || !o["constants"].IsObject()) {
+    throw new CorruptDataException(m_path, "Constants has to be a JSON Object");
+  }
+  std::cout << "Constants:" << std::endl;
+  rapidjson::Value c = o["constants"].GetObject();
+  for (rapidjson::Value::ConstMemberIterator cit = c.MemberBegin(); cit != c.MemberEnd(); ++cit) {
+    std::string constantName = cit->name.GetString();
+    if (cit->value.IsNumber()) {
+      if (cit->value.IsInt()) {
+        m_speedupStructure.addIntConstant(constantName, cit->value.GetInt());
+        std::cout << constantName << " = " << toString(cit->value.GetInt()) << std::endl;
+      }
+      else {
+        m_speedupStructure.addFloatConstant(constantName, cit->value.GetFloat());
+        std::cout << constantName << " = " << toString(cit->value.GetFloat()) << std::endl;
+      }
+
+    }
+    else if (cit->value.IsArray()) {
+      glm::vec4 vec(0.0);
+      if (cit->value.GetArray().Size() > 4) {
+        throw new CorruptDataException(m_path, "Constanct vectors have to be vec4.");
+      }
+      for (rapidjson::SizeType i = 0; i < cit->value.GetArray().Size(); i++) {
+        if (!cit->value.GetArray()[i].IsNumber()) {
+          throw new CorruptDataException(m_path, "Constant array data values have to be numeric.");
+        }
+        vec[i] = cit->value.GetArray()[i].GetFloat();
+      }
+      m_speedupStructure.addVec4Constant(constantName, vec);
+      std::cout << constantName << " = (" << toString(vec.x) << ", " << toString(vec.y) << ", " << toString(vec.z) << ", " << toString(vec.w) << ")" << std::endl;
+    }
+    else {
+      std::cout << "Type not recognized: skipping " << cit->name.GetString() << std::endl;
+    }
+  }
+  if (!o.HasMember("data") || !o["data"].IsObject()) {
+      throw new CorruptDataException(m_path, "Data has to be a JSON Object");
+  }
+  std::cout << "Data:" << std::endl;
+  rapidjson::Value d = o["data"].GetObject();
+  for (rapidjson::Value::ConstMemberIterator cit = d.MemberBegin(); cit != d.MemberEnd(); ++cit) {
+    if (cit->value.IsInt()) {
+      int instances = cit->value.GetInt();
+      std::vector<int> data(count * instances, 0);
+      m_speedupStructure.addData(cit->name.GetString(), data);
+      std::cout << cit->name.GetString() << " with " << instances << " instances." << std::endl;
+    }
+    else {
+      throw new CorruptDataException(m_path, "Speedup data has to hold instance count.");
+    }
   }
 }
 

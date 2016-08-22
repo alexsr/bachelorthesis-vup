@@ -47,36 +47,44 @@ void vup::KernelInfoLoader::load(const char * path)
         std::cout << "Position of " << name << ": " << pos << std::endl;
         pos++;
       }
-      if (!o.HasMember("onSystems") || !o["onSystems"].IsArray()) {
-        throw new CorruptDataException(m_path, "Systems kernel is run on have to be declared.");
+      if (o.HasMember("onStructure") && o["onStructure"].IsBool()) {
+        kinf.onStructure = o["onStructure"].GetBool();
       }
-      if (!o.HasMember("onTypes") || !o["onTypes"].IsArray()) {
-        throw new CorruptDataException(m_path, "Types kernel is run on have to be declared.");
-      }
-      if (o["onSystems"].Size() == 0 && o["onTypes"].Size() == 0) {
-        kinf.global = true;
-        std::cout << name << " is a global kernel." << std::endl;
+      if (!kinf.onStructure) {
+        if (!o.HasMember("onSystems") || !o["onSystems"].IsArray()) {
+          throw new CorruptDataException(m_path, "Systems kernel is run on have to be declared.");
+        }
+        if (!o.HasMember("onTypes") || !o["onTypes"].IsArray()) {
+          throw new CorruptDataException(m_path, "Types kernel is run on have to be declared.");
+        }
+        if (o["onSystems"].Size() == 0 && o["onTypes"].Size() == 0) {
+          kinf.global = true;
+          std::cout << name << " is a global kernel." << std::endl;
+        }
+        else {
+          std::cout << name << " is run on: " << std::endl;
+          rapidjson::Value sys = o["onSystems"].GetArray();
+          std::cout << "- Systems: ";
+          for (rapidjson::Value::ValueIterator sysit = sys.Begin(); sysit != sys.End(); ++sysit) {
+            if (!sysit->IsString()) {
+              throw new CorruptDataException(m_path, "System kernel names have to be strings.");
+            }
+            kinf.onSystems.push_back(sysit->GetString());
+            std::cout << sysit->GetString() << ", ";
+          }
+          rapidjson::Value types = o["onTypes"].GetArray();
+          std::cout << "\n- Types: ";
+          for (rapidjson::Value::ValueIterator typesit = types.Begin(); typesit != types.End(); ++typesit) {
+            if (!typesit->IsString()) {
+              throw new CorruptDataException(m_path, "Types kernel names have to be strings.");
+            }
+            kinf.onTypes.push_back(typesit->GetString());
+            std::cout << typesit->GetString() << ", ";
+          }
+        }
       }
       else {
-        std::cout << name << " is run on: " << std::endl;
-        rapidjson::Value sys = o["onSystems"].GetArray();
-        std::cout << "- Systems: ";
-        for (rapidjson::Value::ValueIterator sysit = sys.Begin(); sysit != sys.End(); ++sysit) {
-          if (!sysit->IsString()) {
-            throw new CorruptDataException(m_path, "System kernel names have to be strings.");
-          }
-          kinf.onSystems.push_back(sysit->GetString());
-          std::cout << sysit->GetString() << ", ";
-        }
-        rapidjson::Value types = o["onTypes"].GetArray();
-        std::cout << "\n- Types: ";
-        for (rapidjson::Value::ValueIterator typesit = types.Begin(); typesit != types.End(); ++typesit) {
-          if (!typesit->IsString()) {
-            throw new CorruptDataException(m_path, "Types kernel names have to be strings.");
-          }
-          kinf.onTypes.push_back(typesit->GetString());
-          std::cout << typesit->GetString() << ", ";
-        }
+        std::cout << name << " is run on the speedup structure." << std::endl;
       }
       if (o.HasMember("constants") && o["constants"].IsObject()) {
         std::map<std::string, float> constants;
