@@ -154,24 +154,6 @@ protected:
   cl::Context m_context;
 };
 
-class ParticleQueue : public vup::Queue
-{
-public:
-  ParticleQueue(cl::Context context, int particleAmount);
-  ~ParticleQueue();
-  void runKernelOnType(cl::Kernel k, int type);
-  void setTypeIndices(int type, cl_mem_flags flags, std::vector<int> indices, cl_bool blocking);
-  std::vector<int> getIndices(int type);
-  int getIndicesAmount(int type);
-  cl::Buffer getIndexBuffer(int type);
-  void addIndices(int type, std::vector<int> indices);
-  void removeIndices(int type, std::vector<int> indices);
-private:
-  bool doesTypeExist(int type);
-  std::map<int, vup::TypeBuffer> m_typeIndices;
-  int m_particleAmount;
-};
-
 }
 
 #endif
