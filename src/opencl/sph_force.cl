@@ -45,45 +45,45 @@ float4 reflect(float4 d, float4 n) {
   float4 r = d - 2.0f*dot(n, d)*n;
   return r;
 }
-
-__kernel void resetGrid(__global int* gridCounter) {
-  int id = get_global_id(0);
-  /*if (gridCounter[id] != 0) {
-    printf("c %d = %d; ", id, gridCounter[id]);
-  }*/
-  gridCounter[id] = 0;
-}
-
-__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint) {
-  int id = get_global_id(0);
-  float xradius = cellRadius * cellsinx;
-  float yradius = cellRadius * cellsiny;
-  float zradius = cellRadius * cellsinz;
-  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
-  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
-  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
-  int gridCounterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
-  if (gridCounter[gridCounterIndex] < cellCapacity) {
-    int n = atomic_inc(&(gridCounter[gridCounterIndex]));
-    grid[i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + n] = id;
-    // int index = i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + 0;
-    // printf("(%f, %f, %f) -> %d, %d, %d -> %d; ", pos[id].x, pos[id].y, pos[id].z, i, j, k, index);
-  }
-}
-
-__kernel void printGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global float4* color) {
-  int id = get_global_id(0);
-  float xradius = cellRadius * cellsinx;
-  float yradius = cellRadius * cellsiny;
-  float zradius = cellRadius * cellsinz;
-  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
-  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
-  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
-  color[id].x = i / (float)(cellsinx);
-  color[id].y = j / (float)(cellsiny);
-  color[id].z = k / (float)(cellsinz);
-}
-
+//
+//__kernel void resetGrid(__global int* gridCounter) {
+//  int id = get_global_id(0);
+//  /*if (gridCounter[id] != 0) {
+//    printf("c %d = %d; ", id, gridCounter[id]);
+//  }*/
+//  gridCounter[id] = 0;
+//}
+//
+//__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint) {
+//  int id = get_global_id(0);
+//  float xradius = cellRadius * cellsinx;
+//  float yradius = cellRadius * cellsiny;
+//  float zradius = cellRadius * cellsinz;
+//  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+//  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+//  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+//  int gridCounterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
+//  if (gridCounter[gridCounterIndex] < cellCapacity) {
+//    int n = atomic_inc(&(gridCounter[gridCounterIndex]));
+//    grid[i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + n] = id;
+//    // int index = i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + 0;
+//    // printf("(%f, %f, %f) -> %d, %d, %d -> %d; ", pos[id].x, pos[id].y, pos[id].z, i, j, k, index);
+//  }
+//}
+//
+//__kernel void printGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global float4* color) {
+//  int id = get_global_id(0);
+//  float xradius = cellRadius * cellsinx;
+//  float yradius = cellRadius * cellsiny;
+//  float zradius = cellRadius * cellsinz;
+//  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+//  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+//  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+//  color[id].x = i / (float)(cellsinx);
+//  color[id].y = j / (float)(cellsiny);
+//  color[id].z = k / (float)(cellsinz);
+//}
+//
 //__kernel void findGridNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* globalIndices) {
 //  int id = get_global_id(0);
 //  //int g_id = globalIndices[id];
@@ -118,9 +118,6 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
 //        }
 //      }
 //    }
-//  }
-//  if (id == 449) {
-//  printf("n %d -> %d; ", id, neighborCounter[id]);
 //  }
 //}
 

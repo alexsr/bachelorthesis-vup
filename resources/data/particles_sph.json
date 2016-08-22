@@ -166,21 +166,5 @@
 				}
 			}
 		}
-	],
-	"speedupstructure": {
-		"size": 10800,
-		"name": "uniformgrid",
-		"data": {
-			"gridCounter": 1,
-			"grid": 50
-		},
-		"constants": {
-			"cellRadius": 0.4,
-			"cellsinx": 6,
-			"cellsiny": 6,
-			"cellsinz": 6,
-			"gridMidpoint": [0,0,0,1],
-			"cellCapacity": 50
-		}
-	}
+	]
 }
