@@ -43,16 +43,12 @@ void initGLEW() {
     exit(-1);
   }
 }
-double updateFramerate(double currentTime, double lastTime, GLFWwindow* window, int &frames) {
-  if (currentTime - lastTime >= 1.0) {
-    std::ostringstream strs;
-    strs << frames;
-    std::string title = "FPS: " + strs.str();
-    glfwSetWindowTitle(window, title.c_str());
-    frames = 0;
-    lastTime = currentTime;
-  }
-  return lastTime;
+
+void updateFramerate(double currentTime, double lastTime, GLFWwindow* window) {  
+  std::ostringstream strs;
+  strs << (currentTime - lastTime)*1000.0;
+  std::string title = "MS per frame: " + strs.str();
+  glfwSetWindowTitle(window, title.c_str());
 }
 
 void clearGL() {
