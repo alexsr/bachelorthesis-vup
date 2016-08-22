@@ -46,102 +46,102 @@ float4 reflect(float4 d, float4 n) {
   return r;
 }
 
-__kernel void resetGrid(__global int* counter) {
+__kernel void resetGrid(__global int* gridCounter) {
   int id = get_global_id(0);
-  /*if (counter[id] != 0) {
-    printf("c %d = %d; ", id, counter[id]);
+  /*if (gridCounter[id] != 0) {
+    printf("c %d = %d; ", id, gridCounter[id]);
   }*/
-  counter[id] = 0;
+  gridCounter[id] = 0;
 }
 
-__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity) {
+__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint) {
   int id = get_global_id(0);
-  int i = floor((pos[id].x + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int j = floor((pos[id].y + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int k = floor((pos[id].z + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int n = atomic_inc(&(counter[i * cellsPerLine * cellsPerLine + j * cellsPerLine + k]));
-  grid[i * cellsPerLine * cellsPerLine * cellCapacity + j * cellsPerLine * cellCapacity + k * cellCapacity + n] = id;
-}
-
-__kernel void printGrid(__global float4* pos, __global int* grid, volatile __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, __global float4* color) {
-  if (get_global_id(0) == 0) {
-    for (int id = 0; id < get_global_size(0); id++) {
-      int i = floor((pos[id].x + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      int j = floor((pos[id].y + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      int k = floor((pos[id].z + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      //printf("\nid %d\n", id);
-      //printf("cell %d, %d, %d;\n------\n", i, j, k);
-      //printf("others in the cell:\n");
-      volatile int n = counter[i * cellsPerLine * cellsPerLine + j * cellsPerLine + k];
-      for (int o = 0; o < n; o++) {
-        int other = grid[i * cellsPerLine * cellsPerLine * cellCapacity + j * cellsPerLine * cellCapacity + k * cellCapacity + o];
-        //printf("%d; ", other);
-      }
-    }
-  }
-  //unsigned int id = get_global_id(0);
-  ///*color[id].x = i / (float)(cellsPerLine);
-  //color[id].y = j / (float)(cellsPerLine);
-  //color[id].z = k / (float)(cellsPerLine);*/
-  //if (id == 0) {
-  /*}*/
-}
-
-__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
-  /*int id = get_global_id(0);
-  neighborCounter[id] = 0;
-  int current_x = floor((pos[id].x + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int current_y = floor((pos[id].y + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int current_z = floor((pos[id].z + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  for (int x = 0; x < cellsPerLine; x++) {
-    int x_counter_offset = x * cellsPerLine * cellsPerLine;
-    int x_offset = x_counter_offset * cellCapacity;
-    for (int y = 0; y < cellsPerLine; y++) {
-      int y_counter_offset = y * cellsPerLine;
-      int y_offset = y_counter_offset * cellCapacity;
-      for (int z = 0; z < cellsPerLine; z++) {
-        int z_offset = z * cellCapacity;
-        int n = counter[x_counter_offset + y_counter_offset + z];
-        for (int i = 0; i < n; i++) {
-          int other = grid[x_offset + y_offset + z_offset + i];
-          if (distance(pos[id].xyz, pos[other].xyz) <= h && id != other) {
-            neighbors[id * neighbor_amount + neighborCounter[id]] = other;
-            neighborCounter[id] = neighborCounter[id] + 1;
-          }
-          if (neighborCounter[id] >= neighbor_amount - 1)
-            break;
-        }
-        if (neighborCounter[id] >= neighbor_amount - 1)
-          break;
-      }
-      if (neighborCounter[id] >= neighbor_amount - 1)
-        break;
-    }
-    if (neighborCounter[id] >= neighbor_amount - 1)
-      break;
-  }*/
-
-  unsigned int id = get_global_id(0);
-  unsigned int g_id = globalIndices[id];
-
-  float4 p = pos[g_id];
-
-  neighborCounter[id] = 0;
-  //save neighbours of THIS particle in an array %
-  //array size is 50(n) times bigger than pos[]
-  for (int index = 0; index < get_global_size(0); index++)
-  {
-    if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength) // < smoothingLength
-    {
-      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
-      neighborCounter[id]++;
-      //only saves values with distance < smoothing Lenght --> [0,smoothingLength]
-    }
-    //stop when 50(n) neighbours of i are found
-    if (neighborCounter[id] >= neighbor_amount - 1)
-      break;
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  int gridCounterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
+  if (gridCounter[gridCounterIndex] < cellCapacity) {
+    int n = atomic_inc(&(gridCounter[gridCounterIndex]));
+    grid[i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + n] = id;
+    // int index = i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + 0;
+    // printf("(%f, %f, %f) -> %d, %d, %d -> %d; ", pos[id].x, pos[id].y, pos[id].z, i, j, k, index);
   }
 }
+
+__kernel void printGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global float4* color) {
+  int id = get_global_id(0);
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  color[id].x = i / (float)(cellsinx);
+  color[id].y = j / (float)(cellsiny);
+  color[id].z = k / (float)(cellsinz);
+}
+
+//__kernel void findGridNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* globalIndices) {
+//  int id = get_global_id(0);
+//  //int g_id = globalIndices[id];
+//  float xradius = cellRadius * cellsinx;
+//  float yradius = cellRadius * cellsiny;
+//  float zradius = cellRadius * cellsinz;
+//  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+//  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+//  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+//  neighborCounter[id] = 0;
+//  for (int x = 0; x < cellsinx; x++) {
+//    int x_counter_offset = x * cellsiny * cellsinz;
+//    int x_offset = x_counter_offset * cellCapacity;
+//    for (int y = 0; y < cellsiny; y++) {
+//      int y_counter_offset = y * cellsinz;
+//      int y_offset = y_counter_offset * cellCapacity;
+//      for (int z = 0; z < cellsinz; z++) {
+//        int z_offset = z * cellCapacity;
+//        int n = gridCounter[x_counter_offset + y_counter_offset + z];
+//        //printf("%d, %d, %d -> %d; ", x, y, z, n);
+//        for (int o = 0; o < n; o++) {
+//          int j = neighborCounter[id];
+//          if (j < neighbor_amount) {
+//            int other = grid[x_offset + y_offset + z_offset + o];
+//            float dist = distance(pos[id].xyz, pos[other].xyz);
+//            if (dist <= smoothingLength && id != other) {
+//              int j_id = id * neighbor_amount + j;
+//              neighbors[j_id] = other;
+//              neighborCounter[id]++;
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+//  if (id == 449) {
+//  printf("n %d -> %d; ", id, neighborCounter[id]);
+//  }
+//}
+
+ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+   unsigned int id = get_global_id(0);
+   unsigned int g_id = globalIndices[id];
+
+   float4 p = pos[g_id];
+
+   neighborCounter[id] = 0;
+   for (int index = 0; index < get_global_size(0); index++)
+   {
+     if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength)
+     {
+       neighbors[id * neighbor_amount + neighborCounter[id]] = index;
+       neighborCounter[id]++;
+     }
+     if (neighborCounter[id] >= neighbor_amount - 1)
+       break;
+   }
+ }
 
 __kernel void calcPressure(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global int* globalIndices) {
   unsigned int id = get_global_id(0);
@@ -198,8 +198,8 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   vel[id] += ((forceIntern[id] + forceExtern) / mass[id]) * dt;
   pos[id] += vel[id] * dt;
   
-  float bounds = 2.0;
-  float ybounds = 2.0;
+  float bounds = 1.0;
+  float ybounds = 1.0;
   if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up);
   }
@@ -218,7 +218,7 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
     vel[id] = reflect(vel[id], back);
   }
-  pos[id].x = clamp(pos[id].x, -xleft, bounds);
+  pos[id].x = clamp(pos[id].x, -bounds, bounds);
   pos[id].y = clamp(pos[id].y, -ybounds, ybounds);
   pos[id].z = clamp(pos[id].z, -bounds, bounds);
 }

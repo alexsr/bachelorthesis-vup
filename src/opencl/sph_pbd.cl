@@ -213,21 +213,27 @@ __kernel void integrate(__global float4* pos, __global float4* next, __global fl
   float ybounds = 5.0;
   if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up);
+    vel[id] *= 0.8f;
   }
   if (dot(vel[id], down) < 0 && pos[id].y > ybounds) {
     vel[id] = reflect(vel[id], down);
+    vel[id] *= 0.8f;
   }
   if (dot(vel[id], right) < 0 && pos[id].x < -bounds) {
     vel[id] = reflect(vel[id], right);
+    vel[id] *= 0.8f;
   }
   if (dot(vel[id], left) < 0 && pos[id].x > bounds) {
     vel[id] = reflect(vel[id], left);
+    vel[id] *= 0.8f;
   }
   if (dot(vel[id], forth) < 0 && pos[id].z < -bounds) {
     vel[id] = reflect(vel[id], forth);
+    vel[id] *= 0.8f;
   }
   if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
     vel[id] = reflect(vel[id], back);
+    vel[id] *= 0.8f;
   }
   pos[id].x = clamp(pos[id].x, -bounds, bounds);
   pos[id].y = clamp(pos[id].y, -ybounds, ybounds);
