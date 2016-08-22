@@ -1,0 +1,42 @@
+{
+	"kernels": [
+		{
+			"name": "resetGrid",
+			"onStructure": true
+		},
+		{
+			"name": "updateGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "printGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "findNeighbors",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcPressure",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcForces",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "integrate",
+			"constants": {
+				"dt": 0.001,
+				"xleft": 1.0
+			},
+			"onSystems": [],
+			"onTypes": []
+		}
+	]
+}

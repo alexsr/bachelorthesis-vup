@@ -1,20 +1,6 @@
 {
 	"kernels": [
 		{
-			"name": "resetGrid",
-			"onStructure": true
-		},
-		{
-			"name": "updateGrid",
-			"onSystems": [],
-			"onTypes": []
-		},
-		{
-			"name": "printGrid",
-			"onSystems": [],
-			"onTypes": []
-		},
-		{
 			"name": "generateConnectionDistances",
 			"onSystems": [],
 			"onTypes": ["B"],
@@ -24,12 +10,36 @@
             }
 		},
 		{
+			"name": "resetGrid",
+			"onStructure": true
+		},
+		{
+			"name": "updateGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
 			"name": "fakecollision",
 			"onSystems": [],
-			"onTypes": ["B"],
+			"onTypes": [],
 			"constants": {
 				"dt": 0.001
 			}
+		},
+		{
+			"name": "findNeighbors",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcPressure",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcForces",
+			"onSystems": [],
+			"onTypes": ["F"]
 		},
         {
 			"name": "computeConnectionForces",
@@ -43,7 +53,7 @@
         {
 			"name": "integrate",
 			"onSystems": [],
-			"onTypes": ["B"],
+			"onTypes": [],
             "constants": {
                 "dt": 0.001,
 				"sign": 1.0

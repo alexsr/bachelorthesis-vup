@@ -82,46 +82,19 @@
 					0
 				]
 			}
-		},
-		{
-			"name": "A",
-			"variables": {},
-			"data": {
-				"mass": [
-					0.02
-				],
-				"vel": [
-					0.0,
-					0.0,
-					0.0,
-					0.0
-				],
-				"forceIntern": [
-					0.0,
-					0.0,
-					0.0,
-					0.0
-				],
-				"color": [
-					1.0,
-					1.0,
-					0.0,
-					1.0
-				]
-			}
 		}
 	],
 	"systems": [
 		{
 			"name": "Fluid1",
 			"type": "F",
-			"particles": 1000,
+			"particles": 100,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
 						"random-1.5,1.5",
-						"random-3,0",
+						"random-2,0",
 						"random-1.5,1.5",
 						1.0
 					]
@@ -146,7 +119,7 @@
 					"frequency": 1,
 					"values": [
 						"random-1.5,1.5",
-						"random1.5,3",
+						"random1.5,2",
 						"random-1.5,1.5",
 						1.0
 					]
@@ -163,56 +136,6 @@
 						1,
 						0,
 						0,
-						1.0
-					]
-				}
-			}
-		},
-		{
-			"name": "Granular1",
-			"type": "A",
-			"particles": 100,
-			"data": {
-				"pos": {
-					"frequency": 1,
-					"values": [
-						"random-1.5,1.5",
-						"random-3,0",
-						"random-1.5,1.5",
-						1.0
-					]
-				},
-				"color": {
-					"frequency": 1,
-					"values": [
-						1,
-						1,
-						0,
-						1.0
-					]
-				}
-			}
-		},
-		{
-			"name": "AGranular1",
-			"type": "A",
-			"particles": 200,
-			"data": {
-				"pos": {
-					"frequency": 1,
-					"values": [
-						"random-1.5,1.5",
-						"random-3,0",
-						"random-1.5,1.5",
-						1.0
-					]
-				},
-				"color": {
-					"frequency": 1,
-					"values": [
-						1.0,
-						0.5,
-						0.0,
 						1.0
 					]
 				}
@@ -245,23 +168,18 @@
 		}
 	],
 	"speedupstructure": {
-		"size": 1000,
+		"size": 10800,
 		"name": "uniformgrid",
 		"data": {
-			"gridCounter": {
-				"format": "1i",
-				"instances": 1,
-				"value": 0
-			},
-			"grid": {
-				"format": "1i",
-				"instances": 50,
-				"value": 0
-			}
+			"gridCounter": 1,
+			"grid": 50
 		},
 		"constants": {
-			"gridRadius": 4.0,
-			"cellsPerLine": 10,
+			"cellRadius": 0.4,
+			"cellsinx": 6,
+			"cellsiny": 6,
+			"cellsinz": 6,
+			"gridMidpoint": [0,0,0,1],
 			"cellCapacity": 50
 		}
 	}

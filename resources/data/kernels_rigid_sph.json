@@ -1,0 +1,63 @@
+{
+	"kernels": [
+        {
+			"name": "calculateCenterOfMass",
+			"onSystems": [],
+			"onTypes": ["R"],
+            "init": true
+		},
+		{
+			"name": "rigidCollision",
+			"onSystems": [],
+			"onTypes": [],
+			"constants": {
+				"dt": 0.001
+			}
+		},
+		{
+			"name": "findNeighbors",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcPressure",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "calcForces",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "rigidBounds",
+			"onSystems" : [],
+			"onTypes": ["R"]
+		},
+        {
+			"name": "calcMomenta",
+			"onSystems": [],
+			"onTypes": ["R"],
+            "constants": {
+				"dt": 0.001
+            }
+		},
+		{
+			"name": "integrateFluid",
+			"constants": {
+				"dt": 0.001,
+				"xleft": 2.0
+			},
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+        {
+			"name": "integrateRigidBody",
+			"onSystems": [],
+			"onTypes": ["R"],
+            "constants": {
+                "dt": 0.001
+            }
+		}
+	]
+}
