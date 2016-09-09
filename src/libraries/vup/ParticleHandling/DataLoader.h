@@ -30,9 +30,9 @@ namespace vup {
 class DataLoader
 {
 public:
-  DataLoader(const char* path);
+  DataLoader(std::string path);
   ~DataLoader();
-  void load(const char* path);
+  void load(std::string path);
   float getParticleSize() { return m_size; }
   std::map<std::string, vup::ParticleType> getTypes() { return m_types; }
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> getSystems() { return m_systems; }
@@ -45,7 +45,7 @@ public:
   vup::SpeedupStructure getSpeedupStructure() { return m_speedupStructure; }
 
 private:
-  const char* m_path;
+  std::string m_path;
   float m_size;
   int m_overallParticleCount;
   std::map<std::string, vup::ParticleType> m_types;

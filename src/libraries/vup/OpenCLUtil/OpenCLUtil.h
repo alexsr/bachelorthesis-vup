@@ -90,12 +90,12 @@ struct KernelArgument {
 class KernelHandler
 {
 public:
-  KernelHandler(cl::Context context, cl::Device device, const char* path);
-  KernelHandler(cl::Context context, cl::Device device, const char* path, std::vector<std::string> kernels);
+  KernelHandler(cl::Context context, cl::Device device, std::string path);
+  KernelHandler(cl::Context context, cl::Device device, std::string path, std::vector<std::string> kernels);
   ~KernelHandler();
   void reloadProgram();
-  void reloadProgram(const char* path);
-  void reloadProgram(cl::Context context, cl::Device device, const char* path);
+  void reloadProgram(std::string path);
+  void reloadProgram(cl::Context context, cl::Device device, std::string path);
   void initKernels(std::vector<std::string> kernels);
   void initKernel(std::string kernel);
   cl::Kernel get(std::string name);
@@ -103,14 +103,14 @@ public:
   template <class T> void setArg(std::vector<std::string> names, int index, T data);
   template <class T> void setArg(const char* name, int index, T data);
 private:
-  void buildProgram(cl::Context context, cl::Device device, const char* path);
-  void extractArguments(const char* path);
+  void buildProgram(cl::Context context, cl::Device device, std::string path);
+  void extractArguments(std::string path);
   bool doesKernelExist(std::string name);
   std::vector<std::string> splitParams(const char* str, char split);
   cl::Context m_context;
   cl::Device m_device;
   cl::Program m_program;
-  const char* m_path;
+  std::string m_path;
   std::map<std::string, cl::Kernel> m_kernels;
   std::map<std::string, std::map<std::string, KernelArgument>> m_arguments;
 };

@@ -29,8 +29,8 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  vup::ParticleSimulation ps(OPENCL_KERNEL_PATH "/deformable_sph.cl", RESOURCES_PATH "/data/kernels_deformable_sph.json", RESOURCES_PATH "/data/particles_deformable_sph.json");
-
+  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt");
+  
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
   float dt = 0.01f;
@@ -39,37 +39,29 @@ int main()
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   double accumulator = 0.0;
-  int frames = 0;
-  float left = 2.0;
-  float sign = 1.0;
-  int leftUpdate = 0;
   // Main loop
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   while (!glfwWindowShouldClose(window)) {
     vup::clearGL();
-    accumulator += glfwGetTime() - currentTime;
     currentTime = glfwGetTime();
-    frames++;
+    accumulator += currentTime - lastTime;
     vup::updateFramerate(currentTime, lastTime, window);
     lastTime = currentTime;
     while (accumulator > dt) {
       ps.run();
       accumulator -= dt;
-      leftUpdate++;
-      left += sign * 0.004;
-     // ps.updateConstant("integrate", 6, sign);
-    }
-    if (leftUpdate > 6000) {
-      leftUpdate = 0;
-      sign *= -1.0;
     }
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       ps.reload();
       ps.init();
       sphere = new vup::SphereData(ps.getSize(), 10, 10);
       renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
+    }
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
+      ps.reloadKernel();
+      ps.init();
     }
     cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());

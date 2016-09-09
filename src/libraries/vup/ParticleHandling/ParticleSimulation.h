@@ -20,7 +20,7 @@ namespace vup {
 class ParticleSimulation
 {
 public:
-  ParticleSimulation(const char* kernelpath, const char * kernelinfopath, const char* datapath);
+  ParticleSimulation(std::string configpath);
   ~ParticleSimulation();
   void init();
   void run();
@@ -29,11 +29,13 @@ public:
   std::map<std::string, vup::VBO> getInteropVBOs() { return m_buffers->getInteropVBOs(); }
   void updateConstant(const char* name, int index, float c);
   void reload();
+  void reloadKernel();
 
 private:
-  const char* m_kernelpath;
-  const char* m_datapath;
-  const char* m_kernelinfopath;
+  std::string m_configpath;
+  std::string m_kernelpath;
+  std::string m_datapath;
+  std::string m_kernelinfopath;
   int m_particleCount;
   float m_size;
   OpenCLBasis* m_clBasis;

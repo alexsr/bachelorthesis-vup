@@ -54,7 +54,7 @@ vup::OpenCLBasis::~OpenCLBasis()
 {
 }
 
-vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path)
+vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, std::string path)
 {
   m_context = context;
   m_device = device;
@@ -63,7 +63,7 @@ vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const 
   extractArguments(path);
   m_kernels = std::map<std::string, cl::Kernel>();
 }
-vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, const char * path, std::vector<std::string> kernels) : KernelHandler(context, device, path)
+vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, std::string path, std::vector<std::string> kernels) : KernelHandler(context, device, path)
 {
   initKernels(kernels);
 }
@@ -79,12 +79,12 @@ void vup::KernelHandler::reloadProgram()
   }
   initKernels(keys);
 }
-void vup::KernelHandler::reloadProgram(const char * path)
+void vup::KernelHandler::reloadProgram(std::string path)
 {
   m_path = path;
   reloadProgram();
 }
-void vup::KernelHandler::reloadProgram(cl::Context context, cl::Device device, const char * path)
+void vup::KernelHandler::reloadProgram(cl::Context context, cl::Device device, std::string path)
 {
   m_context = context;
   m_device = device;
@@ -118,7 +118,7 @@ cl::Kernel vup::KernelHandler::get(std::string name)
   }
 }
 
-void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, const char * path)
+void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, std::string path)
 {
   vup::FileReader file(path);
   m_program = cl::Program(context, file.getSourceChar());
@@ -129,7 +129,7 @@ void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, co
   }
 }
 
-void vup::KernelHandler::extractArguments(const char * path)
+void vup::KernelHandler::extractArguments(std::string path)
 {
   vup::FileReader file(path);
   std::string src = file.getSource();

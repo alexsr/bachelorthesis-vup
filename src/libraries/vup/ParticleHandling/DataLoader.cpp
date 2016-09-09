@@ -1,6 +1,6 @@
 #include "DataLoader.h"
 
-vup::DataLoader::DataLoader(const char* path)
+vup::DataLoader::DataLoader(std::string path)
 {
   //m_floatConstants = std::map<std::string, float>();
   //m_intConstants = std::map<std::string, int>();
@@ -12,7 +12,7 @@ vup::DataLoader::~DataLoader()
 {
 }
 
-void vup::DataLoader::load(const char * path)
+void vup::DataLoader::load(std::string path)
 {
   /*
   m_floatConstants.clear();

@@ -9,19 +9,7 @@
 			"format": "4f",
 			"instances": 1
 		},
-        "forceExtern": {
-			"format": "4f",
-			"instances": 1
-		},
 		"mass": {
-			"format": "1f",
-			"instances": 1
-		},
-		"springcoefficient": {
-			"format": "1f",
-			"instances": 1
-		},
-		"dampingcoefficient": {
 			"format": "1f",
 			"instances": 1
 		}
@@ -42,6 +30,18 @@
 		{
 			"name": "F",
 			"variables": {
+				"predictpos": {
+					"format": "4f",
+					"instances": 1
+				},
+				"predictvel": {
+					"format": "4f",
+					"instances": 1
+				},
+				"forcePressure": {
+					"format": "4f",
+					"instances": 1
+				},
 				"density": {
 					"format": "1f",
 					"instances": 1
@@ -52,7 +52,7 @@
 				},
 				"neighbors": {
 					"format": "1f",
-					"instances": 20
+					"instances": 30
 				},
 				"neighborCounter": {
 					"format": "1f",
@@ -61,21 +61,27 @@
 			},
 			"data": {
 				"density": [
-					0.59
+					1000.0
 				],
 				"pressure": [
 					0.0
-				],
-                "springcoefficient": [
-					50000.0
-				],
-                "dampingcoefficient": [
-					1.0
 				],
 				"mass": [
 					0.004
 				],
 				"vel": [
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				],
+				"predictpos": [
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				],
+				"predictvel": [
 					0.0,
 					0.0,
 					0.0,
@@ -87,7 +93,7 @@
 					0.0,
 					0.0
 				],
-                "forceExtern": [
+				"forcePressure": [
 					0.0,
 					0.0,
 					0.0,
@@ -108,50 +114,45 @@
 			}
 		},
 		{
-			"name": "R",
+			"name": "B",
 			"variables": {
-                "relativePos": {
-                    "format": "4f",
-                    "instances": 1
-                },
-                "centerOfMass": {
-                    "format": "4f",
-                    "instances": 1
-                },
-                "rigidMass": {
+                "stiffness": {
                     "format": "1f",
                     "instances": 1
                 },
-                "inertiaTensor": {
+                "dampingConstant": {
                     "format": "1f",
-                    "instances": 9
-                },
-                "quat": {
-                    "format": "4f",
                     "instances": 1
                 },
-                "momentum": {
-                    "format": "4f",
+                "frictionConstant": {
+                    "format": "1f",
                     "instances": 1
                 },
-                "angularMomentum": {
-                    "format": "4f",
-                    "instances": 1
+				"connectionCounter": {
+					"format": "1i",
+					"instances": 1
                 },
-                "angularVel": {
+				"connections": {
+					"format": "1i",
+					"instances": 26
+				},
+				"connectionDistances": {
                     "format": "4f",
-                    "instances": 1
-                }
+					"instances": 26
+				}
 			},
 			"data": {
 				"mass": [
-					0.0004
+					0.4
 				],
-                "springcoefficient": [
-					50000.0
+                "stiffness": [
+					5000.0
 				],
-                "dampingcoefficient": [
-					1.0
+                "dampingConstant": [
+					2.0
+				],
+                "frictionConstant": [
+					0.4
 				],
 				"vel": [
 					0.0,
@@ -165,60 +166,24 @@
 					0.0,
 					0.0
 				],
-                "forceExtern": [
-					0.0,
-					0.0,
-					0.0,
-					0.0
-				],
 				"color": [
 					0.0,
 					0.0,
 					1.0,
 					1.0
 				],
-                "relativePos": [
-					0.0,
-					0.0,
-					0.0,
-					1.0
+				"connections": [
+					-1
 				],
-                "centerOfMass": [
-					0.0,
-					0.0,
-					0.0,
-					1.0
+				"connectionCounter": [
+					0
 				],
-                "quat": [
-					0.0,
-					0.0,
-					0.0,
-					1.0
-				],
-                "momentum": [
+				"connectionDistances": [
 					0.0,
 					0.0,
 					0.0,
 					0.0
-				],
-                "angularMomentum": [
-					0.0,
-					0.0,
-					0.0,
-					0.0
-				],
-                "angularVel": [
-					0.0,
-					0.0,
-					0.0,
-					0.0
-				],
-                "rigidMass": [
-					0.0
-				],
-                "inertiaTensor": [
-                    0.0
-                ]
+				]
 			}
 		}
 	],
@@ -226,14 +191,14 @@
 		{
 			"name": "Fluid1",
 			"type": "F",
-			"particles": 500,
+			"particles": 1500,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
-						"random-1.5,1.5",
-						"random-3,0",
-						"random-1.5,1.5",
+						"random-1,1",
+						"random-2,0",
+						"random-1,1",
 						1.0
 					]
 				},
@@ -249,42 +214,42 @@
 			}
 		},
 		{
-			"name": "RBody1",
-			"type": "R",
+			"name": "Body1",
+			"type": "B",
 			"particles": 27,
 			"data": {
 				"pos": {
 					"frequency": 27,
 					"values": [
-						-0.2, -0.2, -0.2, 1.0,
-                        0.0, -0.2, -0.2, 1.0,
-                        0.2, -0.2, -0.2, 1.0,
-                        -0.2, 0.0, -0.2, 1.0,
-                        0.0, 0.0, -0.2, 1.0,
-                        0.2, 0.0, -0.2, 1.0,
-                        -0.2, 0.2, -0.2, 1.0,
-                        0.0, 0.2, -0.2, 1.0,
-                        0.2, 0.2, -0.2, 1.0,
+						-0.2, 1.4, -0.2, 1.0,
+            0.0, 1.4, -0.2, 1.0,
+            0.2, 1.4, -0.2, 1.0,
+            -0.2, 1.6, -0.2, 1.0,
+            0.0, 1.6, -0.2, 1.0,
+            0.2, 1.6, -0.2, 1.0,
+            -0.2, 1.8, -0.2, 1.0,
+            0.0, 1.8, -0.2, 1.0,
+            0.2, 1.8, -0.2, 1.0,
 
-                        -0.2, -0.2, 0.0, 1.0,
-                        0.0, -0.2, 0.0, 1.0,
-                        0.2, -0.2, 0.0, 1.0,
-                        -0.2,0.0, 0.0, 1.0,
-                        0.0, 0.0, 0.0, 1.0,
-                        0.2, 0.0, 0.0, 1.0,
-                        -0.2,0.2, 0.0, 1.0,
-                        0.0, 0.2, 0.0, 1.0,
-                        0.2, 0.2, 0.0, 1.0,
+            -0.2, 1.4, 0.0, 1.0,
+            0.0, 1.4, 0.0, 1.0,
+            0.2, 1.4, 0.0, 1.0,
+            -0.2,1.6, 0.0, 1.0,
+            0.0, 1.6, 0.0, 1.0,
+            0.2, 1.6, 0.0, 1.0,
+            -0.2,1.8, 0.0, 1.0,
+            0.0, 1.8, 0.0, 1.0,
+            0.2, 1.8, 0.0, 1.0,
 
-                        -0.2, -0.2, 0.2, 1.0,
-                        0.0, -0.2, 0.2, 1.0,
-                        0.2, -0.2, 0.2, 1.0,
-                        -0.2, 0.0, 0.2, 1.0,
-                        0.0, 0.0, 0.2, 1.0,
-                        0.2, 0.0, 0.2, 1.0,
-                        -0.2,0.2, 0.2, 1.0,
-                        0.0,0.2, 0.2, 1.0,
-                        0.2, 0.2, 0.2, 1.0
+            -0.2, 1.4, 0.2, 1.0,
+            0.0, 1.4, 0.2, 1.0,
+            0.2, 1.4, 0.2, 1.0,
+            -0.2, 1.6, 0.2, 1.0,
+            0.0, 1.6, 0.2, 1.0,
+            0.2, 1.6, 0.2, 1.0,
+            -0.2,1.8, 0.2, 1.0,
+            0.0,1.8, 0.2, 1.0,
+            0.2, 1.8, 0.2, 1.0
 					]
 				},
 				"color": {
@@ -295,7 +260,7 @@
                         0.2, 0.8, 0.8, 1.0,
                         0.8, 0.0, 0.8, 1.0,
                         0.0, 0.0, 0.8, 1.0,
-                        0.2, 0.0, 80.8, 1.0,
+                        0.2, 0.0, 0.8, 1.0,
                         0.8, 0.2, 0.8, 1.0,
                         0.0, 0.2, 0.8, 1.0,
                         0.2, 0.2, 0.8, 1.0,
@@ -325,16 +290,19 @@
 		}
 	],
 	"speedupstructure": {
-		"size": 1000,
+		"size": 1331,
 		"name": "uniformgrid",
 		"data": {
 			"gridCounter": 1,
-			"grid": 50
+			"grid": 1331
 		},
 		"constants": {
-			"gridRadius": 4.0,
-			"cellsPerLine": 10,
-			"cellCapacity": 50
+			"cellRadius": 0.2,
+			"cellsinx": 11,
+			"cellsiny": 11,
+			"cellsinz": 11,
+			"gridMidpoint": [0,0,0,1],
+			"cellCapacity": 100
 		}
 	}
 }

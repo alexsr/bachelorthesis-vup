@@ -1,0 +1,3 @@
+rigid.cl
+kernels_rigid.json
+particles_rigid.json

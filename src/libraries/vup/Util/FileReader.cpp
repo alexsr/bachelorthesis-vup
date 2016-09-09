@@ -1,6 +1,6 @@
 #include "FileReader.h"
 
-vup::FileReader::FileReader(const char* path)
+vup::FileReader::FileReader(std::string path)
 {
   m_path = path;
   m_source = load(path);
@@ -12,7 +12,7 @@ vup::FileReader::~FileReader()
   
 }
 
-std::string vup::FileReader::load(const char * path)
+std::string vup::FileReader::load(std::string path)
 {
   m_loaded = false;
   std::ifstream file(path);

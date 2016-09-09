@@ -1,13 +1,11 @@
 #include "ParticleSimulation.h"
 
-vup::ParticleSimulation::ParticleSimulation(const char * kernelpath, const char * kernelinfopath, const char * datapath)
+vup::ParticleSimulation::ParticleSimulation(std::string configpath)
 {
   m_clBasis = new OpenCLBasis(1, CL_DEVICE_TYPE_GPU, 0);
   m_buffers = new BufferHandler(m_clBasis->context());
   m_queue = new Queue(m_clBasis->context());
-  m_datapath = datapath;
-  m_kernelpath = kernelpath;
-  m_kernelinfopath = kernelinfopath;
+  m_configpath = configpath;
   reload();
   init();
 }
@@ -45,7 +43,20 @@ void vup::ParticleSimulation::updateConstant(const char * name, int index, float
 
 void vup::ParticleSimulation::reload()
 {
-  // Use data from DataLoader to populate clBuffers
+  vup::FileReader configReader(m_configpath);
+  std::istringstream f(configReader.getSource());
+  std::string kernelpath;
+  std::string kerneldatapath;
+  std::string particledatapath;
+  std::getline(f, kernelpath);
+  kernelpath = OPENCL_KERNEL_PATH "/" + kernelpath;
+  m_kernelpath = kernelpath.c_str();
+  std::getline(f, kerneldatapath);
+  kerneldatapath = RESOURCES_PATH "/data/" + kerneldatapath;
+  m_kernelinfopath = kerneldatapath;
+  std::getline(f, particledatapath);
+  particledatapath = RESOURCES_PATH "/data/" + particledatapath;
+  m_datapath = particledatapath;
   m_kernelorder.clear();
   m_initkernels.clear();
   m_kernelSize.clear();
@@ -265,6 +276,83 @@ void vup::ParticleSimulation::reload()
         if (systemSizes.size() != 0) {
           m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("systemSizes" + kinf.first));
         }
+      }
+      else if (arg.second.constant) {
+        identifiers speedupConstantIdentifiers = speedup.getConstantIdentifiers();
+        if (doesKeyExist(arg.first, kinf.second.constants)) {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, kinf.second.constants[arg.first]);
+          std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+        }
+        else if (std::find(speedupConstantIdentifiers.begin(), speedupConstantIdentifiers.end(), arg.first) != speedupConstantIdentifiers.end()) {
+          if (arg.second.type == vup::INT) {
+            m_kernels->setArg(kinf.first.c_str(), arg.second.index, speedup.getIntConstant(arg.first));
+            std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+          }
+          else if (arg.second.type == vup::FLOAT) {
+            m_kernels->setArg(kinf.first.c_str(), arg.second.index, speedup.getFloatConstant(arg.first));
+            std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+          }
+          else if (arg.second.type == vup::VEC4) {
+            m_kernels->setArg(kinf.first.c_str(), arg.second.index, speedup.getVec4Constant(arg.first));
+            std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+          }
+        }
+        else {
+          std::cout << arg.first << " not found." << std::endl;
+        }
+      }
+      else {
+        if (doesKeyExist(arg.first, interop)) {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBufferGL(arg.first));
+          std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+        }
+        else {
+          m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer(arg.first));
+          std::cout << "Set " << arg.first << " at " << arg.second.index << " of " << kinf.first << std::endl;
+        }
+      }
+    }
+  }
+}
+
+void vup::ParticleSimulation::reloadKernel()
+{
+  DataLoader dataloader(m_datapath);
+  typeIdentifiers interop = dataloader.getInteropIdentifiers();
+  vup::SpeedupStructure speedup = dataloader.getSpeedupStructure();
+  int globalOffset = 0;
+  for (auto &t : dataloader.getSystems()) {
+    int typeOffset = 0;
+    for (auto &s : t.second) {
+      int indexCount = s.second.getCount();
+      m_globalIndices[s.first] = std::vector<int>(indexCount);
+      m_typeIndices[s.first] = std::vector<int>(indexCount);
+      for (int i = 0; i < indexCount; i++) {
+        m_globalIndices[s.first].at(i) = i + globalOffset;
+        m_typeIndices[s.first].at(i) = i + typeOffset;
+      }
+      typeOffset += indexCount;
+      globalOffset += indexCount;
+    }
+  }
+  m_kernels = new KernelHandler(m_clBasis->context(), m_clBasis->device(), m_kernelpath);
+  std::map<std::string, std::map<std::string, KernelArgument>> arguments = m_kernels->getKernelArguments();
+  KernelInfoLoader kinfLoader(m_kernelinfopath);
+  std::map<std::string, vup::KernelInfo> kernelinfos = kinfLoader.getKernelInfos();
+  for (auto &kinf : kernelinfos) {
+    m_kernels->initKernel(kinf.first);
+    for (auto &arg : arguments[kinf.first]) {
+      if (arg.first == "globalIndices") {
+        m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("globalIndices" + kinf.first));
+      }
+      else if (arg.first == "typeIndices") {
+        m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("typeIndices" + kinf.first));
+      }
+      else if (arg.first == "systemIDs") {
+        m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("systemIDs" + kinf.first));
+      }
+      else if (arg.first == "systemSizes") {
+        m_kernels->setArg(kinf.first.c_str(), arg.second.index, m_buffers->getBuffer("systemSizes" + kinf.first));
       }
       else if (arg.second.constant) {
         identifiers speedupConstantIdentifiers = speedup.getConstantIdentifiers();

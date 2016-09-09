@@ -10,11 +10,6 @@
 			"onTypes": []
 		},
 		{
-			"name": "printGrid",
-			"onSystems": [],
-			"onTypes": []
-		},
-		{
 			"name": "generateConnectionDistances",
 			"onSystems": [],
 			"onTypes": ["B"],
@@ -31,6 +26,15 @@
 				"dt": 0.001
 			}
 		},
+    {
+			"name": "selfcollision",
+			"onSystems": ["Body2"],
+			"onTypes": [],
+            "constants": {
+                "maxConnections": 26,
+				"dt": 0.001
+            }
+		},
         {
 			"name": "computeConnectionForces",
 			"onSystems": [],
@@ -45,8 +49,7 @@
 			"onSystems": [],
 			"onTypes": ["B"],
             "constants": {
-                "dt": 0.001,
-				"sign": 1.0
+                "dt": 0.001
             }
 		}
 	]

@@ -1,6 +1,6 @@
 #include "KernelInfoLoader.h"
 
-vup::KernelInfoLoader::KernelInfoLoader(const char * path)
+vup::KernelInfoLoader::KernelInfoLoader(std::string path)
 {
   load(path);
 }
@@ -9,7 +9,7 @@ vup::KernelInfoLoader::~KernelInfoLoader()
 {
 }
 
-void vup::KernelInfoLoader::load(const char * path)
+void vup::KernelInfoLoader::load(std::string path)
 {
   m_path = path;
   FileReader fr(m_path);

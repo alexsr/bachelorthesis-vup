@@ -6,8 +6,7 @@ __constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
 __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
 
-__constant float mediumDensity = 1000.0;
-__constant float radius = 0.05;
+__constant float radius = 0.1;
 
 float4 reflect(float4 d, float4 n) {
   if (dot(d, n) > 0) {
@@ -77,7 +76,6 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
 
 __kernel void fakecollision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
-  forceIntern[id] = 0.0f;
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
   float zradius = cellRadius * cellsinz;
@@ -103,14 +101,66 @@ __kernel void fakecollision(__global float4* pos, __global float4* vel, __global
             float m1 = mass[id];
             float m2 = mass[other];
             float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
-            //v1 = v1 - jr / m1 * n;
-            //v2 = v2 + jr / m2 * n;
-            /*vel[id] = v1;
-            vel[other] = v2;*/
-            forceIntern[id] = -jr * n / dt;
-            forceIntern[other] = jr * n / dt;
+            // v1 = v1 - jr / m1 * n;
+            // v2 = v2 + jr / m2 * n;
+            // vel[id] = v1;
+            // vel[other] = v2;
+            forceIntern[id] += -jr * n / dt * 0.99f;
+            //forceIntern[other] += jr * n / dt * 0.99f;
             pos[id] += n * (radius * 2.0f - dist)/2.0f;
-            pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+            // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+          }
+        }
+      }
+    }
+  }
+}
+
+__kernel void selfcollision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, __global int* connections, float maxConnections, float dt, __global int* typeIndices) {
+  int id = typeIndices[get_global_id(0)];
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  for (int x = i - 1; x < i + 2; x++) {
+    int x_counter_offset = x * cellsiny * cellsinz;
+    int x_offset = x_counter_offset * cellCapacity;
+    for (int y = j - 1; y < j + 2; y++) {
+      int y_counter_offset = y * cellsinz;
+      int y_offset = y_counter_offset * cellCapacity;
+      for (int z = k - 1; z < k + 2; z++) {
+        int z_offset = z * cellCapacity;
+        int n = gridCounter[x_counter_offset + y_counter_offset + z];
+        for (int o = 0; o < n; o++) {
+          int other = grid[x_offset + y_offset + z_offset + o];
+          float dist = distance(pos[id].xyz, pos[other].xyz);
+          if (systemIDs[other] == systemIDs[id] && dist < radius * 2.0f && id != other) {
+            bool connected = false;
+            for (int c = 0; c < maxConnections; c++) {
+              int con_id = id * maxConnections+c;
+              if (connections[con_id] == other) {
+                connected = true;
+                break;
+              }
+            }
+            if (!connected) {
+              float4 n = normalize(pos[id] - pos[other]);
+              float4 v1 = vel[id];
+              float4 v2 = vel[other];
+              float m1 = mass[id];
+              float m2 = mass[other];
+              float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
+              //v1 = v1 - jr / m1 * n;
+              //v2 = v2 + jr / m2 * n;
+              /*vel[id] = v1;
+              vel[other] = v2;*/
+              forceIntern[id] += -jr * n / dt * 0.99f;
+              // forceIntern[other] += jr * n / dt * 0.99f;
+              pos[id] += n * (radius * 2.0f - dist)/2.0f;
+              // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+            }
           }
         }
       }
@@ -151,42 +201,44 @@ __kernel void computeConnectionForces(__global float4* pos, __global float4* vel
     float actualDistance = length(posDiff);
     float4 vel_parallel = dot(velDiff, posDiff) / dot(posDiff, posDiff) * posDiff;
     float4 vel_ortho = -velDiff + vel_parallel;
-    forceF -= vel_ortho;
+    forceF += -length(frictionConstant[id] * forceN) * normalize(vel_ortho);
   }
-  forceIntern[id] += forceN + frictionConstant[id] * length(forceN) * normalize(forceF);
+  forceIntern[id] += forceN + forceF;
  // printf("%d -> %f, %f, %f, %f; ", id, forceIntern[id].x, forceIntern[id].y, forceIntern[id].z, forceIntern[id].w);
 }
 
-__kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs, float dt, float sign) {
+__kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
   float4 gravForce = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
-  gravForce.y = -9.81f * mass[id] * sign;
+  gravForce.y = -9.81f * mass[id];
   //if (id != 27) {
     
     //forceExtern.xyz += -M_PI_F * radius * radius * mediumDensity * length(vel[id].xyz) * vel[id].xyz;
     vel[id].xyz += ((forceIntern[id] + gravForce).xyz / mass[id]) * dt;
-    pos[id].xyz += vel[id].xyz * dt;    
+    pos[id].xyz += vel[id].xyz * dt;
+    forceIntern[id] = 0.0f;
   //}
   
   float bounds = 1.0;
   float ybounds = 1.0;
+  float damping = 0.9f;
   if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
-    vel[id] = reflect(vel[id], up);
+    vel[id] = reflect(vel[id], up) * damping;
   }
   if (dot(vel[id], down) < 0 && pos[id].y > ybounds) {
-    vel[id] = reflect(vel[id], down);
+    vel[id] = reflect(vel[id], down) * damping;
   }
   if (dot(vel[id], right) < 0 && pos[id].x < -bounds) {
-    vel[id] = reflect(vel[id], right);
+    vel[id] = reflect(vel[id], right) * damping;
   }
   if (dot(vel[id], left) < 0 && pos[id].x > bounds) {
-    vel[id] = reflect(vel[id], left);
+    vel[id] = reflect(vel[id], left) * damping;
   }
   if (dot(vel[id], forth) < 0 && pos[id].z < -bounds) {
-    vel[id] = reflect(vel[id], forth);
+    vel[id] = reflect(vel[id], forth) * damping;
   }
   if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
-    vel[id] = reflect(vel[id], back);
+    vel[id] = reflect(vel[id], back) * damping;
   }
   pos[id].x = clamp(pos[id].x, -bounds, bounds);
   pos[id].y = clamp(pos[id].y, -ybounds, ybounds);

@@ -16,7 +16,7 @@ namespace vup {
 class FileReader
 {
 public:
-  FileReader(const char* path);
+  FileReader(std::string path);
   ~FileReader();
   std::string getSource() { return m_source; }
   const char* getSourceChar() { return m_source.c_str(); }
@@ -24,11 +24,11 @@ public:
   bool isLoaded() { return m_loaded; }
 
 private:
-  std::string load(const char* path);
+  std::string load(std::string path);
 
   bool m_loaded;
   int m_size;
-  const char* m_path;
+  std::string m_path;
   std::string m_source;
 
 };
