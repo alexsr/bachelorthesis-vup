@@ -1,3 +1,3 @@
-rigid.cl
-kernels_rigid.json
-particles_rigid.json
+sph_rigid.cl
+kernels_sph_rigid.json
+particles_sph_rigid.json

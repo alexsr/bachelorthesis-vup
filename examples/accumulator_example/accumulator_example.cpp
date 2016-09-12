@@ -61,7 +61,6 @@ int main()
     }
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
       ps.reloadKernel();
-      ps.init();
     }
     cam.update(window, camdt);
     simpleShader.updateUniform("view", cam.getView());

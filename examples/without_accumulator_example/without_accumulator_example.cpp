@@ -25,7 +25,7 @@ int main()
   vup::initGLEW();
   glViewport(0, 0, WIDTH, HEIGHT);
 
-  vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f, glm::vec3(0.0f, -2.0f, 0.0f));
+  vup::TrackballCam cam(WIDTH, HEIGHT, 1.0f, 10.0f, 10.0f, glm::vec3(0.0f, 0.0f, 0.0f));
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
@@ -33,7 +33,7 @@ int main()
   
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
-  float dt = 0.001f;
+  float dt = 0.01f;
   float camdt = 0.01f;
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();

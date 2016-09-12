@@ -72,9 +72,6 @@ __kernel void generateConnectionDistances(__global float4* pos, __global int* gl
 
 __kernel void resetGrid(__global int* gridCounter) {
   int id = get_global_id(0);
-  /*if (counter[id] != 0) {
-    printf("c %d = %d; ", id, counter[id]);
-  }*/
   gridCounter[id] = 0;
 }
 

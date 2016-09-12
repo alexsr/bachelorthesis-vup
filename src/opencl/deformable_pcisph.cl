@@ -71,9 +71,6 @@ __kernel void generateConnectionDistances(__global float4* pos, __global int* gl
 
 __kernel void resetGrid(__global int* gridCounter) {
   int id = get_global_id(0);
-  /*if (counter[id] != 0) {
-    printf("c %d = %d; ", id, counter[id]);
-  }*/
   gridCounter[id] = 0;
 }
 
@@ -107,7 +104,7 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   color[id].z = k / (float)(cellsinz);
 }
 
-__kernel void fakecollision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
+__kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
@@ -115,6 +112,9 @@ __kernel void fakecollision(__global float4* pos, __global float4* vel, __global
   int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
   int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
   int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  float m1 = mass[id];
+  float4 v1 = vel[id];
+  float4 p = pos[id];
   for (int x = max(0, i - 1); x < min(i + 2, cellsinx); x++) {
     int x_counter_offset = x * cellsiny * cellsinz;
     int x_offset = x_counter_offset * cellCapacity;
@@ -128,27 +128,23 @@ __kernel void fakecollision(__global float4* pos, __global float4* vel, __global
           int other = grid[x_offset + y_offset + z_offset + o];
           float dist = distance(pos[id].xyz, pos[other].xyz);
           if (systemIDs[other] != systemIDs[id] && dist < radius * 2.0f && id != other) {
-            float4 n = normalize(pos[id] - pos[other]);
-            float4 v1 = vel[id];// +forceIntern[id] / mass[id] * dt;
-            float4 v2 = vel[other];// +forceIntern[other] / mass[other] * dt;
-            float m1 = mass[id];
+            float4 n = normalize(p - pos[other]);
+            float4 v2 = vel[other];
             float m2 = mass[other];
             float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
-            /*v1 = v1 - jr / m1 * n;
-            v2 = v2 + jr / m2 * n;
-            vel[id] = v1;
-            vel[other] = v2;*/
-            forceIntern[id] = -jr * n / dt * 0.99f;
-            forceIntern[other] = jr * n / dt * 0.99f;
+            // v2 = v2 + jr / m2 * n;
+            // vel[id] += - jr / m1 * n;
+            // vel[other] = v2;
+            forceIntern[id] += -jr * n / dt;
+            // forceIntern[other] = jr * n / dt;
             pos[id] += n * (radius * 2.0f - dist)/2.0f;
-            pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+            // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
           }
         }
       }
     }
   }
 }
-
 
 __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
   unsigned int id = get_global_id(0);
@@ -181,10 +177,9 @@ __kernel void initForces(__global float4* pos, __global float4* vel, __global fl
     viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * spiky_const * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
   }
   viscosityForce *= visc_const * mass[g_id];
-  //printf("WTF VISC SHOULD BE 0: %f, %f, %f; ", viscosityForce.x, viscosityForce.y, viscosityForce.z);
   float4 forceExtern = 0.0f;
   forceExtern.y = -9.81f * mass[g_id];
-  forceIntern[g_id].xyz = forceExtern.xyz + viscosityForce.xyz;
+  forceIntern[g_id].xyz += forceExtern.xyz + viscosityForce.xyz;
   pressure[id] = 0.0f;
   forcePressure[id] = 0.0f;
 }
@@ -212,7 +207,6 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
   density[id] = density_id;
   float density_err = density_id - restDensity;
   pressure[id] += -density_err * 0.009f;
-  // printf("WTF at %d -> %f; ", id, beta);
 }
 
 __kernel void computePressureForce(__global float4* predictpos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* forcePressure, __global int* globalIndices) {
@@ -229,12 +223,12 @@ __kernel void computePressureForce(__global float4* predictpos, __global int* ne
   forcePressure[id].xyz = pressureForce.xyz;
 }
 
-__kernel void computeConnectionForces(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global float* stiffness, __global float* dampingConstant, __global float* frictionConstant, __global int* connectionCounter, __global int* connections, __global float4* connectionDistances, float maxConnections, __global int* globalIndices, float dt) {
+__kernel void computeConnectionForces(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global float* stiffness, __global float* dampingConstant,
+__global int* connectionCounter, __global int* connections, __global float4* connectionDistances, float maxConnections, __global int* globalIndices, float dt) {
   int id = get_global_id(0);
   int g_id = globalIndices[id];
   float4 forceB = 0.0f;
   float4 forceD = 0.0f;
-  float4 forceF = 0.0f;
   for (int i = 0; i < connectionCounter[id]; i++) {
     int con_id = id * maxConnections + i;
     int e_id = connections[con_id];
@@ -246,21 +240,9 @@ __kernel void computeConnectionForces(__global float4* pos, __global float4* vel
     forceB += stiffness[id] * (actualDistance - restDistance) * posDiff/actualDistance;
     forceD += dampingConstant[id] * vel_parallel;
   }
-  float4 forceN = forceB + forceD;
-  for (int i = 0; i < connectionCounter[id]; i++) {
-    int con_id = id * maxConnections + i;
-    int e_id = connections[con_id];
-    float4 posDiff = pos[e_id] - pos[g_id];
-    float4 velDiff = vel[e_id] - vel[g_id];
-    float actualDistance = length(posDiff);
-    float4 vel_parallel = dot(velDiff, posDiff) / dot(posDiff, posDiff) * posDiff;
-    float4 vel_ortho = -velDiff + vel_parallel;
-    forceF -= vel_ortho;
-  }
   float4 forceExtern = 0.0f;
   forceExtern.y = -9.81f * mass[g_id];
-  forceIntern[g_id] += forceExtern + forceN;// + frictionConstant[id] * length(forceN) * normalize(forceF);
- // printf("%d -> %f, %f, %f, %f; ", id, forceIntern[id].x, forceIntern[id].y, forceIntern[id].z, forceIntern[id].w);
+  forceIntern[g_id] += forceExtern + forceB + forceD;
 }
 
 __kernel void updateFluidForce(__global float4* forceIntern, __global float4* forcePressure, __global int* globalIndices) {
@@ -271,15 +253,13 @@ __kernel void updateFluidForce(__global float4* forceIntern, __global float4* fo
 
 __kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, float dt) {
   unsigned int id = get_global_id(0);
- // printf("%f, ", mass[id]);
-  vel[id].xyz += ((forceIntern[id].xyz) / mass[id]) * dt;
-  float bounds = 2.0;
-  float ybounds = 2.0;
-  float damping = 1.0;
+  vel[id].xyz += (forceIntern[id].xyz / mass[id]) * dt;
   forceIntern[id] = 0.0f;
   pos[id].xyz += vel[id].xyz * dt;
-  
-    if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
+  float bounds = 2.0;
+  float ybounds = 2.0;
+  float damping = 0.9;
+  if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up) * damping;
   }
   if (dot(vel[id], down) < 0 && pos[id].y > ybounds) {

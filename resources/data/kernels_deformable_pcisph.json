@@ -4,10 +4,10 @@
 			"name": "generateConnectionDistances",
 			"onSystems": [],
 			"onTypes": ["B"],
-            "init": true,
-            "constants": {
-                "maxConnections": 26
-            }
+			"init": true,
+			"constants": {
+					"maxConnections": 26
+			}
 		},
 		{
 			"name": "resetGrid",
@@ -18,8 +18,8 @@
 			"onSystems": [],
 			"onTypes": []
 		},
-    {
-			"name": "fakecollision",
+		{
+			"name": "collision",
 			"onSystems": [],
 			"onTypes": [],
 			"constants": {
@@ -40,114 +40,114 @@
 			"name": "predict",
 			"onSystems": [],
 			"onTypes": ["F"],
-      "constants": {
+			"constants": {
 				"dt": 0.001
-      }
+			}
 		},
-    {
+		{
 			"name": "updatePressure",
 			"onSystems": [],
 			"onTypes": ["F"],
-      "constants": {
+			"constants": {
 				"dt": 0.001
-      }
+			}
 		},
-    {
+		{
 			"name": "computePressureForce",
 			"onSystems": [],
 			"onTypes": ["F"]
 		},
-    {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-        {
+		{
 			"name": "predict"
 		},
-        {
+		{
 			"name": "updatePressure"
 		},
-        {
+		{
 			"name": "computePressureForce"
 		},
-      {
-			"name": "computeConnectionForces",
-			"onSystems": [],
-			"onTypes": ["B"],
-            "constants": {
-                "maxConnections": 26,
+		{
+		"name": "computeConnectionForces",
+		"onSystems": [],
+		"onTypes": ["B"],
+			"constants": {
+				"maxConnections": 26,
 				"dt": 0.001
-            }
+			}
 		},
-    {
+		{
 			"name": "updateFluidForce",
 			"onSystems": [],
 			"onTypes": ["F"]
@@ -156,9 +156,9 @@
 			"name": "integrate",
 			"onSystems": [],
 			"onTypes": [],
-      "constants": {
-          "dt": 0.001
-      }
+			"constants": {
+					"dt": 0.001
+			}
 		}
 	]
 }

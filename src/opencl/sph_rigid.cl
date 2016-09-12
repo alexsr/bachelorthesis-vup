@@ -246,23 +246,20 @@ __kernel void collision(__global float4* pos, __global float4* vel, __global flo
   float kt = kd;
   int sysID = systemIDs[id];
   for (int j = 0; j < get_global_size(0); j++) {
-    if (j == id) {
+    if (j == id || sysID == systemIDs[j]) {
       continue;
     }
-    if (sysID != systemIDs[j]) {
-      int other = j;
-          float dist = distance(pos[id].xyz, pos[other].xyz);
-          if (systemIDs[other] != sysID && dist < radius * 2.0f && id != other) {
-            float4 diffPos = pos[j] - p;
-            float4 vj = vel[j];
-            float4 velDiff = (vj - v);
-            float4 n = diffPos / dist;
-            forceSpring += -ks * (diam - dist) * n;
-            forceDamping += kd * velDiff;
-            forceShear += kt * (velDiff - dot(velDiff, n) * n);
-          }
-        }
-      }
+    float dist = distance(pos[id].xyz, pos[j].xyz);
+    if (dist < radius * 2.0f) {
+      float4 diffPos = pos[j] - p;
+      float4 vj = vel[j];
+      float4 velDiff = (vj - v);
+      float4 n = diffPos / dist;
+      forceSpring += -ks * (diam - dist) * n;
+      forceDamping += kd * velDiff;
+      forceShear += kt * (velDiff - dot(velDiff, n) * n);
+    }
+  }
   forceIntern[id].xyz += forceSpring.xyz + forceDamping.xyz + forceShear.xyz;
 }
 

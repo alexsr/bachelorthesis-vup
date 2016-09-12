@@ -65,7 +65,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
   }
 }
 
-__kernel void initForces(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global float4* forcePressure, __global float* mass, __global float* density, __global float* pressure, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+__kernel void initForces(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global float4* forcePressure, __global float* mass, __global float* density, __global float* pressure, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices, __global int* systemIDs) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
   float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
@@ -77,7 +77,6 @@ __kernel void initForces(__global float4* pos, __global float4* vel, __global fl
     viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * spiky_const * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
   }
   viscosityForce *= visc_const * mass[g_id];
-  //printf("WTF VISC SHOULD BE 0: %f, %f, %f; ", viscosityForce.x, viscosityForce.y, viscosityForce.z);
   float4 forceExtern = 0.0f;
   forceExtern.y = -9.81f * mass[g_id];
   forceIntern[g_id].xyz = forceExtern.xyz + viscosityForce.xyz;
@@ -108,7 +107,6 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
   density[id] = density_id;
   float density_err = density_id - restDensity;
   pressure[id] += -density_err * 0.01f;
-  // printf("WTF at %d -> %f; ", id, beta);
 }
 
 __kernel void computePressureForce(__global float4* predictpos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* forcePressure, __global int* globalIndices) {
@@ -127,7 +125,6 @@ __kernel void computePressureForce(__global float4* predictpos, __global int* ne
 
 __kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global float4* forcePressure, float dt) {
   unsigned int id = get_global_id(0);
- // printf("%f, ", mass[id]);
   vel[id].xyz += ((forceIntern[id].xyz + forcePressure[id].xyz) / mass[id]) * dt;
   float bounds = 2.0;
   float ybounds = 2.0;

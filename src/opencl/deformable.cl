@@ -101,11 +101,10 @@ __kernel void fakecollision(__global float4* pos, __global float4* vel, __global
             float m1 = mass[id];
             float m2 = mass[other];
             float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
-            // v1 = v1 - jr / m1 * n;
             // v2 = v2 + jr / m2 * n;
-            // vel[id] = v1;
+            vel[id] += - jr / m1 * n;
             // vel[other] = v2;
-            forceIntern[id] += -jr * n / dt * 0.99f;
+            // forceIntern[id] += -jr * n / dt * 0.99f;
             //forceIntern[other] += jr * n / dt * 0.99f;
             pos[id] += n * (radius * 2.0f - dist)/2.0f;
             // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
@@ -152,11 +151,9 @@ __kernel void selfcollision(__global float4* pos, __global float4* vel, __global
               float m1 = mass[id];
               float m2 = mass[other];
               float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
-              //v1 = v1 - jr / m1 * n;
-              //v2 = v2 + jr / m2 * n;
-              /*vel[id] = v1;
-              vel[other] = v2;*/
-              forceIntern[id] += -jr * n / dt * 0.99f;
+              // v2 = v2 + jr / m2 * n;
+              vel[id] += - jr / m1 * n;
+              // forceIntern[id] += -jr * n / dt * 0.99f;
               // forceIntern[other] += jr * n / dt * 0.99f;
               pos[id] += n * (radius * 2.0f - dist)/2.0f;
               // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
@@ -172,52 +169,27 @@ __kernel void computeConnectionForces(__global float4* pos, __global float4* vel
   int id = get_global_id(0);
   float4 forceB = 0.0f;
   float4 forceD = 0.0f;
-  float4 forceF = 0.0f;
-  //printf("%d -> %d; ", id, connectionCounter[id]);
   for (int i = 0; i < connectionCounter[id]; i++) {
     int con_id = id * maxConnections + i;
     int e_id = connections[con_id];
     float4 posDiff = pos[e_id] - pos[id];
-    // float4 posDiff = pos[id] - pos[e_id];
     float4 velDiff = vel[e_id] - vel[id];
-    // float4 velDiff = vel[id] - vel[e_id];
     float actualDistance = length(posDiff);
     float restDistance = length(connectionDistances[con_id]);
     float4 vel_parallel = dot(velDiff, posDiff) / dot(posDiff, posDiff) * posDiff;
-    // float4 vel_ortho = velDiff - vel_parallel;
     forceB += stiffness[id] * (actualDistance - restDistance) * posDiff/actualDistance;
     forceD += dampingConstant[id] * vel_parallel;
-    // forceB += stiffness[id] * (posDiff - restDistance * posDiff/actualDistance);
-    // forceD += (dt * stiffness[id] /restDistance + dampingConstant[id]) * dot(velDiff, posDiff/actualDistance) * posDiff/actualDistance;
-   // forceB += stiffness[id] / dot(connectionDistances[con_id], connectionDistances[con_id]) * (actualDistance - length(connectionDistances[con_id])) * posDiff/actualDistance;
-    // forceD += dampingConstant[id]  / dot(connectionDistances[con_id], connectionDistances[con_id]) * velDiff;
   }
-  float4 forceN = forceB + forceD;
-  for (int i = 0; i < connectionCounter[id]; i++) {
-    int con_id = id * maxConnections + i;
-    int e_id = connections[con_id];
-    float4 posDiff = pos[e_id] - pos[id];
-    float4 velDiff = vel[e_id] - vel[id];
-    float actualDistance = length(posDiff);
-    float4 vel_parallel = dot(velDiff, posDiff) / dot(posDiff, posDiff) * posDiff;
-    float4 vel_ortho = -velDiff + vel_parallel;
-    forceF += -length(frictionConstant[id] * forceN) * normalize(vel_ortho);
-  }
-  forceIntern[id] += forceN + forceF;
- // printf("%d -> %f, %f, %f, %f; ", id, forceIntern[id].x, forceIntern[id].y, forceIntern[id].z, forceIntern[id].w);
+  forceIntern[id] += forceB + forceD;
 }
 
 __kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
   float4 gravForce = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
   gravForce.y = -9.81f * mass[id];
-  //if (id != 27) {
-    
-    //forceExtern.xyz += -M_PI_F * radius * radius * mediumDensity * length(vel[id].xyz) * vel[id].xyz;
-    vel[id].xyz += ((forceIntern[id] + gravForce).xyz / mass[id]) * dt;
-    pos[id].xyz += vel[id].xyz * dt;
-    forceIntern[id] = 0.0f;
-  //}
+  vel[id].xyz += ((forceIntern[id] + gravForce).xyz / mass[id]) * dt;
+  pos[id].xyz += vel[id].xyz * dt;
+  forceIntern[id] = 0.0f;
   
   float bounds = 1.0;
   float ybounds = 1.0;
