@@ -2,8 +2,6 @@
 
 vup::DataLoader::DataLoader(std::string path)
 {
-  //m_floatConstants = std::map<std::string, float>();
-  //m_intConstants = std::map<std::string, int>();
   m_overallParticleCount = 0;
   load(path);
 }
@@ -14,9 +12,6 @@ vup::DataLoader::~DataLoader()
 
 void vup::DataLoader::load(std::string path)
 {
-  /*
-  m_floatConstants.clear();
-  m_intConstants.clear();*/
   m_path = path;
   FileReader fr(m_path);
   if (fr.isLoaded()) {
@@ -37,12 +32,14 @@ void vup::DataLoader::load(std::string path)
     if (!doc.HasMember("variables") || !doc["variables"].IsObject()) {
       throw new CorruptDataException(m_path, "Global variables have to be declared.");
     }
-    extractVars(doc["variables"].GetObject(), m_globalIdentifiers);
     if (!doc.HasMember("interopVariables") || !doc["interopVariables"].IsObject()) {
       throw new CorruptDataException(m_path, "Interop variables have to be declared.");
     }
-    extractVars(doc["interopVariables"].GetObject(), m_interopIdentifiers);
+    // Some of these functions rely on data extracted prior to their execution.
+    // Therefore this order should not be touched.
     m_size = doc["size"].GetFloat();
+    extractVars(doc["variables"], m_globalIdentifiers);
+    extractVars(doc["interopVariables"], m_interopIdentifiers);
     extractTypes(doc["types"]);
     extractSystems(doc["systems"]);
     if (doc.HasMember("speedupstructure") && doc["speedupstructure"].IsObject()) {
@@ -67,6 +64,31 @@ int vup::DataLoader::getTypeParticleCount(std::string type)
   return 0;
 }
 
+void vup::DataLoader::extractVars(rapidjson::Value &o, typeIdentifiers &typeMap)
+{
+  if (!o.IsObject()) {
+    throw new CorruptDataException(m_path, "Variables have to be stored in a json object.");
+  }
+  for (rapidjson::Value::ConstMemberIterator typeIter = o.MemberBegin(); typeIter != o.MemberEnd(); ++typeIter) {
+    if (!typeIter->value.IsObject()) {
+      throw new CorruptDataException(m_path, "Var specification has to be an object.");
+    }
+    rapidjson::Value var = o[typeIter->name.GetString()].GetObject();
+    if (var.HasMember("loc") && var["loc"].IsInt()) {
+      typeMap[typeIter->name.GetString()].loc = var["loc"].GetInt();
+    }
+    if (!var.HasMember("format") || !var["format"].IsString()) {
+      throw new CorruptDataException(m_path, "Variable format has to be a string.");
+    }
+    typeMap[typeIter->name.GetString()].format = evalDatatype(var["format"].GetString());
+    if (!var.HasMember("instances") || !var["instances"].IsInt()) {
+      throw new CorruptDataException(m_path, "Variable instances has to be an int.");
+    }
+    typeMap[typeIter->name.GetString()].format = evalDatatype(var["format"].GetString());
+    typeMap[typeIter->name.GetString()].instances = var["instances"].GetInt();
+  }
+}
+
 void vup::DataLoader::extractTypes(rapidjson::Value &a)
 {
   for (rapidjson::Value::ValueIterator it = a.Begin(); it != a.End(); ++it) {
@@ -82,7 +104,7 @@ void vup::DataLoader::extractTypes(rapidjson::Value &a)
       throw new CorruptDataException(m_path, "Type spanning variables have to be declared.");
     }
     typeIdentifiers typeVars;
-    extractVars(o["variables"].GetObject(), typeVars);
+    extractVars(o["variables"], typeVars);
     vup::ParticleType p(type, typeVars);
     m_typeParticleCount[type] = 0;
     std::cout << "Loading type " << type << std::endl;
@@ -148,11 +170,11 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
       throw new CorruptDataException(m_path, "No particle count specified.");
     }
     rapidjson::Value o = it->GetObject();
-    std::string name = o["name"].GetString();
-    std::string type = o["type"].GetString();
     if (!o["particles"].IsInt()) {
       throw new CorruptDataException(m_path, "Particle count should be an integer.");
     }
+    std::string name = o["name"].GetString();
+    std::string type = o["type"].GetString();
     if (!doesKeyExist(type, m_types)) {
       throw new CorruptDataException(m_path, "Type " + type + " not found.");
     }
@@ -286,7 +308,10 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
 
 void vup::DataLoader::extractSpeedupStructure(rapidjson::Value &o)
 {
-  if (!o.HasMember("name") || !o.IsObject()) {
+  if (!o.IsObject()) {
+    throw new CorruptDataException(m_path, "Speedup structure is not a json object.");
+  }
+  if (!o.HasMember("name")) {
     throw new CorruptDataException(m_path, "Missing speedup structure name.");
   }
   if (!o.HasMember("size")) {
@@ -369,7 +394,7 @@ vup::datatype vup::DataLoader::evalDatatype(std::string s)
   }
 }
 
-vup::datatype vup::DataLoader::findFormat(std::string f, typeIdentifiers typeVars)
+vup::datatype vup::DataLoader::findFormat(std::string f, typeIdentifiers &typeVars)
 {
   if (!doesKeyExist(f, typeVars) && !doesKeyExist(f, m_globalIdentifiers) && !doesKeyExist(f, m_interopIdentifiers)) {
     throw new CorruptDataException(m_path, "Data is not specified.");
@@ -386,7 +411,7 @@ vup::datatype vup::DataLoader::findFormat(std::string f, typeIdentifiers typeVar
   return vup::EMPTY;
 }
 
-vup::DataSpecification vup::DataLoader::getDataSpec(std::string f, typeIdentifiers typeVars)
+vup::DataSpecification vup::DataLoader::getDataSpec(std::string f, typeIdentifiers &typeVars)
 {
   if (!doesKeyExist(f, typeVars) && !doesKeyExist(f, m_globalIdentifiers) && !doesKeyExist(f, m_interopIdentifiers)) {
     throw new CorruptDataException(m_path, "Data is not specified.");
@@ -401,28 +426,6 @@ vup::DataSpecification vup::DataLoader::getDataSpec(std::string f, typeIdentifie
     return m_interopIdentifiers[f];
   }
   return vup::DataSpecification();
-}
-
-void vup::DataLoader::extractVars(rapidjson::Value o, typeIdentifiers &typeMap)
-{
-  for (rapidjson::Value::ConstMemberIterator typeIter = o.MemberBegin(); typeIter != o.MemberEnd(); ++typeIter) {
-    if (!typeIter->value.IsObject()) {
-      throw new CorruptDataException(m_path, "Var specification has to be an object.");
-    }
-    rapidjson::Value var = o[typeIter->name.GetString()].GetObject();
-    if (var.HasMember("loc") && var["loc"].IsInt()) {
-      typeMap[typeIter->name.GetString()].loc = var["loc"].GetInt();
-    }
-    if (!var.HasMember("format") || !var["format"].IsString()) {
-      throw new CorruptDataException(m_path, "Variable format has to be a string.");
-    }    
-    typeMap[typeIter->name.GetString()].format = evalDatatype(var["format"].GetString());
-    if (!var.HasMember("instances") || !var["instances"].IsInt()) {
-      throw new CorruptDataException(m_path, "Variable instances has to be an int.");
-    }
-    typeMap[typeIter->name.GetString()].format = evalDatatype(var["format"].GetString());
-    typeMap[typeIter->name.GetString()].instances = var["instances"].GetInt();
-  }
 }
 
 float vup::DataLoader::createFloatRandom(const char* str)

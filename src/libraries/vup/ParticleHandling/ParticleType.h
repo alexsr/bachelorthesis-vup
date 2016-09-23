@@ -21,14 +21,14 @@ public:
   ~ParticleType();
   typeIdentifiers getTypeSpecificIdentifiers() { return m_typeSpecificIdentifiers; }
   void addData(std::string name, vup::DataSpecification t, std::string v);
-  datavalue getData(std::string name);
-  datamap getDatasets() { return m_data; }
+  DataValue getData(std::string name);
+  dataMap getDatasets() { return m_data; }
 
 private:
   std::string m_name;
   identifiers m_identifiers;
   typeIdentifiers m_typeSpecificIdentifiers;
-  datamap m_data;
+  dataMap m_data;
   std::vector<std::string> splitVec4(const char* v);
 
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);

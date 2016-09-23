@@ -34,17 +34,19 @@ struct KernelInfo {
   int iterations = 1;
 };
 
+typedef std::map<std::string, vup::KernelInfo> kernelInfoMap;
+
 class KernelInfoLoader
 {
 public:
   KernelInfoLoader(std::string path);
   ~KernelInfoLoader();
-  std::map<std::string, vup::KernelInfo> getKernelInfos() { return m_kernelInfos; }
+  kernelInfoMap getKernelInfos() { return m_kernelInfos; }
   
 private:
   void load(std::string path);
   std::string m_path;
-  std::map<std::string, vup::KernelInfo> m_kernelInfos;
+  kernelInfoMap m_kernelInfos;
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
   template <typename T> std::string toString(T any);
 };

@@ -87,8 +87,8 @@ glm::vec4 vup::SpeedupStructure::getVec4Constant(std::string name)
   throw new CorruptDataException("", "Vec4 constant does not exist.");
 }
 
-bool vup::SpeedupStructure::doesKeyExist(std::string key, datamap m)
+bool vup::SpeedupStructure::doesKeyExist(std::string key, dataMap m)
 {
-  datamap::iterator it = m.find(key);
+  dataMap::iterator it = m.find(key);
   return it != m.end();
 }

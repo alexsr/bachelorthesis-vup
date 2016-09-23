@@ -17,10 +17,10 @@ namespace vup {
 class VBO {
 public:
   VBO();
-  VBO(GLuint h, int loc, int s);
+  VBO(GLuint h, int loc, int f);
   ~VBO();
   GLuint handle;
-  int size;
+  int format;
   int location;
 };
 

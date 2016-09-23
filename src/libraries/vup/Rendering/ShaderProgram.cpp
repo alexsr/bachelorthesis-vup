@@ -204,7 +204,7 @@ void vup::ShaderProgram::checkProgramStatus(GLuint programID)
     glGetProgramInfoLog(programID, infoLogLength, NULL, infoLog);
     // When throwing the compilation exception,
     // the info log from the compiler is included.
-    throw vup::ProgramCompilationException(infoLog);
+    throw vup::ShaderProgramCompilationException(infoLog);
     delete[] infoLog;
   }
   else {

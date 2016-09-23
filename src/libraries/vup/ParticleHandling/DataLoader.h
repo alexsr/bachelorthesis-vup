@@ -25,14 +25,22 @@
 
 namespace vup {
 
-// Manages OpenCL and OpenGL buffers and provides 
-
+// Loads particle data from a JSON file using rapidjson http://rapidjson.org/
+// Creates a map of particle types containing a map of ParticleSystem objects of its type.
+// Also loads the speedup structure data into a SpeedupStructure object.
 class DataLoader
 {
 public:
   DataLoader(std::string path);
   ~DataLoader();
+  // Loads file from path and checks if it is valid JSON.
+  // If it is valid, it is parsed, otherwise a CorruptDataException is thrown.
+  // Checks for predefined data and structures to parse further.
+  // Global and interop variables are extracted.
+  // Types and systems are created.
+  // If a speedup structure is defined, it is extracted as well.
   void load(std::string path);
+
   float getParticleSize() { return m_size; }
   std::map<std::string, vup::ParticleType> getTypes() { return m_types; }
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> getSystems() { return m_systems; }
@@ -45,23 +53,16 @@ public:
   vup::SpeedupStructure getSpeedupStructure() { return m_speedupStructure; }
 
 private:
-  std::string m_path;
-  float m_size;
-  int m_overallParticleCount;
-  std::map<std::string, vup::ParticleType> m_types;
-  std::map<std::string, int> m_typeParticleCount;
-  std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
-  vup::SpeedupStructure m_speedupStructure;
-  typeIdentifiers m_globalIdentifiers;
-  typeIdentifiers m_interopIdentifiers;
+  // Extract the specifications of all variables in the json object o and put these in the passed typeMap.
+  void extractVars(rapidjson::Value &o, typeIdentifiers &typeMap);
+  // Extract the specifications of all variables in the json object o and put these in the passed typeMap.
   void extractTypes(rapidjson::Value &a);
   void extractSystems(rapidjson::Value &a);
   void extractSpeedupStructure(rapidjson::Value &o);
 
   datatype evalDatatype(std::string s);
-  datatype findFormat(std::string f, typeIdentifiers typeVars);
-  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers typeVars);
-  void extractVars(rapidjson::Value o, typeIdentifiers &typeMap);
+  datatype findFormat(std::string f, typeIdentifiers &typeVars);
+  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers &typeVars);
 
   float createFloatRandom(const char* str);
   float randomFloat(float lower, float upper) {
@@ -74,14 +75,24 @@ private:
     char c;
     return iss >> d && !(iss >> c);
   }
-  //bool isInt(std::string str) {
-  //  std::istringstream iss(str);
-  //  int i;
-  //  char c;
-  //  return iss >> i && !(iss >> c);
-  //}
+  bool isInt(std::string str) {
+    std::istringstream iss(str);
+    int i;
+    char c;
+    return iss >> i && !(iss >> c);
+  }
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
   template <typename T> std::string toString(T any);
+
+  std::string m_path;
+  float m_size;
+  int m_overallParticleCount;
+  std::map<std::string, vup::ParticleType> m_types;
+  std::map<std::string, int> m_typeParticleCount;
+  std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
+  vup::SpeedupStructure m_speedupStructure;
+  typeIdentifiers m_globalIdentifiers;
+  typeIdentifiers m_interopIdentifiers;
 };
 
 template<typename T>

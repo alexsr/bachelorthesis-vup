@@ -4,14 +4,14 @@ vup::VBO::VBO()
 {
   handle = 0;
   location = 0;
-  size = 0;
+  format = 0;
 }
 
-vup::VBO::VBO(GLuint h, int loc, int s)
+vup::VBO::VBO(GLuint h, int loc, int f)
 {
   handle = h;
   location = loc;
-  size = s;
+  format = f;
 }
 
 vup::VBO::~VBO()

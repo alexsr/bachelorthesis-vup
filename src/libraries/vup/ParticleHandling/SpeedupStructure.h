@@ -42,7 +42,7 @@ private:
   std::map<std::string, std::vector<int>> m_data;
 
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
-  bool doesKeyExist(std::string key, datamap m);
+  bool doesKeyExist(std::string key, dataMap m);
 };
 
 template<typename T>

@@ -20,23 +20,23 @@ public:
   ~ParticleSystem();
   void addData(std::string name, std::vector<int> d);
   void addData(std::string name, std::vector<float> d);
-  void addData(std::string name, vec4data d);
-  floatdata getFloatData(std::string key);
+  void addData(std::string name, std::vector<glm::vec4> d);
+  std::vector<float> getFloatData(std::string key);
   std::vector<int> getIntData(std::string key);
-  vec4data getVec4Data(std::string key);
+  std::vector<glm::vec4> getVec4Data(std::string key);
   int getCount() { return m_count; }
 
 private:
   std::string m_name;
   int m_count;
   identifiers m_identifiers;
-  std::map<std::string, floatdata> m_fData;
+  std::map<std::string, std::vector<float>> m_fData;
   std::map<std::string, std::vector<int>> m_iData;
-  std::map<std::string, vec4data> m_vec4Data;
+  std::map<std::string, std::vector<glm::vec4>> m_vec4Data;
 
-  void migrateData(std::string name, vup::DataSpecification t, std::string v);
+  void migrateData(std::string name, vup::DataValue d);
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
-  bool doesKeyExist(std::string key, datamap m);
+  bool doesKeyExist(std::string key, dataMap m);
   std::vector<std::string> splitVec4(const char* v);
 };
 

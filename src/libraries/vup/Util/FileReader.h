@@ -24,7 +24,7 @@ public:
   bool isLoaded() { return m_loaded; }
 
 private:
-  std::string load(std::string path);
+  void load(std::string path);
 
   bool m_loaded;
   int m_size;

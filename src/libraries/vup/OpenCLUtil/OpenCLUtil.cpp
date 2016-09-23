@@ -1,25 +1,33 @@
 #include "OpenCLUtil.h"
 
-vup::OpenCLBasis::OpenCLBasis(int platformID, cl_device_type deviceType, int deviceID)
+// OpenCLBoilerplate
+
+vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, int deviceID)
 {
   cl::Platform::get(&m_platforms);
   if (m_platforms.size() == 0) {
     throw std::exception("No platform found.");
   }
-  if (m_platforms.size() > platformID) {
-    m_defaultPlatform = m_platforms[platformID];
+  else if (m_platforms.size() <= platformID) {
+    std::cout << "Platform " << platformID << " not found." << std::endl;
+    platformID = 0;
   }
-  else {
-    std::cout << "Platform " << platformID << " not found. Using Platform 0.\n";
-    m_defaultPlatform = m_platforms[0];
-  }
-  std::cout << "Using platform: " << m_defaultPlatform.getInfo<CL_PLATFORM_NAME>() << "\n";
+  m_defaultPlatform = m_platforms[platformID];
+  std::cout << "Using platform: " << m_defaultPlatform.getInfo<CL_PLATFORM_NAME>() << std::endl;
+
+
   m_defaultPlatform.getDevices(deviceType, &m_devices);
   if (m_devices.size() == 0) {
     throw std::exception("No device found.");
   }
+  else if (m_devices.size() <= deviceID) {
+    std::cout << "Device " << deviceID << " not found on platform " << platformID << "." << std::endl;
+    deviceID = 0;
+  }
   m_defaultDevice = m_devices[deviceID];
-  std::cout << "Using device: " << m_defaultDevice.getInfo<CL_DEVICE_NAME>() << "\n";
+  std::cout << "Using device: " << m_defaultDevice.getInfo<CL_DEVICE_NAME>() << std::endl;
+
+  // The context properties are OS-specific. Therefore the OS has to be checked here.
 #if defined (__APPLE__)
   CGLContextObj kCGLContext = CGLGetCurrentContext();
   CGLShareGroupObj kCGLShareGroup = CGLGetShareGroup(kCGLContext);
@@ -50,18 +58,26 @@ vup::OpenCLBasis::OpenCLBasis(int platformID, cl_device_type deviceType, int dev
   m_context = cl::Context(m_defaultDevice, properties);
 }
 
-vup::OpenCLBasis::~OpenCLBasis()
+vup::GPUBoilerplate::~GPUBoilerplate()
 {
 }
+
+
+// KernelHandler
 
 vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, std::string path)
 {
   m_context = context;
   m_device = device;
+
   m_path = path;
-  buildProgram(context, device, path);
-  extractArguments(path);
-  m_kernels = std::map<std::string, cl::Kernel>();
+  vup::FileReader file(path);
+  std::string source = file.getSource();
+
+  buildProgram(context, device, m_path, source);
+  extractArguments(path, source);
+
+  m_kernels = kernelMap();
 }
 vup::KernelHandler::KernelHandler(cl::Context context, cl::Device device, std::string path, std::vector<std::string> kernels) : KernelHandler(context, device, path)
 {
@@ -72,12 +88,11 @@ vup::KernelHandler::~KernelHandler()
 }
 void vup::KernelHandler::reloadProgram()
 {
-  buildProgram(m_context, m_device, m_path);
-  std::vector<std::string> keys;
-  for (std::map<std::string, cl::Kernel>::iterator it = m_kernels.begin(); it != m_kernels.end(); ++it) {
-    keys.push_back(it->first);
+  vup::FileReader file(m_path);
+  buildProgram(m_context, m_device, m_path, file.getSource());
+  for (kernelMap::iterator it = m_kernels.begin(); it != m_kernels.end(); ++it) {
+    initKernel(it->first);
   }
-  initKernels(keys);
 }
 void vup::KernelHandler::reloadProgram(std::string path)
 {
@@ -88,8 +103,7 @@ void vup::KernelHandler::reloadProgram(cl::Context context, cl::Device device, s
 {
   m_context = context;
   m_device = device;
-  m_path = path;
-  reloadProgram();
+  reloadProgram(path);
 }
 void vup::KernelHandler::initKernels(std::vector<std::string> kernels)
 {
@@ -106,7 +120,7 @@ void vup::KernelHandler::initKernel(std::string kernel)
   }
  }
 
-cl::Kernel vup::KernelHandler::get(std::string name)
+cl::Kernel vup::KernelHandler::getKernel(std::string name)
 {
   if (doesKernelExist(name))
   {
@@ -118,44 +132,51 @@ cl::Kernel vup::KernelHandler::get(std::string name)
   }
 }
 
-void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, std::string path)
+void vup::KernelHandler::buildProgram(cl::Context context, cl::Device device, std::string path, const std::string &src)
 {
-  vup::FileReader file(path);
-  m_program = cl::Program(context, file.getSourceChar());
-  cl_int clError = m_program.build({ device });
+  m_program = cl::Program(context, src.c_str());
+  std::vector<cl::Device> deviceVector = { device };
+  cl_int clError = m_program.build(deviceVector);
   if (clError != CL_SUCCESS) {
     std::string buildinfo = m_program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device);
     throw vup::CLProgramCompilationException(std::string(path), buildinfo);
   }
 }
 
-void vup::KernelHandler::extractArguments(std::string path)
+void vup::KernelHandler::extractArguments(std::string path, const std::string &src)
 {
-  vup::FileReader file(path);
-  std::string src = file.getSource();
   int kernelPos = 0;
+  // Loop through the source and look for kernel functions until there are no more behind kernelPos.
+  // The definition of the kernel function is then parsed and its name and arguments are stored.
+  // This sets the kernelPos to the position in the src where a kernel definition is found.
   while ((kernelPos = (src.find("__kernel void", kernelPos))) != std::string::npos) {
-    kernelPos += 1;
-    int namePos = kernelPos + 13;
+    // skip 14 characters to get to the name of the kernel
+    int namePos = kernelPos + 14;
     int endOfName = src.find("(", namePos);
-    std::string kernelName = src.substr(namePos, endOfName - namePos);
+    std::string kernelName = onelineTrim(src.substr(namePos, endOfName - namePos));
+    m_arguments[kernelName] = std::vector<KernelArguments>();
+
     int endOfParams = src.find(")", endOfName);
-    std::string paramStr = src.substr(endOfName + 1, endOfParams - endOfName - 1);
-    paramStr.erase(std::remove(paramStr.begin(), paramStr.end(), '\n'), paramStr.end());
-    paramStr.erase(std::remove(paramStr.begin(), paramStr.end(), '\r'), paramStr.end());
-    std::cout << "Kernel " << kernelName << " has the following parameter string: ";
-    m_arguments[kernelName] = std::map<std::string, KernelArgument>();
+    kernelPos = endOfParams;
+    std::string paramStr = onelineTrim(src.substr(endOfName + 1, endOfParams - endOfName - 1));
     std::vector<std::string> params = splitParams(paramStr.c_str(), ',');
+
+    // Index is the position of the argument in the function declaration.
     int index = 0;
+    // Loop through all parameter strings and split them into their parts.
+    // Local or constant memory is not handled differently from global memory.
     for (auto &param : params) {
       std::vector<std::string> parts = splitParams(param.c_str(), ' ');
       if (parts.size() < 2) {
-        throw new std::exception();
+        throw new std::exception(); // TODO: change this exception
       }
-      KernelArgument karg;
+      KernelArguments karg;
+      // The kernel name always is the last string in the parameter string.
       std::string name = parts.at(parts.size()-1);
       datatype type = vup::EMPTY;
+      // The kernel name always is the second to last string in the parameter string.
       std::string typestring = parts.at(parts.size()-2);
+      // If the type string contains a * the argument refers to a set of data, therefore it is not a constant
       if (typestring.find("*") != std::string::npos) {
         karg.constant = false;
       }
@@ -171,34 +192,39 @@ void vup::KernelHandler::extractArguments(std::string path)
       }
       karg.type = type;
       karg.index = index;
+      karg.name = name;
       index++;
-      m_arguments[kernelName][name] = karg;
+      m_arguments[kernelName].push_back(karg);
     }
-    for (auto &str : params) {
-      std::cout << str << ", ";
-    }
-    std::cout << std::endl;
   }
 }
 
 bool vup::KernelHandler::doesKernelExist(std::string name)
 {
-  std::map<std::string, cl::Kernel>::iterator it = m_kernels.find(name);
+  kernelMap::iterator it = m_kernels.find(name);
   return it != m_kernels.end();
 }
 
 std::vector<std::string> vup::KernelHandler::splitParams(const char * str, char split)
 {
   std::vector<std::string> params;
+  // Loop through the string until the pointer to the current char is a nullpointer.
   do {
     const char *begin = str;
     while (*str != split && *str){
       str++;
     }
     params.push_back(vup::trim(std::string(begin, str)));
-  } while (0 != *str++);
+    // Skip multiple consecutive occurrences of the split character.
+    while (*str == split && *str) {
+      str++;
+    }
+  } while (0 != *str);
   return params;
 }
+
+
+// OpenCL Queue
 
 vup::Queue::Queue(cl::Context context)
 {
@@ -213,6 +239,15 @@ vup::Queue::~Queue()
 void vup::Queue::writeBuffer(cl::Buffer b, int size, const void * ptr)
 {
   cl_int clError = m_queue.enqueueWriteBuffer(b, CL_TRUE, 0, size, ptr);
+  finish();
+  if (clError != CL_SUCCESS) {
+    throw vup::BufferWritingException(clError);
+  }
+}
+
+void vup::Queue::writeBuffer(cl::Buffer b, int offset, int size, const void * ptr)
+{
+  cl_int clError = m_queue.enqueueWriteBuffer(b, CL_TRUE, offset, size, ptr);
   finish();
   if (clError != CL_SUCCESS) {
     throw vup::BufferWritingException(clError);
@@ -246,6 +281,7 @@ void vup::Queue::runRangeKernel(cl::Kernel k, int offset, int global, int local)
 
 void vup::Queue::acquireGL(std::vector<cl::Memory>* mem)
 {
+  // Call glFinish to ensure all OpenGL calls are done.
   glFinish();
   cl_int clError = m_queue.enqueueAcquireGLObjects(mem);
   if (clError != CL_SUCCESS) {
@@ -257,6 +293,7 @@ void vup::Queue::releaseGL(std::vector<cl::Memory>* mem)
 {
   cl_int clError = m_queue.enqueueReleaseGLObjects(mem);
   finish();
+  // Call finish to ensure OpenCL is done working on OpenGL data.
   if (clError != CL_SUCCESS) {
     throw vup::ReleasingGLObjectsException(clError);
   }

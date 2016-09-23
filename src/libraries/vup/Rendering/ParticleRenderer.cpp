@@ -15,7 +15,7 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup
     int loc = it->second.location;
     glEnableVertexAttribArray(loc);
     glBindBuffer(GL_ARRAY_BUFFER, it->second.handle);
-    glVertexAttribPointer(loc, it->second.size, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(loc, it->second.format, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glVertexAttribDivisor(loc, 1); // Make vertex attribute at loc instanced
   }

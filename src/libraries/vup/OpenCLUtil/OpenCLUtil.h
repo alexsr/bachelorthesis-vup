@@ -26,6 +26,8 @@
 #include <cctype>
 #include <locale>
 
+
+// Methods to get context properties are OS-specific.
 #ifdef _WIN32
 #  define WINDOWS_LEAN_AND_MEAN
 #  define NOMINMAX
@@ -42,81 +44,132 @@
 #define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
 #endif
 
+// This class handles all of OpenCL's methods used within the framework which allows the usage
+// of a different GPU programming API by simply creating a different handler.
+// The new handler should use the same public functions though, to ensure flawless functionality.
+
 namespace vup {
 
 // https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
-// trim from start
+
+// Trims string from start
 static inline std::string &ltrim(std::string &s) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(),
     std::not1(std::ptr_fun<int, int>(std::isspace))));
   return s;
 }
 
-// trim from end
+// Trims string from end
 static inline std::string &rtrim(std::string &s) {
   s.erase(std::find_if(s.rbegin(), s.rend(),
     std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
   return s;
 }
 
-// trim from both ends
+// Trims string from both ends
 static inline std::string &trim(std::string &s) {
   return ltrim(rtrim(s));
 }
 
-class OpenCLBasis
+// Removes linebreaks and trims the string
+static inline std::string &onelineTrim(std::string &s) {
+  s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+  s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
+  return trim(s);
+}
+
+
+// Encapsulates OpenCL boilerplate in order to get an OpenCL context and default device to execute kernel code on.
+class GPUBoilerplate
 {
 public:
-  OpenCLBasis(int platformID, cl_device_type deviceType, int deviceID);
-  ~OpenCLBasis();
-  cl::Platform platform() { return m_defaultPlatform; }
-  cl::Device device() { return m_defaultDevice; }
-  cl::Context context() { return m_context; }
+  // Selects default platform from platformID and looks for device of deviceType with deviceID on this platform.
+  // Creates OpenCL context from these parameters specific to the OS.
+  GPUBoilerplate(int platformID, cl_device_type deviceType, int deviceID);
+  ~GPUBoilerplate();
+
+  cl::Platform getPlatform() { return m_defaultPlatform; }
+  cl::Device getDevice() { return m_defaultDevice; }
+  cl::Context getContext() { return m_context; }
 
 private:
   cl::Platform m_defaultPlatform;
-  std::vector<cl::Platform> m_platforms;
   cl::Device m_defaultDevice;
-  std::vector<cl::Device> m_devices;
   cl::Context m_context;
+
+  std::vector<cl::Platform> m_platforms;
+  std::vector<cl::Device> m_devices;
 };
 
-struct KernelArgument {
+
+// Represents an OpenCL kernel parameter, so data can be assigned correctly
+struct KernelArguments {
+  std::string name = "";
   int index = 0;
   datatype type = vup::EMPTY;
   bool constant = true;
 };
 
+typedef std::map<std::string, std::vector<KernelArguments>> kernelArgumentsMap;
+typedef std::map<std::string, cl::Kernel> kernelMap;
+
+// Handles OpenCL program compilation on specified device within a given context.
+// Provides functionality to initialize kernels and set kernel arguments.
+// Also extracts arguments from kernel function definitions for correct data association.
 class KernelHandler
 {
 public:
+  // Builds kernel program on device with given context.
   KernelHandler(cl::Context context, cl::Device device, std::string path);
+  // Initializes given list of kernels. 
   KernelHandler(cl::Context context, cl::Device device, std::string path, std::vector<std::string> kernels);
   ~KernelHandler();
+
+  // Reloads kernel program from the same source as previously specified
+  // to allow changes in the kernels while the application in running.
+  // Kernels that were initialized before the reload are initialized again.
   void reloadProgram();
+  // Changes source of kernel program to new path.
   void reloadProgram(std::string path);
+  // Changes context and device to build new program on.
   void reloadProgram(cl::Context context, cl::Device device, std::string path);
-  void initKernels(std::vector<std::string> kernels);
+
+  // Creates cl::Kernel and adds it to m_kernels with the kernel name as key.
+  // Throws KernelCreationException if the kernel creation fails.
   void initKernel(std::string kernel);
-  cl::Kernel get(std::string name);
-  std::map<std::string, std::map<std::string, KernelArgument>> getKernelArguments() { return m_arguments; }
-  template <class T> void setArg(std::vector<std::string> names, int index, T data);
-  template <class T> void setArg(const char* name, int index, T data);
+  void initKernels(std::vector<std::string> kernels);
+
+  cl::Kernel getKernel(std::string name);
+
+  kernelArgumentsMap getKernelArguments() { return m_arguments; }
+
+  // Sets argument at position index in kernel with given name to data.
+  template <class T> void setArg(const char* name, int index, const T &data);
+  // Sets arguments of multiple kernels whose names are given to data.
+  // The index in all kernels has to be the same.
+  template <class T> void setArg(std::vector<std::string> names, int index, const T &data);
+
 private:
-  void buildProgram(cl::Context context, cl::Device device, std::string path);
-  void extractArguments(std::string path);
+  // Builds OpenCL kernel program on device with OS-specific context.
+  // In the process the m_program variable is set to the newly built program.
+  // Throws CLProgramCompilationException of build fails.
+  void buildProgram(cl::Context context, cl::Device device, std::string path, const std::string &src);
+  // Extracts kernel arguments from the kernel function declaration in the source code.
+  // Arguments of each kernel are saved in an entry in the kernelArgumentsMap m_arguments.
+  void extractArguments(std::string path, const std::string &src);
   bool doesKernelExist(std::string name);
+  // Splits kernel function parameter strings using the specified split character.
   std::vector<std::string> splitParams(const char* str, char split);
   cl::Context m_context;
   cl::Device m_device;
   cl::Program m_program;
   std::string m_path;
-  std::map<std::string, cl::Kernel> m_kernels;
-  std::map<std::string, std::map<std::string, KernelArgument>> m_arguments;
+  kernelMap m_kernels;
+  kernelArgumentsMap m_arguments;
 };
 
 template<class T>
-void KernelHandler::setArg(const char* name, int index, T data)
+void KernelHandler::setArg(const char* name, int index, const T &data)
 {
   if (doesKernelExist(name)) {
     m_kernels[name].setArg(index, data);
@@ -126,24 +179,35 @@ void KernelHandler::setArg(const char* name, int index, T data)
   }
 }
 template<class T>
-void KernelHandler::setArg(std::vector<std::string> names, int index, T data)
+void KernelHandler::setArg(std::vector<std::string> names, int index, const T &data)
 {
   for (std::string name : names) {
     setArg(name, index, data);
   }
 }
 
+// Encapsulates the OpenCL queue on a specified context. It is preferable to use
+// this queue over the OpenCL queue since its methods are less verbose.
 class Queue
 {
 public:
   Queue(cl::Context context);
   ~Queue();
   cl::CommandQueue getQueue() { return m_queue; }
+  // Enqueues the writing of data from ptr into the memory of size with an offset of 0 in clBuffer b.
+  // This call is blocking.
   void writeBuffer(cl::Buffer b, int size, const void * ptr);
+  // Allows to set offset of data. This call is blocking.
+  void writeBuffer(cl::Buffer b, int offset, int size, const void * ptr);
+  // Allows to set offset of data and if the writing is blocking.
   void writeBuffer(cl::Buffer b, cl_bool blocking, int offset, int size, const void * ptr);
+  // Enqueues kernel execution with the specified global range.
   void runRangeKernel(cl::Kernel k, int global);
+  // Enqueues kernel execution with the specified global and local range and offset.
   void runRangeKernel(cl::Kernel k, int offset, int global, int local);
+  // Enqueues the acquisition of OpenGL memory so it can be used within OpenCL.
   void acquireGL(std::vector<cl::Memory> * mem);
+  // Enqueues the release of OpenGL memory from OpenCL so it can be used by OpenGL again.
   void releaseGL(std::vector<cl::Memory> * mem);
 
   void finish() { m_queue.finish(); }

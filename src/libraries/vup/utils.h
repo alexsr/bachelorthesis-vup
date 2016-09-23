@@ -44,9 +44,9 @@ void initGLEW() {
   }
 }
 
-void updateFramerate(double currentTime, double lastTime, GLFWwindow* window) {  
+void updateFramerate(double currentTime, double lastTime, double frames, GLFWwindow* window) {
   std::ostringstream strs;
-  strs << (currentTime - lastTime)*1000.0;
+  strs << (currentTime - lastTime)*1000.0/frames;
   std::string title = "MS per frame: " + strs.str();
   glfwSetWindowTitle(window, title.c_str());
 }

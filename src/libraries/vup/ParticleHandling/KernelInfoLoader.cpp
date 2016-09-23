@@ -33,10 +33,9 @@ void vup::KernelInfoLoader::load(std::string path)
       std::cout << "Loading kernel " << name << "." << std::endl;
       if (doesKeyExist(name, m_kernelInfos)) {
         m_kernelInfos[name].pos.push_back(pos);
-        std::cout << "Position of " << name << ": " << pos << std::endl;
+        std::cout << "Next position of " << name << ": " << pos << std::endl;
         pos++;
         continue;
-        //throw new CorruptDataException(m_path, "Multiple declerations of kernel " + name + " found.");
       }
       KernelInfo kinf;
       if (o.HasMember("init") && o["init"].IsBool()) {

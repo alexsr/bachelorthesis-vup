@@ -12,6 +12,7 @@
 #include "vup/ParticleHandling/BufferHandler.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 #include "vup/Rendering/ParticleRenderer.h"
+#include <memory>
 
 namespace vup {
 
@@ -36,16 +37,16 @@ private:
   std::string m_kernelpath;
   std::string m_datapath;
   std::string m_kernelinfopath;
+  kernelInfoMap m_kernelinfos;
   int m_particleCount;
   float m_size;
-  OpenCLBasis* m_clBasis;
+  GPUBoilerplate* m_clBasis;
   BufferHandler* m_buffers;
+  Queue* m_queue;
+  std::unique_ptr<KernelHandler> m_kernels;
   std::vector<std::string> m_kernelorder;
   std::vector<std::string> m_initkernels;
   std::map<std::string, int> m_kernelSize;
-  KernelHandler* m_kernels;
-  Queue* m_queue;
-  std::map<std::string, vup::ParticleType> m_types;
   std::map<std::string, std::vector<int>> m_globalIndices;
   std::map<std::string, std::vector<int>> m_typeIndices;
 
