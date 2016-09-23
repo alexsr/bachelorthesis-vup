@@ -16,7 +16,7 @@
 #include <map>
 
 #if defined (__APPLE__) || defined(MACOSX)
-#include <OpenGL/OpenGL.h>
+#include <OpenCL/OpenCL.h>
 #else
 #include "CL/cl.hpp"
 #include "CL/cl_gl.h"
