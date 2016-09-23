@@ -2,8 +2,8 @@
 // Author: Alexander Scheid-Rehder
 // Email: alexsr@uni-koblenz.de
 
-#ifndef VUP_PROGRAMCOMPILATIONEXCEPTION_H
-#define VUP_PROGRAMCOMPILATIONEXCEPTION_H
+#ifndef VUP_SHADERPROGRAMCOMPILATIONEXCEPTION_H
+#define VUP_SHADERPROGRAMCOMPILATIONEXCEPTION_H
 
 #include <exception>
 #include <string>
@@ -11,10 +11,10 @@
 namespace vup {
 
 // Is thrown when the shader program compilation fails.
-class ProgramCompilationException : public std::exception {
+class ShaderProgramCompilationException : public std::exception {
 
 public:
-  ProgramCompilationException(std::string infoLog) throw() {
+  ShaderProgramCompilationException(std::string infoLog) throw() {
     m_infoLog = infoLog;
     m_msg = "Shader program compilation failed.\n" + m_infoLog;
   };
