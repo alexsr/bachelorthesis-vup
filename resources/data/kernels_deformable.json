@@ -19,7 +19,7 @@
             }
 		},
 		{
-			"name": "fakecollision",
+			"name": "collision",
 			"onSystems": [],
 			"onTypes": ["B"],
 			"constants": {

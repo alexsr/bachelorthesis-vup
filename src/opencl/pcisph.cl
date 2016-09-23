@@ -7,7 +7,7 @@ __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
 __constant float smoothingLength = 0.2;
 __constant float restDensity = 1000.0;
-__constant int neighbor_amount = 30;
+__constant int neighbor_amount = 100;
 
 float polySix(float h, float r) {
   if (0 <= r && r < h) {
@@ -46,22 +46,63 @@ float4 reflect(float4 d, float4 n) {
   return r;
 }
 
-__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+
+__kernel void resetGrid(__global int* gridCounter) {
+  int id = get_global_id(0);
+  gridCounter[id] = 0;
+}
+
+__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint) {
+  int id = get_global_id(0);
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  int counterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
+  if (counterIndex < cellsinx*cellsiny*cellsinz) {
+    int n = atomic_inc(&(gridCounter[i * cellsiny * cellsinz + j * cellsinz + k]));
+    if (n < cellCapacity) {
+      grid[i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + n] = id;
+    }
+  }
+}
+
+__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* globalIndices, __global int* typeIDs) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
-
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (pos[g_id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (pos[g_id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (pos[g_id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
   float4 p = pos[g_id];
   neighborCounter[id] = 0;
-  for (int index = 0; index < get_global_size(0); index++)
-  {
-    float dist = distance(p.xyz, pos[globalIndices[index]].xyz);
-    if (dist <= smoothingLength)
-    {
-      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
-      neighborCounter[id]++;
+  for (int x = max(0, i - 1); x < min(i + 2, cellsinx); x++) {
+    int x_counter_offset = x * cellsiny * cellsinz;
+    int x_offset = x_counter_offset * cellCapacity;
+    for (int y = max(0, j - 1); y < min(j + 2, cellsiny); y++) {
+      int y_counter_offset = y * cellsinz;
+      int y_offset = y_counter_offset * cellCapacity;
+      for (int z = max(0, k - 1); z < min(k + 2, cellsinz); z++) {
+        int z_offset = z * cellCapacity;
+        int n = gridCounter[x_counter_offset + y_counter_offset + z];
+        for (int o = 0; o < n; o++) {
+          int other = grid[x_offset + y_offset + z_offset + o];
+          float dist = distance(p.xyz, pos[other].xyz);
+          if (dist <= smoothingLength && g_id != other)
+          {
+            neighbors[id * neighbor_amount + neighborCounter[id]] = other - typeIDs[id];
+            neighborCounter[id]++;
+          }
+          if (neighborCounter[id] >= neighbor_amount - 1) {
+            return;
+          }
+        }
+      }
     }
-    if (neighborCounter[id] >= neighbor_amount - 1)
-      break;
   }
 }
 
@@ -94,7 +135,7 @@ __kernel void predict(__global float4* pos, __global float4* vel, __global float
 __kernel void updatePressure(__global float4* pos, __global float4* predictpos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global int* globalIndices, float dt) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
-  float density_id = 0.0f;
+  float density_id = mass[g_id] * polySix(smoothingLength, 0.0);
   float pressure_id = 0;
   float polySix_const = 315.0f / (64.0f * M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   for (int i = 0; i < neighborCounter[id]; i++) {
@@ -106,7 +147,7 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
 
   density[id] = density_id;
   float density_err = density_id - restDensity;
-  pressure[id] += -density_err * 0.01f;
+  pressure[id] += -density_err * 0.009f;
 }
 
 __kernel void computePressureForce(__global float4* predictpos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* forcePressure, __global int* globalIndices) {
@@ -129,7 +170,7 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   float bounds = 2.0;
   float ybounds = 2.0;
   pos[id].xyz += vel[id].xyz * dt;
-  float damping = 0.99;
+  float damping = 0.9;
   if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up) * damping;
   }

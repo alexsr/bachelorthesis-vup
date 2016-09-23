@@ -67,7 +67,7 @@
 					0.0
 				],
         "springcoefficient": [
-					5000.0
+					50000.0
 				],
         "dampingcoefficient": [
 					10.0
@@ -152,10 +152,10 @@
           4.0
         ],
         "springcoefficient": [
-          50000.0
+          5000.0
         ],
         "dampingcoefficient": [
-          10.0
+          2.0
         ],
         "vel": [
           0.0,

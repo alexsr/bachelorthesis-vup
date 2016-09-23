@@ -203,36 +203,71 @@ __kernel void calcCurrentTensor(__global float4* quat, __global float* restTenso
   }
 }
 
-__kernel void rigidCollision(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global float* inertiaTensor, __global int* systemIDs, __global float* springcoefficient, __global float* dampingcoefficient, __global float* mass, float dt) {
+
+__kernel void resetGrid(__global int* gridCounter) {
   int id = get_global_id(0);
-  float diam = radius * 2.0f;
+  gridCounter[id] = 0;
+}
+
+__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint) {
+  int id = get_global_id(0);
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  int counterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
+  if (counterIndex < cellsinx*cellsiny*cellsinz) {
+    int n = atomic_inc(&(gridCounter[i * cellsiny * cellsinz + j * cellsinz + k]));
+    if (n < cellCapacity) {
+      grid[i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + n] = id;
+    }
+  }
+}
+
+__kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, __global float* springcoefficient, __global float* dampingcoefficient, float dt) {
+  int id = get_global_id(0);
   float4 p = pos[id];
   float4 v = vel[id];
   float4 forceSpring = 0.0f;
   float4 forceDamping = 0.0f;
   float4 forceShear = 0.0f;
-  int sysID = systemIDs[id];
-  float k = springcoefficient[id];
+  float diam = 2.0f * radius;
+  float ks = springcoefficient[id];
   float kd = dampingcoefficient[id];
-  float kt = kd;
-  for (int j = 0; j < get_global_size(0); j++) {
-    if (j == id) {
-      continue;
-    }
-    if (sysID != systemIDs[j]) {
-      float dist = distance(pos[id], pos[j]);
-      if (dist < diam) {
-        float4 diffPos = pos[j] - p;
-        float4 vj = vel[j];
-        float4 velDiff = (vj - v);
-        float4 n = diffPos / dist;
-        forceSpring += -k * (diam - dist) * n;
-        forceDamping += kd * velDiff;
-        forceShear += kt * (velDiff - dot(velDiff, n) * n);
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  int i = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  for (int x = i - 1; x < i + 2; x++) {
+    int x_counter_offset = x * cellsiny * cellsinz;
+    int x_offset = x_counter_offset * cellCapacity;
+    for (int y = j - 1; y < j + 2; y++) {
+      int y_counter_offset = y * cellsinz;
+      int y_offset = y_counter_offset * cellCapacity;
+      for (int z = k - 1; z < k + 2; z++) {
+        int z_offset = z * cellCapacity;
+        int n = gridCounter[x_counter_offset + y_counter_offset + z];
+        for (int o = 0; o < n; o++) {
+          int other = grid[x_offset + y_offset + z_offset + o];
+          float dist = distance(p.xyz, pos[other].xyz);
+          if (systemIDs[other] != systemIDs[id] && dist < radius * 2.0f && id != other) {
+            float4 diffPos = pos[other] - p;
+            float4 vj = vel[other];
+            float4 velDiff = (vj - v);
+            float4 n = diffPos / dist;
+            forceSpring += -ks * (diam - dist) * n;
+            forceDamping += kd * velDiff;
+            forceShear += 0.0f * (velDiff - dot(velDiff, n) * n);
+          }
+        }
       }
     }
   }
-  float4 gravForce = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
+  float4 gravForce = 0.0f;
   gravForce.y = -9.81f * mass[id];
   forceIntern[id].xyz += gravForce.xyz + forceSpring.xyz + forceDamping.xyz + forceShear.xyz;
 }
@@ -295,12 +330,12 @@ __kernel void integrateRigidBody(__global float4* pos, __global float4* relative
   
   float4 forceSpring = 0.0f;
   float bounds = 2.0;
-  float ybounds = 2.0;
+  float ybounds = 4.0;
   float k = springcoefficient[id];
   float kd = dampingcoefficient[id];
   bool collision = false;
-  if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
-    forceSpring.y += -k * (pos[id].y + ybounds);
+  if (dot(vel[id], up) < 0 && pos[id].y < -bounds) {
+    forceSpring.y += -k * (pos[id].y + bounds);
     collision = true;
   }
   else if (dot(vel[id], down) < 0 && pos[id].y > ybounds) {

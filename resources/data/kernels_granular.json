@@ -1,0 +1,41 @@
+{
+	"kernels": [
+		{
+			"name": "resetGrid",
+			"onStructure": true
+		},
+		{
+			"name": "updateGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "rigidCollision",
+			"onSystems": [],
+			"onTypes": [],
+			"constants": {
+				"dt": 0.001
+			}
+		},
+    {
+			"name": "integrate",
+			"onSystems": [],
+			"onTypes": ["G"],
+      "constants": {
+          "dt": 0.001
+      }
+		},
+		{
+			"name": "rigidCollision"
+		},
+    {
+			"name": "integrate"
+		},
+		{
+			"name": "rigidCollision"
+		},
+    {
+			"name": "integrate"
+		}
+	]
+}

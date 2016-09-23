@@ -1,5 +1,14 @@
 {
 	"kernels": [
+    {
+			"name": "resetGrid",
+			"onStructure": true
+		},
+		{
+			"name": "updateGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
 		{
 			"name": "findNeighbors",
 			"onSystems": [],
@@ -18,7 +27,7 @@
 		{
 			"name": "integrate",
 			"constants": {
-				"dt": 0.001
+				"dt": 0.01
 			},
 			"onSystems": [],
 			"onTypes": []

@@ -74,8 +74,8 @@ int main()
     particles[i].viscosity = 3.0f;
   }
 
-  vup::OpenCLBasis clBasis(1, CL_DEVICE_TYPE_GPU, 0);
-  vup::BufferHandler buffers(clBasis.context());
+  vup::GPUBoilerplate clBasis(1, CL_DEVICE_TYPE_GPU, 0);
+  vup::BufferHandler buffers(clBasis.getContext());
   buffers.createVBOData("pos", 2, particle_amount, 4, translations, true, GL_STREAM_DRAW);
   buffers.createVBOData("color", 3, particle_amount, 4, color, true, GL_STATIC_DRAW);
 
@@ -93,7 +93,7 @@ int main()
   }
 
   // OPENCL
-  vup::ParticleQueue queue(clBasis.context(), particle_amount);
+  vup::ParticleQueue queue(clBasis.getContext(), particle_amount);
   buffers.createBufferGL("pos_vbo", CL_MEM_READ_WRITE, "pos");
   buffers.createBuffer<vup::velocity>("vel", CL_MEM_READ_WRITE, vel.size());
   queue.writeBuffer(buffers.getBuffer("vel"), sizeof(glm::vec4) * vel.size(), &vel[0]);
@@ -105,7 +105,7 @@ int main()
   float dt = 0.01f;
   float camdt = 0.01f;
   std::vector<cl::Memory> openglbuffers = buffers.getGLBuffers();
-  vup::KernelHandler kh(clBasis.context(), clBasis.device(), OPENCL_KERNEL_PATH "/fakebox.cl", { "test", "fakecollision" });
+  vup::KernelHandler kh(clBasis.getContext(), clBasis.getDevice(), OPENCL_KERNEL_PATH "/fakebox.cl", { "test", "fakecollision" });
   
   kh.initKernel("move");
   kh.setArg({ "move", "test", "fakecollision" }, 0, buffers.getBufferGL("pos_vbo"));
@@ -150,8 +150,8 @@ int main()
       accumulator = 0.0;
         //  queue.removeIndices(0, std::vector<int>(fluidIndices.begin() + test2, fluidIndices.begin() + test2 + 50));
       queue.acquireGL(&openglbuffers);
-      queue.runRangeKernel(kh.get("fakecollision"), particle_amount);
-      queue.runRangeKernel(kh.get("test"), particle_amount);
+      queue.runRangeKernel(kh.getKernel("fakecollision"), particle_amount);
+      queue.runRangeKernel(kh.getKernel("test"), particle_amount);
       queue.releaseGL(&openglbuffers);
       queue.finish();
     }

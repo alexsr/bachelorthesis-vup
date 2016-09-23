@@ -52,7 +52,7 @@
 				},
 				"neighbors": {
 					"format": "1f",
-					"instances": 30
+					"instances": 100
 				},
 				"neighborCounter": {
 					"format": "1f",
@@ -118,14 +118,14 @@
 		{
 			"name": "Fluid1",
 			"type": "F",
-			"particles": 1000,
+			"particles": 3500,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
-						"random-1.5,1.5",
-						"random0,1",
-						"random-1.5,1.5",
+						"random-2,2",
+						"random-0.5,1",
+						"random-2,2",
 						1.0
 					]
 				},
@@ -143,14 +143,14 @@
 		{
 			"name": "Fluid2",
 			"type": "F",
-			"particles": 1050,
+			"particles": 2000,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
-						"random-1.5,1.5",
-						"random1.5,2",
-						"random-1.5,1.5",
+						"random-2,2",
+						"random1,2",
+						"random-2,2",
 						1.0
 					]
 				},
@@ -166,7 +166,7 @@
 				"mass": {
 					"frequency": 1,
 					"values": [
-						0.4
+						0.08
 					]
 				}
 			}
@@ -174,14 +174,14 @@
 		{
 			"name": "Fluid3",
 			"type": "F",
-			"particles": 1000,
+			"particles": 4500,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
-						"random-1.5,1.5",
-						"random0,1",
-						"random-1.5,1.5",
+						"random-2,2",
+						"random-2,-0.5",
+						"random-2,2",
 						1.0
 					]
 				},
@@ -196,5 +196,21 @@
 				}
 			}
 		}
-	]
+	],
+	"speedupstructure": {
+		"size": 1331,
+		"name": "uniformgrid",
+		"data": {
+			"gridCounter": 1,
+			"grid": 200
+		},
+		"constants": {
+			"cellRadius": 0.2,
+			"cellsinx": 11,
+			"cellsiny": 11,
+			"cellsinz": 11,
+			"gridMidpoint": [0,0,0,1],
+			"cellCapacity": 200
+		}
+	}
 }

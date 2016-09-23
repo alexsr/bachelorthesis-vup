@@ -74,7 +74,7 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   color[id].z = k / (float)(cellsinz);
 }
 
-__kernel void fakecollision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
+__kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;

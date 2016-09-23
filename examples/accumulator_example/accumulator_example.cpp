@@ -38,7 +38,9 @@ int main()
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
+  double frameTime = lastTime;
   double accumulator = 0.0;
+  double frames = 0.0;
   // Main loop
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -47,7 +49,12 @@ int main()
     vup::clearGL();
     currentTime = glfwGetTime();
     accumulator += currentTime - lastTime;
-    vup::updateFramerate(currentTime, lastTime, window);
+    if (currentTime - frameTime > 1) {
+      vup::updateFramerate(currentTime, frameTime, frames, window);
+      frameTime = currentTime;
+      frames = 0;
+    }
+    frames += 1;
     lastTime = currentTime;
     while (accumulator > dt) {
       ps.run();

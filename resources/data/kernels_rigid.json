@@ -1,6 +1,6 @@
 {
 	"kernels": [
-        {
+    {
 			"name": "calculateCenterOfMass",
 			"onSystems": [],
 			"onTypes": ["R"],
@@ -11,8 +11,17 @@
 			"onSystems": [],
 			"onTypes": []
 		},
+    {
+      "name": "resetGrid",
+      "onStructure": true
+    },
+    {
+			"name": "updateGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
 		{
-			"name": "rigidCollision",
+			"name": "collision",
 			"onSystems": [],
 			"onTypes": [],
 			"constants": {

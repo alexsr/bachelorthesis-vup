@@ -241,9 +241,6 @@ __kernel void collision(__global float4* pos, __global float4* vel, __global flo
   float4 forceSpring = 0.0f;
   float4 forceDamping = 0.0f;
   float4 forceShear = 0.0f;
-  float ks = springcoefficient[id];
-  float kd = dampingcoefficient[id];
-  float kt = kd;
   int sysID = systemIDs[id];
   for (int j = 0; j < get_global_size(0); j++) {
     if (j == id || sysID == systemIDs[j]) {
@@ -255,6 +252,9 @@ __kernel void collision(__global float4* pos, __global float4* vel, __global flo
       float4 vj = vel[j];
       float4 velDiff = (vj - v);
       float4 n = diffPos / dist;
+      float ks = springcoefficient[j];
+      float kd = dampingcoefficient[j];
+      float kt = kd;
       forceSpring += -ks * (diam - dist) * n;
       forceDamping += kd * velDiff;
       forceShear += kt * (velDiff - dot(velDiff, n) * n);
@@ -367,7 +367,7 @@ __kernel void integrateFluid(__global float4* pos, __global float4* vel, __globa
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
   float4 gravForce = 0.0f;
-  gravForce.x = -9.81f * mass[id];
+  gravForce.x = -9.81f * mass[g_id];
   float4 v = vel[g_id];
   float4 p = pos[g_id];
   v += ((forceIntern[g_id] + gravForce) / mass[g_id]) * dt;
