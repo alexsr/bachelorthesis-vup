@@ -40,7 +40,7 @@ void vup::TypeBuffer::removeIndices(std::vector<int> indices)
 {
   std::sort(indices.begin(), indices.end());
   indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
-  for (int i = 0; i < indices.size(); i++) {
+  for (unsigned int i = 0; i < indices.size(); i++) {
     removeIndex(indices.at(i));
   }
   m_range = m_indices.size();

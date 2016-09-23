@@ -5,8 +5,24 @@
 #ifndef VUP_OPENCLUTIL_H
 #define VUP_OPENCLUTIL_H
 
+// Includes for methods to get context properties are OS-specific.
+#ifdef _WIN32
+#  define WINDOWS_LEAN_AND_MEAN
+#  define NOMINMAX
+#  include <windows.h>
+#endif
+
+#ifdef UNIX
+#include <GL/glx.h>
+#endif
+
+#if defined (__APPLE__) || defined(MACOSX)
+#define GL_SHARING_EXTENSION "cl_APPLE_gl_sharing"
+#else
+#define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
+#endif
+
 #include "vup/defs.h"
-#include "vup/particle.h"
 #include "vup/Util/FileReader.h"
 #include "vup/ParticleHandling/datadefs.h"
 #include "vup/Exceptions/KernelNotFoundException.h"
@@ -25,24 +41,6 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
-
-
-// Methods to get context properties are OS-specific.
-#ifdef _WIN32
-#  define WINDOWS_LEAN_AND_MEAN
-#  define NOMINMAX
-#  include <windows.h>
-#endif
-
-#ifdef UNIX
-#include <GL/glx.h>
-#endif
-
-#if defined (__APPLE__) || defined(MACOSX)
-#define GL_SHARING_EXTENSION "cl_APPLE_gl_sharing"
-#else
-#define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
-#endif
 
 // This class handles all of OpenCL's methods used within the framework which allows the usage
 // of a different GPU programming API by simply creating a different handler.

@@ -22,8 +22,10 @@ void vup::KernelInfoLoader::load(std::string path)
     if (!doc.HasMember("kernels") || !doc["kernels"].IsArray()) {
       throw new CorruptDataException(m_path, "No particle size specified!");
     }
+
     int pos = 0;
     rapidjson::Value a = doc["kernels"].GetArray();
+    // Loop through all kernel info.
     for (rapidjson::Value::ValueIterator it = a.Begin(); it != a.End(); ++it) {
       if (!it->HasMember("name") || !it->IsObject()) {
         throw new CorruptDataException(m_path, "Missing kernel name.");
@@ -31,6 +33,10 @@ void vup::KernelInfoLoader::load(std::string path)
       rapidjson::Value o = it->GetObject();
       std::string name = o["name"].GetString();
       std::cout << "Loading kernel " << name << "." << std::endl;
+      // If a kernel is already defined, every additional occurence just adds an additional
+      // kernel execution call at the next position.
+      // If a kernel is mentioned twice in the info file, it is executed twice.
+      // The execution order of kernels is the same as the order they appear in the info file.
       if (doesKeyExist(name, m_kernelInfos)) {
         m_kernelInfos[name].pos.push_back(pos);
         std::cout << "Next position of " << name << ": " << pos << std::endl;
@@ -38,6 +44,8 @@ void vup::KernelInfoLoader::load(std::string path)
         continue;
       }
       KernelInfo kinf;
+      // If a kernel is an init kernel, it is used to initialize specific values and only run once
+      // at the start of the simulation.
       if (o.HasMember("init") && o["init"].IsBool()) {
         kinf.init = o["init"].GetBool();
       }
@@ -86,6 +94,7 @@ void vup::KernelInfoLoader::load(std::string path)
         std::cout << name << " is run on the speedup structure." << std::endl;
       }
       if (o.HasMember("constants") && o["constants"].IsObject()) {
+        // Kernel constants are float only.
         std::map<std::string, float> constants;
         std::cout << "\nKernel constants:" << std::endl;
         rapidjson::Value c = o["constants"].GetObject();

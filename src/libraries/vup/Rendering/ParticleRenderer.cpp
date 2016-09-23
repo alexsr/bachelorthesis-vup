@@ -4,7 +4,6 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup
 {
   
   m_instancedVBOs = instancedVBOs;
-
   glBindVertexArray(m_vao);
   std::map<std::string, vup::VBO>::iterator it;
   // Use iterator to loop through map. Loc is specified in VBO to allow this behavior,
@@ -17,7 +16,8 @@ vup::ParticleRenderer::ParticleRenderer(RenderData rd, std::map<std::string, vup
     glBindBuffer(GL_ARRAY_BUFFER, it->second.handle);
     glVertexAttribPointer(loc, it->second.format, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glVertexAttribDivisor(loc, 1); // Make vertex attribute at loc instanced
+    // Make vertex attribute at loc instanced.
+    glVertexAttribDivisor(loc, 1);
   }
   glBindVertexArray(0);
 }

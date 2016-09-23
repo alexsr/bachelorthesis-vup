@@ -13,6 +13,7 @@
 
 namespace vup {
 
+// Loads the contents of a file into m_source.
 class FileReader
 {
 public:
@@ -24,6 +25,7 @@ public:
   bool isLoaded() { return m_loaded; }
 
 private:
+  // Loads file and if it fails an exception in thrown.
   void load(std::string path);
 
   bool m_loaded;

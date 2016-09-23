@@ -94,7 +94,7 @@ void vup::ParticleSystem::migrateData(std::string name, vup::DataValue d)
       std::vector<std::string> str = splitVec4(stringValue.c_str());
       std::vector<glm::vec4> result;
       glm::vec4 vec(0);
-      for (int i = 0; i < str.size(); i++) {
+      for (unsigned int i = 0; i < str.size(); i++) {
         vec[i] = std::atof(str[i].c_str());
       }
       for (int i = 0; i < m_count * instances; i++) {

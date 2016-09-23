@@ -6,7 +6,6 @@
 #define VUP_BUFFERHANDLER_H
 
 #include "vup/defs.h"
-#include "vup/particle.h"
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
 #else
@@ -55,7 +54,7 @@ public:
   cl::BufferGL getBufferGL(std::string name);
   // Returns the OpenCL buffers of interop buffers as a vector of memory objects.
   // This is necessary because the acquire and release functions of the queue require memory objects.
-  std::vector<cl::Memory> getGLBuffers() { return m_glBuffersVector; }
+  std::vector<cl::Memory> * getGLBuffers() { return m_glBuffersVector; }
 
   // OpenGL buffer handling
 
@@ -84,7 +83,7 @@ private:
   cl::Context m_defaultContext;
   std::map<std::string, cl::Buffer> m_buffers;
   std::map<std::string, cl::BufferGL> m_glBuffers;
-  std::vector<cl::Memory> m_glBuffersVector;
+  std::vector<cl::Memory> * m_glBuffersVector;
   std::map<std::string, vup::VBO> m_vbos;
   std::map<std::string, vup::VBO> m_interopVBOs;
 };

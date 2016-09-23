@@ -53,22 +53,27 @@ public:
   vup::SpeedupStructure getSpeedupStructure() { return m_speedupStructure; }
 
 private:
-  // Extract the specifications of all variables in the json object o and put these in the passed typeMap.
+  // Extracts the specifications of all variables in the json object o and put these in the passed typeMap.
   void extractVars(rapidjson::Value &o, typeIdentifiers &typeMap);
-  // Extract the specifications of all variables in the json object o and put these in the passed typeMap.
+  // Extracts the specifications of all variables in the json object o and put these in the passed typeMap.
   void extractTypes(rapidjson::Value &a);
+  // Extracts the data for the system. The variables have to conform to global, interop or type variables.
+  // Creates a ParticleSystem object from its ParticleType object.
   void extractSystems(rapidjson::Value &a);
+  // Extracts the speedup structure data and constants and creates a SpeedupStructure objects from it.
   void extractSpeedupStructure(rapidjson::Value &o);
 
+  // Returns a data type corresponding to s. If there is no data type specified, an exception is thrown.
   datatype evalDatatype(std::string s);
+  // Returns the format of a variable that may be in m_globalIdentifiers, m_interopIdentifiers or in typeVars.
   datatype findFormat(std::string f, typeIdentifiers &typeVars);
+  // Looks for the variable f in m_globalIdentifiers, m_interopIdentifiers or in typeVars and return its specs
   vup::DataSpecification getDataSpec(std::string f, typeIdentifiers &typeVars);
-
+  // Creates a float from a string in the format of "randomX,Y" with X and Y being any kind of float.
   float createFloatRandom(const char* str);
   float randomFloat(float lower, float upper) {
     return lower + (upper-lower) * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
   }
-
   bool isFloat(std::string str) {
     std::istringstream iss(str);
     double d;
@@ -85,10 +90,12 @@ private:
   template <typename T> std::string toString(T any);
 
   std::string m_path;
+  // size of the particle representation
   float m_size;
   int m_overallParticleCount;
   std::map<std::string, vup::ParticleType> m_types;
   std::map<std::string, int> m_typeParticleCount;
+  // A map of systems in a map with type names as keys
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
   vup::SpeedupStructure m_speedupStructure;
   typeIdentifiers m_globalIdentifiers;

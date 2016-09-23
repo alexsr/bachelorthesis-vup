@@ -22,11 +22,6 @@ void vup::SpeedupStructure::addData(std::string name, std::vector<int> d)
   m_data[name] = d;
 }
 
-std::map<std::string, std::vector<int>> vup::SpeedupStructure::getData()
-{
-  return m_data;
-}
-
 void vup::SpeedupStructure::addIntConstant(std::string name, int v)
 {
   if (std::find(m_identifiers.begin(), m_identifiers.end(), name) != m_identifiers.end()) {

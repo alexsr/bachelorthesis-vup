@@ -1,14 +1,13 @@
+// Bachelor thesis Particleframework
+// Author: Alexander Scheid-Rehder
+// Email: alexsr@uni-koblenz.de
+
 #include "vup/defs.h"
-#include "vup/particle.h"
 #include "vup/utils.h"
 #include "vup/Rendering/ShaderProgram.h"
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
-#include "vup/ParticleHandling/DataLoader.h"
-#include "vup/ParticleHandling/BufferHandler.h"
-#include "vup/ParticleHandling/UniformGrid.h"
-#include "vup/OpenCLUtil/OpenCLUtil.h"
 #include "vup/ParticleHandling/ParticleSimulation.h"
 
 #include <string>
@@ -29,7 +28,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt");
+  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt", 1, CL_DEVICE_TYPE_GPU, 0);
   
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());

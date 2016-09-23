@@ -107,7 +107,7 @@ void vup::KernelHandler::reloadProgram(cl::Context context, cl::Device device, s
 }
 void vup::KernelHandler::initKernels(std::vector<std::string> kernels)
 {
-  for (int i = 0; i < kernels.size(); i++) {
+  for (unsigned int i = 0; i < kernels.size(); i++) {
     initKernel(kernels.at(i));
   }
 }

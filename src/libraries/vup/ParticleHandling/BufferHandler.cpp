@@ -4,14 +4,12 @@
 vup::BufferHandler::BufferHandler(cl::Context defaultContext)
 {
   m_defaultContext = defaultContext;
-  m_buffers = std::map<std::string, cl::Buffer>();
-  m_glBuffers = std::map<std::string, cl::BufferGL>();
-  m_vbos = std::map<std::string, vup::VBO>();
-  m_interopVBOs = std::map<std::string, vup::VBO>();
+  m_glBuffersVector = new std::vector<cl::Memory>();
 }
 
 vup::BufferHandler::~BufferHandler()
 {
+  delete m_glBuffersVector;
 }
 
 void vup::BufferHandler::clear()
@@ -20,7 +18,7 @@ void vup::BufferHandler::clear()
   m_glBuffers.clear();
   m_vbos.clear();
   m_interopVBOs.clear();
-  m_glBuffersVector.clear();
+  m_glBuffersVector->clear();
 }
 
 void vup::BufferHandler::addBuffer(std::string name, cl::Buffer buffer)
@@ -40,7 +38,7 @@ void vup::BufferHandler::createBufferGL(std::string name, cl_mem_flags flags, st
   }
   cl_int clError;
   m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, getInteropVBOHandle(vbo), &clError);
-  m_glBuffersVector.push_back(m_glBuffers[name]);
+  m_glBuffersVector->push_back(m_glBuffers[name]);
   if (clError != CL_SUCCESS) {
     throw vup::BufferCreationException(name, clError);
   }
