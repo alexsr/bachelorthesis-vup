@@ -13,10 +13,11 @@
 
 namespace vup {
 
+// Loads the contents of a file into m_source.
 class FileReader
 {
 public:
-  FileReader(const char* path);
+  FileReader(std::string path);
   ~FileReader();
   std::string getSource() { return m_source; }
   const char* getSourceChar() { return m_source.c_str(); }
@@ -24,11 +25,12 @@ public:
   bool isLoaded() { return m_loaded; }
 
 private:
-  std::string load(const char* path);
+  // Loads file and if it fails an exception in thrown.
+  void load(std::string path);
 
   bool m_loaded;
   int m_size;
-  const char* m_path;
+  std::string m_path;
   std::string m_source;
 
 };

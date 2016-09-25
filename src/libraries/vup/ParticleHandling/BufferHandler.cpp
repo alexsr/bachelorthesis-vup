@@ -4,23 +4,27 @@
 vup::BufferHandler::BufferHandler(cl::Context defaultContext)
 {
   m_defaultContext = defaultContext;
-  m_buffers = std::map<std::string, cl::Buffer>();
-  m_glBuffers = std::map<std::string, cl::BufferGL>();
-  m_vbos = std::map<std::string, vup::VBO>();
-  m_interopVBOs = std::map<std::string, vup::VBO>();
+  m_glBuffersVector = new std::vector<cl::Memory>();
 }
 
 vup::BufferHandler::~BufferHandler()
 {
+  delete m_glBuffersVector;
+}
+
+void vup::BufferHandler::clear()
+{
   m_buffers.clear();
   m_glBuffers.clear();
-  m_interopVBOs.clear();
   m_vbos.clear();
+  m_interopVBOs.clear();
+  m_glBuffersVector->clear();
 }
 
 void vup::BufferHandler::addBuffer(std::string name, cl::Buffer buffer)
 {
   if (doesBufferExist(name)) {
+    // -1 is used here because it is not an OpenCL error code and therefore clearly distinguishable.
     throw new BufferCreationException(name, -1);
   }
   m_buffers[name] = buffer;
@@ -29,11 +33,12 @@ void vup::BufferHandler::addBuffer(std::string name, cl::Buffer buffer)
 void vup::BufferHandler::createBufferGL(std::string name, cl_mem_flags flags, std::string vbo)
 {
   if (doesBufferGLExist(name)) {
+    // -1 is used here because it is not an OpenCL error code and therefore clearly distinguishable.
     throw new BufferCreationException(name, -1);
   }
   cl_int clError;
   m_glBuffers[name] = cl::BufferGL(m_defaultContext, flags, getInteropVBOHandle(vbo), &clError);
-  m_glBuffersVector.push_back(m_glBuffers[name]);
+  m_glBuffersVector->push_back(m_glBuffers[name]);
   if (clError != CL_SUCCESS) {
     throw vup::BufferCreationException(name, clError);
   }
@@ -42,6 +47,7 @@ void vup::BufferHandler::createBufferGL(std::string name, cl_mem_flags flags, st
 void vup::BufferHandler::addBufferGL(std::string name, cl::BufferGL buffer)
 {
   if (doesBufferGLExist(name)) {
+    // -1 is used here because it is not an OpenCL error code and therefore clearly distinguishable.
     throw new BufferCreationException(name, -1);
   }
   m_glBuffers[name] = buffer;

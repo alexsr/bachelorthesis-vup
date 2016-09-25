@@ -29,7 +29,7 @@ public:
     return m_msg.c_str();
   }
 private:
-  int m_error;
+  int m_error; // OpenCL error code
   std::string m_name;
   std::string m_msg;
 };

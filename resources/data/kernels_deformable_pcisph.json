@@ -1,0 +1,164 @@
+{
+	"kernels": [
+		{
+			"name": "generateConnectionDistances",
+			"onSystems": [],
+			"onTypes": ["B"],
+			"init": true,
+			"constants": {
+					"maxConnections": 26
+			}
+		},
+		{
+			"name": "resetGrid",
+			"onStructure": true
+		},
+		{
+			"name": "updateGrid",
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "collision",
+			"onSystems": [],
+			"onTypes": [],
+			"constants": {
+				"dt": 0.001
+			}
+		},
+		{
+			"name": "findNeighbors",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "initForces",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "predict",
+			"onSystems": [],
+			"onTypes": ["F"],
+			"constants": {
+				"dt": 0.001
+			}
+		},
+		{
+			"name": "updatePressure",
+			"onSystems": [],
+			"onTypes": ["F"],
+			"constants": {
+				"dt": 0.001
+			}
+		},
+		{
+			"name": "computePressureForce",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+			"name": "predict"
+		},
+		{
+			"name": "updatePressure"
+		},
+		{
+			"name": "computePressureForce"
+		},
+		{
+		"name": "computeConnectionForces",
+		"onSystems": [],
+		"onTypes": ["B"],
+			"constants": {
+				"maxConnections": 26,
+				"dt": 0.001
+			}
+		},
+		{
+			"name": "updateFluidForce",
+			"onSystems": [],
+			"onTypes": ["F"]
+		},
+		{
+			"name": "integrate",
+			"onSystems": [],
+			"onTypes": [],
+			"constants": {
+					"dt": 0.001
+			}
+		}
+	]
+}

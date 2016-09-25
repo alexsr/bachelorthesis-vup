@@ -13,14 +13,13 @@ namespace vup {
 // information for accessing and using an vbo.
 // All parameters are public to ease usablility.
 // This could also be a struct but is not to allow easy extension.
-
 class VBO {
 public:
   VBO();
-  VBO(GLuint h, int loc, int s);
+  VBO(GLuint h, int loc, int f);
   ~VBO();
   GLuint handle;
-  int size;
+  int format;
   int location;
 };
 

@@ -10,7 +10,7 @@
 
 namespace vup {
 
-// Is thrown when the buffer creation fails.
+// Is thrown when running of the kernel fails
 class RunKernelException : public std::exception {
 
 public:
@@ -25,7 +25,7 @@ public:
     return m_msg.c_str();
   }
 private:
-  int m_error;
+  int m_error; // OpenCL error code
   std::string m_msg;
 };
 

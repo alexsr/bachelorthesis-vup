@@ -10,8 +10,11 @@
 #include <string>
 #include <sstream>
 
+// These methods can be used in the example executable code.
+
 namespace vup {
 
+// Creates a GLFWwindow with default hints and vSync disabled.
 GLFWwindow* createWindow(int width, int height, const char* title, GLFWmonitor* monitor, GLFWwindow* share) {
   GLint glfwError = glfwInit();
   GLFWwindow* window = glfwCreateWindow(width, height, title, monitor, share);
@@ -29,6 +32,7 @@ GLFWwindow* createWindow(int width, int height, const char* title, GLFWmonitor* 
   return window;
 }
 
+// Closes window if ESC is pressed.
 void closeWindowCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -36,6 +40,7 @@ void closeWindowCallback(GLFWwindow* window, int key, int scancode, int action, 
   }
 }
 
+// Initializes GLEW.
 void initGLEW() {
   GLenum glewError = glewInit();
   if (GLEW_OK != glewError) {
@@ -43,18 +48,16 @@ void initGLEW() {
     exit(-1);
   }
 }
-double updateFramerate(double currentTime, double lastTime, GLFWwindow* window, int &frames) {
-  if (currentTime - lastTime >= 1.0) {
-    std::ostringstream strs;
-    strs << frames;
-    std::string title = "FPS: " + strs.str();
-    glfwSetWindowTitle(window, title.c_str());
-    frames = 0;
-    lastTime = currentTime;
-  }
-  return lastTime;
+
+// Sets the title to ms per frame.
+void updateFramerate(double currentTime, double lastTime, double frames, GLFWwindow* window) {
+  std::ostringstream strs;
+  strs << (currentTime - lastTime)*1000.0/frames;
+  std::string title = "MS per frame: " + strs.str();
+  glfwSetWindowTitle(window, title.c_str());
 }
 
+// Clears color and buffers.
 void clearGL() {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

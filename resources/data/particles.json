@@ -38,11 +38,11 @@
 					"format": "1f",
 					"instances": 1
 				},
-				"neighbors":  {
+				"neighbors": {
 					"format": "1f",
 					"instances": 20
 				},
-				"neighborCounter":  {
+				"neighborCounter": {
 					"format": "1f",
 					"instances": 1
 				}
@@ -55,7 +55,7 @@
 					0.0
 				],
 				"mass": [
-					0.02
+					0.004
 				],
 				"vel": [
 					0.0,
@@ -80,6 +80,33 @@
 				],
 				"neighborCounter": [
 					0
+				]
+			}
+		},
+		{
+			"name": "A",
+			"variables": {},
+			"data": {
+				"mass": [
+					0.02
+				],
+				"vel": [
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				],
+				"forceIntern": [
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				],
+				"color": [
+					1.0,
+					1.0,
+					0.0,
+					1.0
 				]
 			}
 		}
@@ -113,7 +140,7 @@
 		{
 			"name": "Fluid2",
 			"type": "F",
-			"particles": 500,
+			"particles": 250,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -127,7 +154,7 @@
 				"mass": {
 					"frequency": 1,
 					"values": [
-						0.02
+						0.004
 					]
 				},
 				"color": {
@@ -136,6 +163,56 @@
 						1,
 						0,
 						0,
+						1.0
+					]
+				}
+			}
+		},
+		{
+			"name": "Granular1",
+			"type": "A",
+			"particles": 100,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-1.5,1.5",
+						"random-3,0",
+						"random-1.5,1.5",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						1,
+						1,
+						0,
+						1.0
+					]
+				}
+			}
+		},
+		{
+			"name": "AGranular1",
+			"type": "A",
+			"particles": 200,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-1.5,1.5",
+						"random-3,0",
+						"random-1.5,1.5",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						1.0,
+						0.5,
+						0.0,
 						1.0
 					]
 				}
@@ -166,5 +243,26 @@
 				}
 			}
 		}
-	]
+	],
+	"speedupstructure": {
+		"size": 1000,
+		"name": "uniformgrid",
+		"data": {
+			"gridCounter": {
+				"format": "1i",
+				"instances": 1,
+				"value": 0
+			},
+			"grid": {
+				"format": "1i",
+				"instances": 50,
+				"value": 0
+			}
+		},
+		"constants": {
+			"gridRadius": 4.0,
+			"cellsPerLine": 10,
+			"cellCapacity": 50
+		}
+	}
 }

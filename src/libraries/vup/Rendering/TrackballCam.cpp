@@ -9,13 +9,13 @@ vup::TrackballCam::TrackballCam(int width, int height, float sens, float r, floa
 
   m_width = width;
   m_height = height;
-  m_oldX = 0.0f;
-  m_oldY = 0.0f;
-  m_x = 0.0f;
-  m_y = 0.0f;
+  m_oldX = 0.0;
+  m_oldY = 0.0;
+  m_x = 0.0;
+  m_y = 0.0;
  
-  m_theta = glm::pi<float>() / 2.0f;
-  m_phi = 0.f;
+  m_theta = glm::pi<double>() / 2.0;
+  m_phi = 0.0;
   m_radius = r;
 
   m_cameraPos.x = m_center.x + m_radius * glm::sin(m_theta) * glm::sin(m_phi);
@@ -56,8 +56,8 @@ void vup::TrackballCam::update(GLFWwindow * window, float dt)
     double changeY = (y - m_y) * m_sens * dt;
 
     m_theta -= changeY;
-    if (m_theta < 0.01f) {
-      m_theta = 0.01f;
+    if (m_theta < 0.01) {
+      m_theta = 0.01;
     } else if (m_theta > glm::pi<double>() - 0.01) {
       m_theta = glm::pi<double>() - 0.01;
     }
@@ -83,8 +83,8 @@ void vup::TrackballCam::update(GLFWwindow * window, float dt)
   else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
     m_radius += m_zoomsens * dt;
   }
-  if (m_radius < 0.1f) {
-    m_radius = 0.1f;
+  if (m_radius < 0.1) {
+    m_radius = 0.1;
   }
 
   m_cameraPos.x = m_center.x + m_radius * glm::sin(m_theta) * glm::sin(m_phi);

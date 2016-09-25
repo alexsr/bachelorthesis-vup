@@ -1,0 +1,148 @@
+{
+	"size": 0.1,
+	"variables": {
+		"vel": {
+			"format": "4f",
+			"instances": 1
+		},
+		"forceIntern": {
+			"format": "4f",
+			"instances": 1
+		},
+        "forceExtern": {
+			"format": "4f",
+			"instances": 1
+		},
+		"mass": {
+			"format": "1f",
+			"instances": 1
+		}
+	},
+	"interopVariables": {
+		"pos": {
+			"loc": 2,
+			"format": "4f",
+			"instances": 1
+		},
+		"color": {
+			"loc": 3,
+			"format": "4f",
+			"instances": 1
+		}
+	},
+	"types": [
+		{
+      "name": "G",
+      "variables": {
+        "springcoefficient": {
+          "format": "1f",
+          "instances": 1
+        },
+        "dampingcoefficient": {
+          "format": "1f",
+          "instances": 1
+        }
+      },
+      "data": {
+        "mass": [
+          0.04
+        ],
+        "springcoefficient": [
+          10.0
+        ],
+        "dampingcoefficient": [
+          4.0
+        ],
+        "vel": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "forceIntern": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "forceExtern": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "color": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ]
+			}
+		}
+	],
+	"systems": [
+		{
+			"name": "Granular1",
+			"type": "G",
+			"particles": 1000,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+            "random-2,2",
+            "random-2,-1",
+            "random-2,2",
+            1
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						"random0,1",
+            "random0,1",
+            "random0,1",
+            1
+					]
+				}
+			}
+		},
+		{
+			"name": "Granular2",
+			"type": "G",
+			"particles": 200,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+            "random-0.5,0.5",
+						"random-1,2",
+            "random-0.5,0.5",
+            1
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						0.0, 0.0, 1.0, 1.0
+					]
+				}
+			}
+		}
+	],
+	"speedupstructure": {
+		"size": 1331,
+		"name": "uniformgrid",
+		"data": {
+			"gridCounter": 1,
+			"grid": 100
+		},
+		"constants": {
+			"cellRadius": 0.2,
+			"cellsinx": 11,
+			"cellsiny": 11,
+			"cellsinz": 11,
+			"gridMidpoint": [0,0,0,1],
+			"cellCapacity": 100
+		}
+	}
+}

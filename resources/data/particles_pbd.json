@@ -1,0 +1,164 @@
+{
+	"size": 0.1,
+	"variables": {
+		"vel": {
+			"format": "4f",
+			"instances": 1
+		},
+		"next": {
+			"format": "4f",
+			"instances": 1
+		},
+		"mass": {
+			"format": "1f",
+			"instances": 1
+		}
+	},
+	"interopVariables": {
+		"pos": {
+			"loc": 2,
+			"format": "4f",
+			"instances": 1
+		},
+		"color": {
+			"loc": 3,
+			"format": "4f",
+			"instances": 1
+		}
+	},
+	"types": [
+		{
+			"name": "F",
+			"variables": {
+				"density": {
+					"format": "1f",
+					"instances": 1
+				},
+				"lambda": {
+					"format": "1f",
+					"instances": 1
+				},
+				"neighbors":  {
+					"format": "1f",
+					"instances": 20
+				},
+				"neighborCounter":  {
+					"format": "1f",
+					"instances": 1
+				}
+			},
+			"data": {
+				"density": [
+					1000.0
+				],
+				"lambda": [
+					0.0
+				],
+				"mass": [
+					0.4
+				],
+				"vel": [
+					0.0,
+					0.0,
+					0.0,
+					0.0
+				],
+				"next": [
+					0.0,
+					0.0,
+					0.0,
+					1.0
+				],
+				"color": [
+					0.0,
+					0.0,
+					1.0,
+					1.0
+				],
+				"neighbors": [
+					0
+				],
+				"neighborCounter": [
+					0
+				]
+			}
+		}
+	],
+	"systems": [
+		{
+			"name": "Fluid1",
+			"type": "F",
+			"particles": 2050,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-1,1",
+						"random-1,1",
+						"random-1,1",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						0,
+						0,
+						1,
+						1.0
+					]
+				}
+			}
+		},
+		{
+			"name": "Fluid2",
+			"type": "F",
+			"particles": 1300,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-0.5,0.5",
+						"random0.5,1",
+						"random-0.5,0.5",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						1,
+						0,
+						0,
+						1.0
+					]
+				}
+			}
+		},
+		{
+			"name": "Fluid3",
+			"type": "F",
+			"particles": 50,
+			"data": {
+				"pos": {
+					"frequency": 1,
+					"values": [
+						"random-0.5,0.5",
+						"random0,0.5",
+						"random-0.5,0.5",
+						1.0
+					]
+				},
+				"color": {
+					"frequency": 1,
+					"values": [
+						0,
+						1,
+						0,
+						1.0
+					]
+				}
+			}
+		}
+	]
+}

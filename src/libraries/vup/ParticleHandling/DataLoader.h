@@ -11,6 +11,7 @@
 #include "vup/Exceptions/CorruptDataException.h"
 #include "vup/ParticleHandling/ParticleSystem.h"
 #include "vup/ParticleHandling/ParticleType.h"
+#include "vup/ParticleHandling/SpeedupStructure.h"
 #include <vector>
 #include <map>
 #include <string>
@@ -24,14 +25,22 @@
 
 namespace vup {
 
-// Manages OpenCL and OpenGL buffers and provides 
-
+// Loads particle data from a JSON file using rapidjson http://rapidjson.org/
+// Creates a map of particle types containing a map of ParticleSystem objects of its type.
+// Also loads the speedup structure data into a SpeedupStructure object.
 class DataLoader
 {
 public:
-  DataLoader(const char* path);
+  DataLoader(std::string path);
   ~DataLoader();
-  void load(const char* path);
+  // Loads file from path and checks if it is valid JSON.
+  // If it is valid, it is parsed, otherwise a CorruptDataException is thrown.
+  // Checks for predefined data and structures to parse further.
+  // Global and interop variables are extracted.
+  // Types and systems are created.
+  // If a speedup structure is defined, it is extracted as well.
+  void load(std::string path);
+
   float getParticleSize() { return m_size; }
   std::map<std::string, vup::ParticleType> getTypes() { return m_types; }
   std::map<std::string, std::map<std::string, vup::ParticleSystem>> getSystems() { return m_systems; }
@@ -41,43 +50,56 @@ public:
   int getParticleCount() { return m_overallParticleCount; }
   std::map<std::string, int> getTypeParticleCounts() { return m_typeParticleCount; }
   int getTypeParticleCount(std::string type);
+  vup::SpeedupStructure getSpeedupStructure() { return m_speedupStructure; }
 
 private:
-  const char* m_path;
-  float m_size;
-  int m_overallParticleCount;
-  std::map<std::string, vup::ParticleType> m_types;
-  std::map<std::string, int> m_typeParticleCount;
-  std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
-  typeIdentifiers m_globalIdentifiers;
-  typeIdentifiers m_interopIdentifiers;
+  // Extracts the specifications of all variables in the json object o and put these in the passed typeMap.
+  void extractVars(rapidjson::Value &o, typeIdentifiers &typeMap);
+  // Extracts the specifications of all variables in the json object o and put these in the passed typeMap.
   void extractTypes(rapidjson::Value &a);
+  // Extracts the data for the system. The variables have to conform to global, interop or type variables.
+  // Creates a ParticleSystem object from its ParticleType object.
   void extractSystems(rapidjson::Value &a);
+  // Extracts the speedup structure data and constants and creates a SpeedupStructure objects from it.
+  void extractSpeedupStructure(rapidjson::Value &o);
 
+  // Returns a data type corresponding to s. If there is no data type specified, an exception is thrown.
   datatype evalDatatype(std::string s);
-  datatype findFormat(std::string f, typeIdentifiers typeVars);
-  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers typeVars);
-  void extractVars(rapidjson::Value o, typeIdentifiers &typeMap);
-
+  // Returns the format of a variable that may be in m_globalIdentifiers, m_interopIdentifiers or in typeVars.
+  datatype findFormat(std::string f, typeIdentifiers &typeVars);
+  // Looks for the variable f in m_globalIdentifiers, m_interopIdentifiers or in typeVars and return its specs
+  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers &typeVars);
+  // Creates a float from a string in the format of "randomX,Y" with X and Y being any kind of float.
   float createFloatRandom(const char* str);
   float randomFloat(float lower, float upper) {
     return lower + (upper-lower) * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
   }
-
   bool isFloat(std::string str) {
     std::istringstream iss(str);
     double d;
     char c;
     return iss >> d && !(iss >> c);
   }
-  //bool isInt(std::string str) {
-  //  std::istringstream iss(str);
-  //  int i;
-  //  char c;
-  //  return iss >> i && !(iss >> c);
-  //}
+  bool isInt(std::string str) {
+    std::istringstream iss(str);
+    int i;
+    char c;
+    return iss >> i && !(iss >> c);
+  }
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
   template <typename T> std::string toString(T any);
+
+  std::string m_path;
+  // size of the particle representation
+  float m_size;
+  int m_overallParticleCount;
+  std::map<std::string, vup::ParticleType> m_types;
+  std::map<std::string, int> m_typeParticleCount;
+  // A map of systems in a map with type names as keys
+  std::map<std::string, std::map<std::string, vup::ParticleSystem>> m_systems;
+  vup::SpeedupStructure m_speedupStructure;
+  typeIdentifiers m_globalIdentifiers;
+  typeIdentifiers m_interopIdentifiers;
 };
 
 template<typename T>

@@ -13,7 +13,6 @@ namespace vup {
 // The view matrix for the current camera view is calculated and
 // is accessable as well as the projection.
 // A lot of parameters of this camera can be specified.
-
 class TrackballCam
 {
 public:
@@ -49,8 +48,8 @@ private:
   float m_sens;
   float m_zoomsens;
   float m_radius;
-  float m_theta;
-  float m_phi;
+  double m_theta;
+  double m_phi;
   double m_x;
   double m_y;
   double m_oldX;

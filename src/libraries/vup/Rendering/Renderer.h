@@ -7,7 +7,6 @@
 
 #include "vup/defs.h"
 #include "vup/Rendering/RenderData/RenderData.h"
-#include "vup/particle.h"
 
 namespace vup {
 

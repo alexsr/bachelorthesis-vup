@@ -21,28 +21,33 @@
 
 namespace vup {
 
-// Manages OpenCL and OpenGL buffers and provides 
-
+// Stores info about a kernel such as when it is executed and on which systems or types of particles.
 struct KernelInfo {
   std::vector<int> pos = std::vector<int>();
   bool global = false;
+  bool init = false;
+  bool onStructure = false;
   std::vector<std::string> onSystems = std::vector<std::string>();
   std::vector<std::string> onTypes = std::vector<std::string>();
   std::map<std::string, float> constants = std::map<std::string, float>();
-  int iterations = 1;
 };
 
+typedef std::map<std::string, vup::KernelInfo> kernelInfoMap;
+
+// Loads information about how kernels are to be executed and stores it in a map of KernelInfos.
+// This data is contained in a JSON file.
+// rapidjson is used for parsing http://rapidjson.org
 class KernelInfoLoader
 {
 public:
-  KernelInfoLoader(const char* path);
+  KernelInfoLoader(std::string path);
   ~KernelInfoLoader();
-  std::map<std::string, vup::KernelInfo> getKernelInfos() { return m_kernelInfos; }
+  kernelInfoMap getKernelInfos() { return m_kernelInfos; }
   
 private:
-  void load(const char* path);
-  const char* m_path;
-  std::map<std::string, vup::KernelInfo> m_kernelInfos;
+  void load(std::string path);
+  std::string m_path;
+  kernelInfoMap m_kernelInfos;
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
   template <typename T> std::string toString(T any);
 };

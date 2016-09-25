@@ -14,34 +14,29 @@
 
 namespace vup {
 
+// Holds type default data and its specification. Data is not only type specific but also global and interop.
 class ParticleType {
 public:
   ParticleType() { m_name = ""; };
+  // Creates a particle type with its default values specifications.
   ParticleType(std::string name, typeIdentifiers typeValues);
   ~ParticleType();
   typeIdentifiers getTypeSpecificIdentifiers() { return m_typeSpecificIdentifiers; }
-  //void addConstant(std::string name, datatype t, std::string v);
+  // Adds default data specification and data if it was not added already.
   void addData(std::string name, vup::DataSpecification t, std::string v);
-  /*float getIntConstant(std::string name);
-  float getFloatConstant(std::string name);
-  glm::vec4 getVec4Constant(std::string name);*/
-  datavalue getData(std::string name);
-  /*std::map<std::string, int> getIntConstants() { return m_iConsts; }
-  std::map<std::string, float> getFloatConstants() { return m_fConsts; }
-  std::map<std::string, glm::vec4> getVec4Constants() { return m_vec4Consts; }*/
-  datamap getDatasets() { return m_data; }
+  DataValue getData(std::string name);
+  dataMap getDatasets() { return m_data; }
 
 private:
-  std::string m_name;
-  identifiers m_identifiers;
-  typeIdentifiers m_typeSpecificIdentifiers;
-  /*std::map<std::string, int> m_iConsts;
-  std::map<std::string, float> m_fConsts;
-  std::map<std::string, glm::vec4> m_vec4Consts;*/
-  datamap m_data;
   std::vector<std::string> splitVec4(const char* v);
-
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
+
+  std::string m_name;
+  // Identifiers for added data.
+  identifiers m_identifiers;
+  // Identifiers for type data only.
+  typeIdentifiers m_typeSpecificIdentifiers;
+  dataMap m_data;
 };
 
 template<typename T>
