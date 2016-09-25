@@ -4,6 +4,7 @@ vup::ParticleSystem::ParticleSystem(std::string name, int count, vup::ParticleTy
 {
   m_name = name;
   m_count = count;
+  // Get all data sets from the type to add default data to the system.
   dataMap datasets = p.getDatasets();
   for (auto &entry : datasets) {
     std::string dName = entry.first;
@@ -104,12 +105,6 @@ void vup::ParticleSystem::migrateData(std::string name, vup::DataValue d)
     }
     std::cout << "Migrated data " << name << "." << std::endl;
   }
-}
-
-bool vup::ParticleSystem::doesKeyExist(std::string key, dataMap m)
-{
-  dataMap::iterator it = m.find(key);
-  return it != m.end();
 }
 
 std::vector<std::string> vup::ParticleSystem::splitVec4(const char* v) {

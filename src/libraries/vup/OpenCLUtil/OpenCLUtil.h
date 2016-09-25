@@ -33,7 +33,6 @@
 #include "vup/Exceptions/ReleasingGLObjectsException.h"
 #include "vup/Exceptions/BufferWritingException.h"
 #include "vup/Exceptions/BufferNotFoundException.h"
-#include "vup/ParticleHandling/TypeBuffer.h"
 #include <vector>
 #include <map>
 #include <algorithm>

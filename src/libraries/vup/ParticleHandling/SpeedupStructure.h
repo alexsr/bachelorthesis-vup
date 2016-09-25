@@ -21,9 +21,17 @@ public:
   SpeedupStructure() { m_name = ""; m_count = 0; };
   SpeedupStructure(std::string name, int count);
   ~SpeedupStructure();
+  // Adds data to the structure.
+  // Checks if data or constant with the same name exists. If it does, an exception is thrown.
   void addData(std::string name, std::vector<int> d);
+  // Adds an int constant to the structure.
+  // Checks if data or constant with the same name exists. If it does, an exception is thrown.
   void addIntConstant(std::string name, int v);
+  // Adds a float constant to the structure.
+  // Checks if data or constant with the same name exists. If it does, an exception is thrown.
   void addFloatConstant(std::string name, float v);
+  // Adds a vec4 constant to the structure.
+  // Checks if data or constant with the same name exists. If it does, an exception is thrown.
   void addVec4Constant(std::string name, glm::vec4 v);
   std::map<std::string, std::vector<int>> getData() { return m_data; }
   int getIntConstant(std::string name);

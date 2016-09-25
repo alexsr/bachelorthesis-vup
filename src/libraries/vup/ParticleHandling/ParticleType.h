@@ -14,24 +14,29 @@
 
 namespace vup {
 
+// Holds type default data and its specification. Data is not only type specific but also global and interop.
 class ParticleType {
 public:
   ParticleType() { m_name = ""; };
+  // Creates a particle type with its default values specifications.
   ParticleType(std::string name, typeIdentifiers typeValues);
   ~ParticleType();
   typeIdentifiers getTypeSpecificIdentifiers() { return m_typeSpecificIdentifiers; }
+  // Adds default data specification and data if it was not added already.
   void addData(std::string name, vup::DataSpecification t, std::string v);
   DataValue getData(std::string name);
   dataMap getDatasets() { return m_data; }
 
 private:
+  std::vector<std::string> splitVec4(const char* v);
+  template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
+
   std::string m_name;
+  // Identifiers for added data.
   identifiers m_identifiers;
+  // Identifiers for type data only.
   typeIdentifiers m_typeSpecificIdentifiers;
   dataMap m_data;
-  std::vector<std::string> splitVec4(const char* v);
-
-  template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
 };
 
 template<typename T>

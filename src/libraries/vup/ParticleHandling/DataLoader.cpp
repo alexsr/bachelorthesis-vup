@@ -123,7 +123,6 @@ void vup::DataLoader::extractTypes(rapidjson::Value &a)
         if (!cit->value.IsArray()) {
           throw new CorruptDataException(m_path, "Data has to be declared in an array.");
         }
-
         std::string varname = cit->name.GetString();
         // Ints and floats are saved as floats to reduce need for data maps.
         if (spec.format == vup::INT || spec.format == vup::FLOAT) {
@@ -219,6 +218,7 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
           // frequency of 1 means, every particle gets the same data.
           // frequency of 2 means, the first particle gets the first value, the second particle gets the second value and so on.
           int frequency = dataset["frequency"].GetInt();
+          // If the data is not specified, there will be an exception thrown.
           vup::DataSpecification spec = getDataSpec(dataIdentifier, m_types[type].getTypeSpecificIdentifiers());
           rapidjson::Value values = dataset["values"].GetArray();
           if (spec.format == vup::FLOAT) {
@@ -256,7 +256,7 @@ void vup::DataLoader::extractSystems(rapidjson::Value &a)
             std::vector<int> datavec;
             for (int i = 0; i < count * spec.instances; i++) {
               int offset = i % (frequency * spec.instances);
-              int v = 0.0;
+              int v = 0;
               if (values[offset].IsString()) {
                 std::string valuestring = values[offset].GetString();
                 if (valuestring.substr(0, 6) == "random") {

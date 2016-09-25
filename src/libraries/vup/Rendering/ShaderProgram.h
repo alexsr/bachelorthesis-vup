@@ -20,7 +20,6 @@ namespace vup {
 // Creates an OpenGL Shader Program from source and provides
 // additional functionality to use the shader and update the
 // uniform values.
-
 class ShaderProgram
 {
 public:
@@ -29,11 +28,12 @@ public:
   // Activates the use of the shader program.
   void use();
   GLuint getProgram();
+  
+  // Update methods:
+  // These are the essential methods for updating uniforms.
 
   // Updates the uniform at the location of name with
   // the second value in the method decleration.
-  // These are the essential methods for updating uniforms.
-
   void updateUniform(const GLchar * name, bool b);
   void updateUniform(const GLchar * name, int i);
   void updateUniform(const GLchar * name, float f);
@@ -56,17 +56,13 @@ private:
   // Tries to find the uniform location of the uniform with the given name.
   // If the uniform is not found in the shader, an exception is thrown.
   GLint findUniform(const GLchar* name);
-
   // Handles the shader creation and returns the id of the compiled shader.
   GLuint createShader(const char* path, GLenum type);
-
   // Loads the shader file source from the path but does not return the source.
   // Instead it adds the source to the shader with the given shaderID.
   void loadFromSource(const char* path, GLuint shaderID);
-
   // Checks if the shader was compiled correctly.
   void checkShaderStatus(GLuint shaderID);
-
   // Checks if the program was compiled correctly.
   void checkProgramStatus(GLuint programID);
 

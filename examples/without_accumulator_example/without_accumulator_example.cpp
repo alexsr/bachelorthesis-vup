@@ -32,7 +32,7 @@ int main()
   
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
-  float dt = 0.01f;
+  float dt = 0.016667f;
   float camdt = 0.01f;
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
@@ -46,7 +46,7 @@ int main()
   while (!glfwWindowShouldClose(window)) {
     vup::clearGL();
     currentTime = glfwGetTime();
-    if (currentTime - lastTime > 1) {
+    if (currentTime - lastTime >= 1) {
       vup::updateFramerate(currentTime, lastTime, frames, window);
       lastTime = currentTime;
       frames = 0;

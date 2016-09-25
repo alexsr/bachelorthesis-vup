@@ -12,7 +12,6 @@ namespace vup {
 
 // Creates the vertices and normals of a sphere.
 // Radius, horizontal and vertical resolution can be specified.
-
 class SphereData : public RenderData
 {
 public:
