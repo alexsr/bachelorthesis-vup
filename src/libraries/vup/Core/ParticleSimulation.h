@@ -9,7 +9,6 @@
 #include "vup/Exceptions/CorruptDataException.h"
 #include "vup/Util/DataLoader.h"
 #include "vup/Util/KernelInfoLoader.h"
-#include "vup/ParticleHandling/BufferHandler.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 #include "vup/Rendering/ParticleRenderer.h"
 #include <memory>
