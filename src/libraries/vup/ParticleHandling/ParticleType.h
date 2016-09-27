@@ -5,8 +5,8 @@
 #ifndef VUP_PARTICLETYPE_H
 #define VUP_PARTICLETYPE_H
 
-#include "vup/defs.h"
-#include "datadefs.h"
+#include "vup/Core/defs.h"
+#include "vup/Core/datadefs.h"
 #include "vup/Exceptions/CorruptDataException.h"
 #include <map>
 #include <algorithm>

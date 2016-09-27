@@ -22,9 +22,9 @@
 #define GL_SHARING_EXTENSION "cl_khr_gl_sharing"
 #endif
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "vup/Util/FileReader.h"
-#include "vup/ParticleHandling/datadefs.h"
+#include "vup/Core/datadefs.h"
 #include "vup/Exceptions/KernelNotFoundException.h"
 #include "vup/Exceptions/KernelCreationException.h"
 #include "vup/Exceptions/RunKernelException.h"

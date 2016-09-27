@@ -5,9 +5,9 @@
 #ifndef VUP_PARTICLERENDERER_H
 #define VUP_PARTICLERENDERER_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "Renderer.h"
-#include "vup/ParticleHandling/VBO.h"
+#include "VBO.h"
 #include <map>
 
 namespace vup {

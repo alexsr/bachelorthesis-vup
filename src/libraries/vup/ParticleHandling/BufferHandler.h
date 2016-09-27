@@ -5,14 +5,14 @@
 #ifndef VUP_BUFFERHANDLER_H
 #define VUP_BUFFERHANDLER_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
 #else
 #include <CL/cl.hpp>
 #include <CL/cl_gl.h>
 #endif
-#include "vup/ParticleHandling/VBO.h"
+#include "vup/Rendering/VBO.h"
 #include "vup/Exceptions/BufferCreationException.h"
 #include "vup/Exceptions/BufferNotFoundException.h"
 #include <vector>

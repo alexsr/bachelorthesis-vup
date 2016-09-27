@@ -5,7 +5,7 @@
 #ifndef VUP_SPHEREDATA_H
 #define VUP_SPHEREDATA_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "vup/Rendering/RenderData/RenderData.h"
 
 namespace vup {

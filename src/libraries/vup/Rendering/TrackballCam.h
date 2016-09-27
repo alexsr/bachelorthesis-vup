@@ -5,7 +5,7 @@
 #ifndef VUP_TRACKBALLCAM_H
 #define VUP_TRACKBALLCAM_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 
 namespace vup {
 

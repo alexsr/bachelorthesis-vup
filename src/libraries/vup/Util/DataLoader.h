@@ -5,8 +5,8 @@
 #ifndef VUP_DATALOADER_H
 #define VUP_DATALOADER_H
 
-#include "vup/defs.h"
-#include "datadefs.h"
+#include "vup/Core/defs.h"
+#include "vup/Core/datadefs.h"
 #include "vup/Util/FileReader.h"
 #include "vup/Exceptions/CorruptDataException.h"
 #include "vup/ParticleHandling/ParticleSystem.h"

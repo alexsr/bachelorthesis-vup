@@ -2,13 +2,13 @@
 // Author: Alexander Scheid-Rehder
 // Email: alexsr@uni-koblenz.de
 
-#include "vup/defs.h"
-#include "vup/utils.h"
+#include "vup/Core/defs.h"
+#include "vup/Core/utils.h"
 #include "vup/Rendering/ShaderProgram.h"
 #include "vup/Rendering/TrackballCam.h"
 #include "vup/Rendering/RenderData/SphereData.h"
 #include "vup/Rendering/ParticleRenderer.h"
-#include "vup/ParticleHandling/ParticleSimulation.h"
+#include "vup/Core/ParticleSimulation.h"
 
 #include <string>
 #include <ctime>

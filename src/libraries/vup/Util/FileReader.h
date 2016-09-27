@@ -5,7 +5,7 @@
 #ifndef VUP_FILEREADER_H
 #define VUP_FILEREADER_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "vup/Exceptions/FileNotFoundException.h"
 #include <string>
 #include <fstream>

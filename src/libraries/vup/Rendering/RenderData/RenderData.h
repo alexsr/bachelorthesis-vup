@@ -5,7 +5,7 @@
 #ifndef VUP_RENDERDATA_H
 #define VUP_RENDERDATA_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include <vector>
 
 namespace vup {

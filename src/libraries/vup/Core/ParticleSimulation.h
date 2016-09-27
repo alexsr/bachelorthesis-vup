@@ -5,10 +5,10 @@
 #ifndef VUP_PARTICLESIMULATION_H
 #define VUP_PARTICLESIMULATION_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "vup/Exceptions/CorruptDataException.h"
-#include "vup/ParticleHandling/DataLoader.h"
-#include "vup/ParticleHandling/KernelInfoLoader.h"
+#include "vup/Util/DataLoader.h"
+#include "vup/Util/KernelInfoLoader.h"
 #include "vup/ParticleHandling/BufferHandler.h"
 #include "vup/OpenCLUtil/OpenCLUtil.h"
 #include "vup/Rendering/ParticleRenderer.h"

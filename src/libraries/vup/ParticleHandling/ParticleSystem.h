@@ -5,8 +5,8 @@
 #ifndef VUP_PARTICLESYSTEM_H
 #define VUP_PARTICLESYSTEM_H
 
-#include "vup/defs.h"
-#include "datadefs.h"
+#include "vup/Core/defs.h"
+#include "vup/Core/datadefs.h"
 #include "vup/ParticleHandling/ParticleType.h"
 #include <map>
 #include <iostream>

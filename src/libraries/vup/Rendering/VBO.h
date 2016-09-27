@@ -5,7 +5,7 @@
 #ifndef VUP_VBO_H
 #define VUP_VBO_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 
 namespace vup {
 

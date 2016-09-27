@@ -5,7 +5,7 @@
 #ifndef VUP_INIT_H
 #define VUP_INIT_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include <iostream>
 #include <string>
 #include <sstream>

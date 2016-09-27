@@ -5,7 +5,7 @@
 #ifndef VUP_SHADERPROGRAM_H
 #define VUP_SHADER_PROGRAM_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "vup/Exceptions/ShaderProgramCompilationException.h"
 #include "vup/Exceptions/ShaderCompilationException.h"
 #include "vup/Exceptions/UniformNotFoundException.h"

@@ -5,7 +5,7 @@
 #ifndef VUP_KERNELINFOLOADER_H
 #define VUP_KERNELINFOLOADER_H
 
-#include "vup/defs.h"
+#include "vup/Core/defs.h"
 #include "vup/Util/FileReader.h"
 #include "vup/Exceptions/CorruptDataException.h"
 #include <vector>
