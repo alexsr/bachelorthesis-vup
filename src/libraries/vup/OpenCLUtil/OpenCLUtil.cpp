@@ -6,7 +6,7 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
 {
   cl::Platform::get(&m_platforms);
   if (m_platforms.size() == 0) {
-    throw std::exception("No platform found.");
+    throw std::exception();
   }
   else if (m_platforms.size() <= platformID) {
     std::cout << "Platform " << platformID << " not found." << std::endl;
@@ -18,7 +18,7 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
 
   m_defaultPlatform.getDevices(deviceType, &m_devices);
   if (m_devices.size() == 0) {
-    throw std::exception("No device found.");
+    throw std::exception();
   }
   else if (m_devices.size() <= deviceID) {
     std::cout << "Device " << deviceID << " not found on platform " << platformID << "." << std::endl;
@@ -36,13 +36,12 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
     CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE, (cl_context_properties)kCGLShareGroup,
     0
   };
-#else
-#ifdef UNIX
+#elif defined __linux__
   cl_context_properties properties[] =
   {
     CL_GL_CONTEXT_KHR, (cl_context_properties)glXGetCurrentContext(),
     CL_GLX_DISPLAY_KHR, (cl_context_properties)glXGetCurrentDisplay(),
-    CL_CONTEXT_PLATFORM, (cl_context_properties)cpPlatform,
+    CL_CONTEXT_PLATFORM, (cl_context_properties)m_defaultPlatform(),
     0
   };
 #else // Win32
@@ -53,7 +52,6 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
     CL_CONTEXT_PLATFORM, (cl_context_properties)m_defaultPlatform(), // OpenCL platform object
     0
   };
-#endif
 #endif
   m_context = cl::Context(m_defaultDevice, properties);
 }
@@ -154,7 +152,7 @@ void vup::KernelHandler::extractArguments(std::string path, const std::string &s
     int namePos = kernelPos + 14;
     int endOfName = src.find("(", namePos);
     std::string kernelName = onelineTrim(src.substr(namePos, endOfName - namePos));
-    m_arguments[kernelName] = std::vector<KernelArguments>();
+    m_arguments[kernelName] = std::vector<KernelArgument>();
 
     int endOfParams = src.find(")", endOfName);
     kernelPos = endOfParams;
@@ -170,7 +168,7 @@ void vup::KernelHandler::extractArguments(std::string path, const std::string &s
       if (parts.size() < 2) {
         throw new std::exception(); // TODO: change this exception
       }
-      KernelArguments karg;
+      KernelArgument karg;
       // The kernel name always is the last string in the parameter string.
       std::string name = parts.at(parts.size()-1);
       datatype type = vup::EMPTY;

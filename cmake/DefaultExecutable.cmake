@@ -13,7 +13,7 @@ include_directories(
     ${GLEW_INCLUDE_PATH}
     ${GLFW3_INCLUDE_PATH}
     ${GLM_INCLUDE_PATH}
-    ${ASSIMP_INCLUDE_DIRS}
+		${RAPIDJSON_INCLUDE_PATH}
     ${OpenCL_INCLUDE_DIRS}
     ${EXTERNAL_LIBRARY_PATHS}
     ${LIBRARIES_PATH}
@@ -25,7 +25,6 @@ file(GLOB_RECURSE HEADER *.h)
 add_definitions(-DSHADERS_PATH="${SHADERS_PATH}")
 add_definitions(-DOPENCL_KERNEL_PATH="${OPENCL_KERNEL_PATH}")
 add_definitions(-DRESOURCES_PATH="${RESOURCES_PATH}")
-add_definitions(-DGLFW_INCLUDE_GLCOREARB)
 add_definitions(-DGLEW_STATIC)
 
 add_executable(${ProjectId} ${SOURCES} ${HEADER})
@@ -37,7 +36,5 @@ target_link_libraries(
     ${GLFW3_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${OPENGL_LIBRARIES}
-    ${ASSIMP_LIBRARIES}
     ${OpenCL_LIBRARIES}
 )
-

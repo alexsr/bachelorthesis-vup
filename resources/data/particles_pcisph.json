@@ -118,7 +118,7 @@
 		{
 			"name": "Fluid1",
 			"type": "F",
-			"particles": 500,
+			"particles": 2500,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -143,7 +143,7 @@
 		{
 			"name": "Fluid2",
 			"type": "F",
-			"particles": 1000,
+			"particles": 1500,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -174,7 +174,7 @@
 		{
 			"name": "Fluid3",
 			"type": "F",
-			"particles": 1500,
+			"particles": 3000,
 			"data": {
 				"pos": {
 					"frequency": 1,

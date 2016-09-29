@@ -42,7 +42,7 @@ private:
 template<typename T>
 inline bool ParticleType::doesKeyExist(std::string key, std::map<std::string, T> m)
 {
-  std::map<std::string, T>::iterator it = m.find(key);
+  typename std::map<std::string, T>::iterator it = m.find(key);
   return it != m.end();
 }
 

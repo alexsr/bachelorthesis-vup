@@ -5,17 +5,6 @@
 #ifndef VUP_OPENCLUTIL_H
 #define VUP_OPENCLUTIL_H
 
-// Includes for methods to get context properties are OS-specific.
-#ifdef _WIN32
-#  define WINDOWS_LEAN_AND_MEAN
-#  define NOMINMAX
-#  include <windows.h>
-#endif
-
-#ifdef UNIX
-#include <GL/glx.h>
-#endif
-
 #if defined (__APPLE__) || defined(MACOSX)
 #define GL_SHARING_EXTENSION "cl_APPLE_gl_sharing"
 #else
@@ -43,6 +32,17 @@
 #include <cctype>
 #include <locale>
 
+// Includes for methods to get context properties are OS-specific.
+#ifdef _WIN32
+#  define WINDOWS_LEAN_AND_MEAN
+#  define NOMINMAX
+#  include <windows.h>
+#endif
+
+#ifdef __linux__
+#include <GL/glx.h>
+#endif
+
 // This class handles all of OpenCL's methods used within the framework which allows the usage
 // of a different GPU programming API by simply creating a different handler.
 // The new handler should use the same public functions though, to ensure flawless functionality.
@@ -52,26 +52,26 @@ namespace vup {
 // https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
 
 // Trims string from start
-static inline std::string &ltrim(std::string &s) {
+static inline std::string ltrim(std::string s) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(),
     std::not1(std::ptr_fun<int, int>(std::isspace))));
   return s;
 }
 
 // Trims string from end
-static inline std::string &rtrim(std::string &s) {
+static inline std::string rtrim(std::string s) {
   s.erase(std::find_if(s.rbegin(), s.rend(),
     std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
   return s;
 }
 
 // Trims string from both ends
-static inline std::string &trim(std::string &s) {
+static inline std::string trim(std::string s) {
   return ltrim(rtrim(s));
 }
 
 // Removes linebreaks and trims the string
-static inline std::string &onelineTrim(std::string &s) {
+static inline std::string onelineTrim(std::string s) {
   s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
   s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
   return trim(s);
@@ -102,14 +102,14 @@ private:
 
 
 // Represents an OpenCL kernel parameter, so data can be assigned correctly
-struct KernelArguments {
+struct KernelArgument {
   std::string name = "";
   int index = 0;
   datatype type = vup::EMPTY;
   bool constant = true;
 };
 
-typedef std::map<std::string, std::vector<KernelArguments>> kernelArgumentsMap;
+typedef std::map<std::string, std::vector<KernelArgument>> kernelArgumentsMap;
 typedef std::map<std::string, cl::Kernel> kernelMap;
 
 // Handles OpenCL program compilation on specified device within a given context.

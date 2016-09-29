@@ -434,7 +434,7 @@ vup::datatype vup::DataLoader::findFormat(std::string f, typeIdentifiers &typeVa
   return vup::EMPTY;
 }
 
-vup::DataSpecification vup::DataLoader::getDataSpec(std::string f, typeIdentifiers &typeVars)
+vup::DataSpecification vup::DataLoader::getDataSpec(std::string f, typeIdentifiers typeVars)
 {
   if (!doesKeyExist(f, typeVars) && !doesKeyExist(f, m_globalIdentifiers) && !doesKeyExist(f, m_interopIdentifiers)) {
     throw new CorruptDataException(m_path, "Data is not specified.");

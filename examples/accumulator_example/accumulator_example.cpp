@@ -28,7 +28,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt", 1, CL_DEVICE_TYPE_GPU, 0);
+  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt", 0, CL_DEVICE_TYPE_GPU, 0);
   
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
@@ -56,10 +56,7 @@ int main()
     }
     frames += 1;
     lastTime = currentTime;
-    while (accumulator > dt) {
-      ps.run();
-      accumulator -= dt;
-    }
+    accumulator = ps.runAccumulated(accumulator, dt);
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       ps.reload();
       ps.init();

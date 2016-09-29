@@ -1,10 +1,9 @@
 #
-# Try to find GLEW library and include path.
-# Once done this will define
+# Find GLM include path.
 #
 # GLM_FOUND
 # GLM_INCLUDE_PATH
-# 
+#
 
 SET(GLM_SEARCH_PATHS
 	${DEPENDENCIES_ROOT}

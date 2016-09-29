@@ -27,7 +27,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(GLFW3 REQUIRED)
 find_package(GLM REQUIRED)
-find_package(ASSIMP REQUIRED)
+find_package(RapidJSON REQUIRED)
 find_package(OpenCL REQUIRED)
 
 add_subdirectory(${OPENCL_KERNEL_PATH})

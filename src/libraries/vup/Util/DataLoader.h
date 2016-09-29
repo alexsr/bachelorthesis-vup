@@ -68,7 +68,7 @@ private:
   // Returns the format of a variable that may be in m_globalIdentifiers, m_interopIdentifiers or in typeVars.
   datatype findFormat(std::string f, typeIdentifiers &typeVars);
   // Looks for the variable f in m_globalIdentifiers, m_interopIdentifiers or in typeVars and return its specs
-  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers &typeVars);
+  vup::DataSpecification getDataSpec(std::string f, typeIdentifiers typeVars);
   // Creates a float from a string in the format of "randomX,Y" with X and Y being any kind of float.
   float createFloatRandom(const char* str);
   float randomFloat(float lower, float upper) {
@@ -105,7 +105,7 @@ private:
 template<typename T>
 inline bool DataLoader::doesKeyExist(std::string key, std::map<std::string, T> m)
 {
-  std::map<std::string, T>::iterator it = m.find(key);
+  typename std::map<std::string, T>::iterator it = m.find(key);
   return it != m.end();
 }
 

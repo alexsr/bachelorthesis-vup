@@ -35,6 +35,19 @@ void vup::ParticleSimulation::run()
   m_queue->releaseGL(m_buffers->getGLBuffers());
 }
 
+double vup::ParticleSimulation::runAccumulated(double accumulator, double dt)
+{
+	m_queue->acquireGL(m_buffers->getGLBuffers());
+	while (accumulator > dt) {
+		for (std::string &kernel : m_kernelorder) {
+			m_queue->runRangeKernel(m_kernels->getKernel(kernel), m_kernelSize.at(kernel));
+		}
+		accumulator -= dt;
+	}
+	m_queue->releaseGL(m_buffers->getGLBuffers());
+  return accumulator;
+}
+
 void vup::ParticleSimulation::updateConstant(const char * name, int index, float c)
 {
   m_kernels->setArg(name, index, c);

@@ -31,6 +31,7 @@ public:
   void init();
   // Executes all kernels except initializing kernels in the order specified in m_kernelorder.
   void run();
+  double runAccumulated(double accumulator, double dt);
   float getSize() { return m_size; }
   int getParticleCount() { return m_particleCount; }
   std::map<std::string, vup::VBO> getInteropVBOs() { return m_buffers->getInteropVBOs(); }
@@ -72,7 +73,7 @@ private:
 template<typename T>
 inline bool ParticleSimulation::doesKeyExist(std::string key, std::map<std::string, T> m)
 {
-  std::map<std::string, T>::iterator it = m.find(key);
+  typename std::map<std::string, T>::iterator it = m.find(key);
   return it != m.end();
 }
 }
