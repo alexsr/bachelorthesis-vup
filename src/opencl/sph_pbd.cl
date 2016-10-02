@@ -8,6 +8,8 @@ __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 __constant float smoothingLength = 0.2;
 __constant float restDensity = 1000.0;
 __constant int neighbor_amount = 20;
+__constant float polySixConst = 3059924.7482;
+__constant float spikyConst = 223811.6387;
 
 float polySix(float h, float r) {
   if (0 <= r && r <= h) {
@@ -47,45 +49,27 @@ float4 reflect(float4 d, float4 n) {
   return r;
 }
 
-__kernel void resetGrid(__global int* counter) {
+__kernel void resetGrid(__global int* gridCounter) {
   int id = get_global_id(0);
-  /*if (counter[id] != 0) {
-    printf("c %d = %d; ", id, counter[id]);
-  }*/
-  counter[id] = 0;
+  gridCounter[id] = 0;
 }
 
-__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity) {
+__kernel void updateGrid(__global float4* pos, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint) {
   int id = get_global_id(0);
-  int i = floor((pos[id].x + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int j = floor((pos[id].y + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int k = floor((pos[id].z + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int n = atomic_inc(&(counter[i * cellsPerLine * cellsPerLine + j * cellsPerLine + k]));
-  grid[i * cellsPerLine * cellsPerLine * cellCapacity + j * cellsPerLine * cellCapacity + k * cellCapacity + n] = id;
-}
-
-__kernel void printGrid(__global float4* pos, __global int* grid, volatile __global int* counter, float gridRadius, int cellsPerLine, int cellCapacity, __global float4* color) {
-  if (get_global_id(0) == 0) {
-    for (int id = 0; id < get_global_size(0); id++) {
-      int i = floor((pos[id].x + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      int j = floor((pos[id].y + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      int k = floor((pos[id].z + gridRadius) / gridRadius * (cellsPerLine / 2.0f));
-      //printf("\nid %d\n", id);
-      //printf("cell %d, %d, %d;\n------\n", i, j, k);
-      //printf("others in the cell:\n");
-      volatile int n = counter[i * cellsPerLine * cellsPerLine + j * cellsPerLine + k];
-      for (int o = 0; o < n; o++) {
-        int other = grid[i * cellsPerLine * cellsPerLine * cellCapacity + j * cellsPerLine * cellCapacity + k * cellCapacity + o];
-        //printf("%d; ", other);
-      }
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  float4 p = pos[id];
+  int i = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  int counterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
+  if (counterIndex < cellsinx*cellsiny*cellsinz) {
+    int n = atomic_inc(&(gridCounter[i * cellsiny * cellsinz + j * cellsinz + k]));
+    if (n < cellCapacity) {
+      grid[i * cellsiny * cellsinz * cellCapacity + j * cellsinz * cellCapacity + k * cellCapacity + n] = id;
     }
   }
-  //unsigned int id = get_global_id(0);
-  ///*color[id].x = i / (float)(cellsPerLine);
-  //color[id].y = j / (float)(cellsPerLine);
-  //color[id].z = k / (float)(cellsPerLine);*/
-  //if (id == 0) {
-  /*}*/
 }
 
 __kernel void predict(__global float4* pos, __global float4* next, __global float4* vel, __global float* mass, float dt, float sign) {
@@ -95,58 +79,56 @@ __kernel void predict(__global float4* pos, __global float4* next, __global floa
   next[id] = pos[id] + vel[id] * dt;
 }
 
-__kernel void findNeighbors(__global float4* next, __global int* neighbors, __global int* neighborCounter) {
-  /*int id = get_global_id(0);
+__kernel void findNeighborsNoGrid(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
+  float4 p = pos[g_id];
   neighborCounter[id] = 0;
-  int current_x = floor((next) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int current_y = floor((next[id].y + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  int current_z = floor((next[id].z + gridRadius) / gridRadius * ((cellsPerLine - 1) / 2.0f));
-  for (int x = 0; x < cellsPerLine; x++) {
-    int x_counter_offset = x * cellsPerLine * cellsPerLine;
+  for (int index = 0; index < get_global_size(0); index++) {
+    if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength) {
+      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
+      neighborCounter[id]++;
+    }
+    if (neighborCounter[id] >= neighbor_amount - 1) {
+      break;
+    }
+  }
+}
+
+__kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* globalIndices, __global int* typeIDs) {
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
+  float xradius = cellRadius * cellsinx;
+  float yradius = cellRadius * cellsiny;
+  float zradius = cellRadius * cellsinz;
+  float4 p = pos[g_id];
+  int i = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  neighborCounter[id] = 0;
+  for (int x = max(0, i - 1); x < min(i + 2, cellsinx); x++) {
+    int x_counter_offset = x * cellsiny * cellsinz;
     int x_offset = x_counter_offset * cellCapacity;
-    for (int y = 0; y < cellsPerLine; y++) {
-      int y_counter_offset = y * cellsPerLine;
+    for (int y = max(0, j - 1); y < min(j + 2, cellsiny); y++) {
+      int y_counter_offset = y * cellsinz;
       int y_offset = y_counter_offset * cellCapacity;
-      for (int z = 0; z < cellsPerLine; z++) {
+      for (int z = max(0, k - 1); z < min(k + 2, cellsinz); z++) {
         int z_offset = z * cellCapacity;
-        int n = counter[x_counter_offset + y_counter_offset + z];
-        for (int i = 0; i < n; i++) {
-          int other = grid[x_offset + y_offset + z_offset + i];
-          if (distance(pos[id].xyz, pos[other].xyz) <= h && id != other) {
-            neighbors[id * neighbor_amount + neighborCounter[id]] = other;
-            neighborCounter[id] = neighborCounter[id] + 1;
+        int n = gridCounter[x_counter_offset + y_counter_offset + z];
+        for (int o = 0; o < n; o++) {
+          int other = grid[x_offset + y_offset + z_offset + o];
+          float dist = distance(p.xyz, pos[other].xyz);
+          if (dist <= smoothingLength && g_id != other)
+          {
+            neighbors[id * neighbor_amount + neighborCounter[id]] = other - typeIDs[id];
+            neighborCounter[id]++;
           }
-          if (neighborCounter[id] >= neighbor_amount - 1)
-            break;
+          if (neighborCounter[id] >= neighbor_amount - 1) {
+            return;
+          }
         }
-        if (neighborCounter[id] >= neighbor_amount - 1)
-          break;
       }
-      if (neighborCounter[id] >= neighbor_amount - 1)
-        break;
     }
-    if (neighborCounter[id] >= neighbor_amount - 1)
-      break;
-  }*/
-
-  unsigned int i = get_global_id(0);
-
-  float4 p = next[i];
-
-  neighborCounter[i] = 0;
-  //save neighbours of THIS particle in an array %
-  //array size is 50(n) times bigger than pos[]
-  for (int index = 0; index < get_global_size(0); index++)
-  {
-    if (distance(p.xyz, next[index].xyz) <= smoothingLength) // < smoothingLength
-    {
-      neighbors[i * neighbor_amount + neighborCounter[i]] = index;
-      neighborCounter[i]++;
-      //only saves values with distance < smoothing Lenght --> [0,smoothingLength]
-    }
-    //stop when 50(n) neighbours of i are found
-    if (neighborCounter[i] >= neighbor_amount - 1)
-      break;
   }
 }
 
@@ -167,14 +149,10 @@ __kernel void calcLambda(__global float4* next, __global int* neighbors, __globa
   }
   grad_sum_k += length(grad_sum_k_i/restDensity) * length(grad_sum_k_i/restDensity);
   density[id] = density_id;
-  // if (id == 0) {
-    // printf("%d -> %f;", id, density_id);
-  // }
-  //float C = density[id] / restDensity - 1.0f;
   float C = max(density[id] / restDensity - 1.0f, 0.0f);
   if(C != 0.0f) {
     float eps = 0.0001;
-    lambda[id] = -C / (grad_sum_k + eps);    
+    lambda[id] = -C / (grad_sum_k + eps);
    }
    else {
     lambda[id] = 0.0f;
@@ -186,31 +164,24 @@ __kernel void calcDelta(__global float4* pos, __global float4* next, __global in
   float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   float polySix_const = 315.0f / (64.0f * M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   float4 posDelta = 0.0f;
-  float n = 4.0f;
+  float n = 0.1f;
   float k = 0.001;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
-    //if (density[id] != 0.0 && density[j] != 0.0) {
-      float corr = -k * pow((polySix(smoothingLength, distance(next[id].xyz, next[j].xyz)))/(polySix(smoothingLength, 0.2 * smoothingLength)), n);
-      posDelta += (lambda[id] + lambda[j] + corr) * (spiky_const * spikyGradient(smoothingLength, next[id], next[j]));
-    //}
+    float corr = -k * pow((polySix(smoothingLength, distance(next[id].xyz, next[j].xyz)))/(polySix(smoothingLength, 0.2 * smoothingLength)), n);
+    posDelta += (lambda[id] + lambda[j] + corr) * (spiky_const * spikyGradient(smoothingLength, next[id], next[j]));
   }
   next[id].xyz += posDelta.xyz / restDensity;
 }
 
-__kernel void integrate(__global float4* pos, __global float4* next, __global float4* vel, __global float* mass, float dt, float xleft) {
+__kernel void integrate(__global float4* pos, __global float4* next, __global float4* vel, __global float* mass, float dt) {
   unsigned int id = get_global_id(0);
- // printf("%f, ", mass[id]);
   vel[id] = (next[id] - pos[id])/dt;
   vel[id].w = 0.0f;
-  // float velclamp = 0.0001;
-  // vel[id].x = clamp(vel[id].x, -velclamp, velclamp);
-  // vel[id].y = clamp(vel[id].y, -velclamp, velclamp);
-  // vel[id].z = clamp(vel[id].z, -velclamp, velclamp);
   pos[id] = next[id];
-  
+
   float bounds = 2.0;
-  float ybounds = 5.0;
+  float ybounds = 2.0;
   if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
     vel[id] = reflect(vel[id], up);
     vel[id] *= 0.8f;
@@ -242,7 +213,6 @@ __kernel void integrate(__global float4* pos, __global float4* next, __global fl
 
 __kernel void viscosity(__global float4* pos, __global float4* next, __global float4* vel, __global int* neighborCounter, __global int* neighbors) {
   unsigned int id = get_global_id(0);
-  // printf("%f, ", mass[id]);
   float4 velsum = (0, 0, 0, 0);
   float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   float c = 0.01;
@@ -251,5 +221,4 @@ __kernel void viscosity(__global float4* pos, __global float4* next, __global fl
     velsum += (vel[id] - vel[j]) * spiky_const * polySix(smoothingLength, distance(pos[id].xyz, pos[j].xyz));
   }
   velsum *= c;
-  //vel[id] += velsum;
 }
