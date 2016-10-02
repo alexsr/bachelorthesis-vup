@@ -9,7 +9,7 @@
 			"format": "4f",
 			"instances": 1
 		},
-        "forceExtern": {
+    "forceExtern": {
 			"format": "4f",
 			"instances": 1
 		},
@@ -34,11 +34,15 @@
 		{
       "name": "G",
       "variables": {
-        "springcoefficient": {
+        "stiffness": {
           "format": "1f",
           "instances": 1
         },
-        "dampingcoefficient": {
+        "damping": {
+          "format": "1f",
+          "instances": 1
+        },
+				"friction": {
           "format": "1f",
           "instances": 1
         }
@@ -47,11 +51,14 @@
         "mass": [
           0.04
         ],
-        "springcoefficient": [
-          10.0
+        "stiffness": [
+          1000.0
         ],
-        "dampingcoefficient": [
-          4.0
+        "damping": [
+          20.0
+        ],
+				"friction": [
+          10.0
         ],
         "vel": [
           0.0,
@@ -89,9 +96,9 @@
 				"pos": {
 					"frequency": 1,
 					"values": [
-            "random-2,2",
-            "random-2,-1",
-            "random-2,2",
+            "random-1.5,1.5",
+            "random-2,0",
+            "random-1.5,1.5",
             1
 					]
 				},
@@ -109,7 +116,7 @@
 		{
 			"name": "Granular2",
 			"type": "G",
-			"particles": 200,
+			"particles": 500,
 			"data": {
 				"pos": {
 					"frequency": 1,

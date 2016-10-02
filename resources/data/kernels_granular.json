@@ -14,7 +14,8 @@
 			"onSystems": [],
 			"onTypes": [],
 			"constants": {
-				"dt": 0.001
+				"dt": 0.001,
+				"staticFriction": 100.0
 			}
 		},
     {

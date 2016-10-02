@@ -38,27 +38,28 @@ __kernel void updateGrid(__global float4* pos, __global int* grid, volatile __gl
   }
 }
 
-__kernel void rigidCollision(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global int* systemIDs, __global float* springcoefficient, __global float* dampingcoefficient, __global float* mass, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, float dt) {
+__kernel void rigidCollision(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global int* systemIDs, __global int* globalIndices, __global float* stiffness, __global float* damping, __global float* friction, __global float* mass, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, float dt, float staticFriction) {
   int id = get_global_id(0);
+  int g_id = globalIndices[id];
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
   float zradius = cellRadius * cellsinz;
-  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
-  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
-  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  float4 p = pos[g_id];
+  float4 v = vel[g_id];
+  float m = mass[g_id];
+  int a = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int b = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int c = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
   float diam = radius * 2.0f;
-  float4 p = pos[id];
-  float4 v = vel[id];
-  float4 forceSpring = 0.0f;
-  float4 forceDamping = 0.0f;
-  float4 forceShear = 0.0f;
-  for (int x = max(0, i - 1); x < min(i + 2, cellsinx); x++) {
+  float4 forceNormal = 0.0f;
+  float4 forceFriction = 0.0f;
+  for (int x = max(0, a - 1); x < min(a + 2, cellsinx); x++) {
     int x_counter_offset = x * cellsiny * cellsinz;
     int x_offset = x_counter_offset * cellCapacity;
-    for (int y = max(0, j - 1); y < min(j + 2, cellsiny); y++) {
+    for (int y = max(0, b - 1); y < min(b + 2, cellsiny); y++) {
       int y_counter_offset = y * cellsinz;
       int y_offset = y_counter_offset * cellCapacity;
-      for (int z = max(0, k - 1); z < min(k + 2, cellsinz); z++) {
+      for (int z = max(0, c - 1); z < min(c + 2, cellsinz); z++) {
         int z_offset = z * cellCapacity;
         int n = gridCounter[x_counter_offset + y_counter_offset + z];
         for (int o = 0; o < n; o++) {
@@ -66,24 +67,30 @@ __kernel void rigidCollision(__global float4* pos, __global float4* vel, __globa
           if (j == id) {
             continue;
           }
-          float dist = distance(pos[id].xyz, pos[j].xyz);
+          float4 pj = pos[j];
+          float dist = distance(p.xyz, pj.xyz);
           if (dist < diam) {
-            float k = springcoefficient[j];
-            float kd = dampingcoefficient[j];
-            float kt = kd * 0.1f;
-            float4 diffPos = pos[j] - p;
+            float kr = stiffness[j];
+            float kd = damping[j];
+            float intersect = max(0.0f, diam-dist);
+            float ks = friction[j];
+            float mj = mass[j];
+            float4 diffPos = pj - p;
             float4 vj = vel[j];
-            float4 velDiff = (vj - v);
+            float4 velDiff = (v - vj);
             float4 n = diffPos / dist;
-            forceSpring += -k * (diam - dist) * n;
-            forceDamping += kd * velDiff;
-            forceShear += kt * (velDiff - dot(velDiff, n) * n);
+            float relativeVelocity = dot(velDiff, n);
+            float4 fn = -(kd * sqrt(intersect)*relativeVelocity + kr * pow(intersect, 1.5)) * n;
+            float4 v_tan = cross(n, cross(velDiff, n));
+            float m_eff = m * mj / (m + mj);
+            forceFriction += -staticFriction * m_eff * v_tan - min(ks * length(fn), ks * length(v_tan)) * normalize(v_tan);
+            forceNormal += fn;
           }
         }
       }
     }
   }
-  forceIntern[id].xyz += forceSpring.xyz + forceDamping.xyz + forceShear.xyz;
+  forceIntern[id].xyz += forceFriction.xyz + forceNormal.xyz;
 }
 
 __kernel void integrate(__global float4* pos, __global float* mass, __global float4* vel, __global float4* forceIntern, __global int* globalIndices, float dt) {

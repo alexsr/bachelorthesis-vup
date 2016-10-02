@@ -5,7 +5,6 @@ __constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
 __constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
 __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
-
 __constant float radius = 0.1;
 
 float4 reflect(float4 d, float4 n) {
@@ -19,14 +18,14 @@ float4 reflect(float4 d, float4 n) {
 __kernel void generateConnectionDistances(__global float4* pos, __global int* connectionCounter, __global int* connections, __global float4* connectionDistances, float maxConnections, __global int* systemIDs) {
   int id = get_global_id(0);
   int sysID = systemIDs[id];
-  float maxDist = radius * 2.0f * sqrt(3.0f);
+  float maxDist = radius * 3.46410162; // ~ 2.0 * sqrt(3.0)
   float4 p = pos[id];
   for (int s = 0; s < get_global_size(0); s++) {
     if (connectionCounter[id] > maxConnections) {
       break;
     }
     float dist = distance(p, pos[s]);
-    if (dist <= maxDist && id != s && sysID == systemIDs[s]) {      
+    if (dist <= maxDist && id != s && sysID == systemIDs[s]) {
       int con_id = id * maxConnections + connectionCounter[id];
       float4 calcConnection = pos[s] - pos[id];
       connectionDistances[con_id] = calcConnection;
@@ -38,9 +37,6 @@ __kernel void generateConnectionDistances(__global float4* pos, __global int* co
 
 __kernel void resetGrid(__global int* gridCounter) {
   int id = get_global_id(0);
-  /*if (counter[id] != 0) {
-    printf("c %d = %d; ", id, counter[id]);
-  }*/
   gridCounter[id] = 0;
 }
 
@@ -49,9 +45,10 @@ __kernel void updateGrid(__global float4* pos, __global int* grid, volatile __gl
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
   float zradius = cellRadius * cellsinz;
-  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
-  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
-  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  float4 p = pos[id];
+  int i = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
   int counterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
   if (counterIndex < cellsinx*cellsiny*cellsinz) {
     int n = atomic_inc(&(gridCounter[i * cellsiny * cellsinz + j * cellsinz + k]));
@@ -74,14 +71,18 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   color[id].z = k / (float)(cellsinz);
 }
 
-__kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
+__kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global float* epsilon, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
   float zradius = cellRadius * cellsinz;
-  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
-  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
-  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  float4 p = pos[id];
+  float4 v = vel[id];
+  float m = mass[id];
+  float e = epsilon[id];
+  int i = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
   for (int x = i - 1; x < i + 2; x++) {
     int x_counter_offset = x * cellsiny * cellsinz;
     int x_offset = x_counter_offset * cellCapacity;
@@ -93,21 +94,19 @@ __kernel void collision(__global float4* pos, __global float4* vel, __global flo
         int n = gridCounter[x_counter_offset + y_counter_offset + z];
         for (int o = 0; o < n; o++) {
           int other = grid[x_offset + y_offset + z_offset + o];
-          float dist = distance(pos[id].xyz, pos[other].xyz);
+          float4 pj = pos[other];
+          float dist = distance(p.xyz, pj.xyz);
           if (systemIDs[other] != systemIDs[id] && dist < radius * 2.0f && id != other) {
-            float4 n = normalize(pos[id] - pos[other]);
-            float4 v1 = vel[id];
-            float4 v2 = vel[other];
-            float m1 = mass[id];
-            float m2 = mass[other];
-            float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
-            // v2 = v2 + jr / m2 * n;
-            vel[id] += - jr / m1 * n;
-            // vel[other] = v2;
-            // forceIntern[id] += -jr * n / dt * 0.99f;
-            //forceIntern[other] += jr * n / dt * 0.99f;
+            float4 n = normalize(p - pj);
+            float4 vj = vel[other];
+            float mj = mass[other];
+            float jr = -(e + epsilon[other]) * dot(vj - v, n) / (1.0/m + 1.0/mj);
+            //vel[id] += -jr / m * n;
+            //vel[other] += jr / mj * n;
+            forceIntern[id] += -jr * n / dt;
+            //forceIntern[other] += jr * n / dt;
             pos[id] += n * (radius * 2.0f - dist)/2.0f;
-            // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+            pos[other] -= n * (radius * 2.0f - dist)/2.0f;
           }
         }
       }
@@ -120,6 +119,9 @@ __kernel void selfcollision(__global float4* pos, __global float4* vel, __global
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
   float zradius = cellRadius * cellsinz;
+  float4 p = pos[id];
+  float4 v = vel[id];
+  float m = mass[id];
   int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
   int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
   int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
@@ -134,30 +136,19 @@ __kernel void selfcollision(__global float4* pos, __global float4* vel, __global
         int n = gridCounter[x_counter_offset + y_counter_offset + z];
         for (int o = 0; o < n; o++) {
           int other = grid[x_offset + y_offset + z_offset + o];
-          float dist = distance(pos[id].xyz, pos[other].xyz);
+          float4 pj = pos[other];
+          float dist = distance(p.xyz, pj.xyz);
           if (systemIDs[other] == systemIDs[id] && dist < radius * 2.0f && id != other) {
-            bool connected = false;
-            for (int c = 0; c < maxConnections; c++) {
-              int con_id = id * maxConnections+c;
-              if (connections[con_id] == other) {
-                connected = true;
-                break;
-              }
-            }
-            if (!connected) {
-              float4 n = normalize(pos[id] - pos[other]);
-              float4 v1 = vel[id];
-              float4 v2 = vel[other];
-              float m1 = mass[id];
-              float m2 = mass[other];
-              float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
-              // v2 = v2 + jr / m2 * n;
-              vel[id] += - jr / m1 * n;
-              // forceIntern[id] += -jr * n / dt * 0.99f;
-              // forceIntern[other] += jr * n / dt * 0.99f;
-              pos[id] += n * (radius * 2.0f - dist)/2.0f;
-              // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
-            }
+            float4 n = normalize(p - pj);
+            float4 vj = vel[other];
+            float mj = mass[other];
+            float jr = -2.0 * dot(vj - v, n) / (1.0/m + 1.0/mj);
+            //vel[id] += -jr / m * n;
+            //vel[other] += jr / mj * n;
+            forceIntern[id] += -jr * n / dt;
+            //forceIntern[other] += jr * n / dt;
+            pos[id] += n * (radius * 2.0f - dist)/2.0f;
+            pos[other] -= n * (radius * 2.0f - dist)/2.0f;
           }
         }
       }
@@ -165,7 +156,7 @@ __kernel void selfcollision(__global float4* pos, __global float4* vel, __global
   }
 }
 
-__kernel void computeConnectionForces(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global float* stiffness, __global float* dampingConstant, __global float* frictionConstant, __global int* connectionCounter, __global int* connections, __global float4* connectionDistances, float maxConnections, float dt) {
+__kernel void computeConnectionForces(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global float* stiffness, __global float* damping, __global int* connectionCounter, __global int* connections, __global float4* connectionDistances, float maxConnections, float dt) {
   int id = get_global_id(0);
   float4 forceB = 0.0f;
   float4 forceD = 0.0f;
@@ -178,7 +169,7 @@ __kernel void computeConnectionForces(__global float4* pos, __global float4* vel
     float restDistance = length(connectionDistances[con_id]);
     float4 vel_parallel = dot(velDiff, posDiff) / dot(posDiff, posDiff) * posDiff;
     forceB += stiffness[id] * (actualDistance - restDistance) * posDiff/actualDistance;
-    forceD += dampingConstant[id] * vel_parallel;
+    forceD += damping[id] * vel_parallel;
   }
   forceIntern[id] += forceB + forceD;
 }
@@ -190,7 +181,7 @@ __kernel void integrate(__global float4* pos, __global float4* vel, __global flo
   vel[id].xyz += ((forceIntern[id] + gravForce).xyz / mass[id]) * dt;
   pos[id].xyz += vel[id].xyz * dt;
   forceIntern[id] = 0.0f;
-  
+
   float bounds = 1.0;
   float ybounds = 1.0;
   float damping = 0.9f;

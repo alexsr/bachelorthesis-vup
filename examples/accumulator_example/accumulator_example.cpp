@@ -55,17 +55,19 @@ int main()
       frames = 0;
     }
     frames += 1;
-    lastTime = currentTime;
-    accumulator = ps.runAccumulated(accumulator, dt);
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       ps.reload();
       ps.init();
       sphere = new vup::SphereData(ps.getSize(), 10, 10);
       renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
+      currentTime = glfwGetTime();
     }
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
       ps.reloadKernel();
+      currentTime = glfwGetTime();
     }
+    lastTime = currentTime;
+    accumulator = ps.runAccumulated(accumulator, dt);
     cam.update(window, dt);
     simpleShader.updateUniform("view", cam.getView());
     simpleShader.use();

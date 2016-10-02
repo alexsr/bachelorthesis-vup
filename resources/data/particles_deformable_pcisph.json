@@ -287,7 +287,7 @@
 		"name": "uniformgrid",
 		"data": {
 			"gridCounter": 1,
-			"grid": 200
+			"grid": 100
 		},
 		"constants": {
 			"cellRadius": 0.2,
@@ -295,7 +295,7 @@
 			"cellsiny": 11,
 			"cellsinz": 11,
 			"gridMidpoint": [0,0,0,1],
-			"cellCapacity": 200
+			"cellCapacity": 100
 		}
 	}
 }

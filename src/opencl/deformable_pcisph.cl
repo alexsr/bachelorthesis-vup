@@ -7,6 +7,8 @@ __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
 __constant float radius = 0.1;
 __constant float smoothingLength = 0.2;
+__constant float polySixConst = 3059924.7482;
+__constant float spikyConst = 223811.6387;
 __constant float restDensity = 1000.0;
 __constant int neighbor_amount = 30;
 
@@ -59,7 +61,7 @@ __kernel void generateConnectionDistances(__global float4* pos, __global int* gl
     }
     int g_s = globalIndices[s];
     float dist = distance(p, pos[g_s]);
-    if (dist <= maxDist && id != s && sysID == systemIDs[s]) {      
+    if (dist <= maxDist && id != s && sysID == systemIDs[s]) {
       int con_id = id * maxConnections + connectionCounter[id];
       float4 calcConnection = pos[g_s] - p;
       connectionDistances[con_id] = calcConnection;
@@ -146,6 +148,22 @@ __kernel void collision(__global float4* pos, __global float4* vel, __global flo
   }
 }
 
+__kernel void findNeighborsNoGrid(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
+  float4 p = pos[g_id];
+  neighborCounter[id] = 0;
+  for (int index = 0; index < get_global_size(0); index++) {
+    if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength) {
+      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
+      neighborCounter[id]++;
+    }
+    if (neighborCounter[id] >= neighbor_amount - 1) {
+      break;
+    }
+  }
+}
+
 __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* globalIndices, __global int* typeIDs, __global int* typeSizes) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
@@ -170,7 +188,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
           int other = grid[x_offset + y_offset + z_offset + o];
           float dist = distance(p.xyz, pos[other].xyz);
           if (dist <= smoothingLength) {
-            if (other > typeIDs[id]) {
+            if (other >= typeIDs[id] && other < typeIDs[id] + typeSizes[id]) {
               neighbors[id * neighbor_amount + neighborCounter[id]] = other - typeIDs[id];
               neighborCounter[id]++;
             }
@@ -187,15 +205,14 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
 __kernel void initForces(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global float4* forcePressure, __global float* mass, __global float* density, __global float* pressure, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
-  float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   float visc_const = 0.2;
   float4 viscosityForce = 0.0f;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];
-    viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * spiky_const * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
+    viscosityForce += mass[g_j] * (vel[g_j] - vel[g_id]) / density[j] * visc(smoothingLength, distance(pos[g_id].xyz, pos[g_j].xyz));
   }
-  viscosityForce *= visc_const * mass[g_id];
+  viscosityForce *= spikyConst * visc_const * mass[g_id];
   float4 forceExtern = 0.0f;
   forceExtern.y = -9.81f * mass[g_id];
   forceIntern[g_id].xyz += forceExtern.xyz + viscosityForce.xyz;
@@ -215,13 +232,12 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
   unsigned int g_id = globalIndices[id];
   float density_id = 0.0f;
   float pressure_id = 0;
-  float polySix_const = 315.0f / (64.0f * M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];
     density_id += mass[g_j] * polySix(smoothingLength, distance(predictpos[id].xyz, predictpos[j].xyz));
   }
-  density_id *= polySix_const;
+  density_id *= polySixConst;
 
   density[id] = density_id;
   float density_err = density_id - restDensity;
@@ -231,14 +247,13 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
 __kernel void computePressureForce(__global float4* predictpos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* forcePressure, __global int* globalIndices) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
-  float spiky_const = 45.0f / (M_PI_F*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength*smoothingLength);
   float4 pressureForce = 0.0f;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];
-    pressureForce += mass[g_j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spiky_const * spikyGradient(smoothingLength, predictpos[id], predictpos[j]);
+    pressureForce += mass[g_j] * (pressure[id] + pressure[j]) / (2.0f * density[j]) * spikyGradient(smoothingLength, predictpos[id], predictpos[j]);
   }
-  pressureForce *= mass[g_id];
+  pressureForce *= mass[g_id] * spikyConst;
   forcePressure[id].xyz = pressureForce.xyz;
 }
 
@@ -272,31 +287,31 @@ __kernel void updateFluidForce(__global float4* forceIntern, __global float4* fo
 
 __kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, float dt) {
   unsigned int id = get_global_id(0);
-  vel[id].xyz += (forceIntern[id].xyz / mass[id]) * dt;
-  forceIntern[id] = 0.0f;
-  pos[id].xyz += vel[id].xyz * dt;
+  vel[id].xyz += forceIntern[id].xyz / mass[id] * dt;
+  forceIntern[id] = 0.0;
   float bounds = 2.0;
   float ybounds = 2.0;
+  float4 p = pos[id] + vel[id] * dt;
   float damping = 0.9;
-  if (dot(vel[id], up) < 0 && pos[id].y < -ybounds) {
+  if (dot(vel[id], up) < 0 && p.y < -ybounds) {
     vel[id] = reflect(vel[id], up) * damping;
   }
-  if (dot(vel[id], down) < 0 && pos[id].y > ybounds) {
+  if (dot(vel[id], down) < 0 && p.y > ybounds) {
     vel[id] = reflect(vel[id], down) * damping;
   }
-  if (dot(vel[id], right) < 0 && pos[id].x < -bounds) {
+  if (dot(vel[id], right) < 0 && p.x < -bounds) {
     vel[id] = reflect(vel[id], right) * damping;
   }
-  if (dot(vel[id], left) < 0 && pos[id].x > bounds) {
+  if (dot(vel[id], left) < 0 && p.x > bounds) {
     vel[id] = reflect(vel[id], left) * damping;
   }
-  if (dot(vel[id], forth) < 0 && pos[id].z < -bounds) {
+  if (dot(vel[id], forth) < 0 && p.z < -bounds) {
     vel[id] = reflect(vel[id], forth) * damping;
   }
-  if (dot(vel[id], back) < 0 && pos[id].z > bounds) {
+  if (dot(vel[id], back) < 0 && p.z > bounds) {
     vel[id] = reflect(vel[id], back) * damping;
   }
-  pos[id].x = clamp(pos[id].x, -bounds, bounds);
-  pos[id].y = clamp(pos[id].y, -ybounds, ybounds);
-  pos[id].z = clamp(pos[id].z, -bounds, bounds);
+  pos[id].x = clamp(p.x, -bounds, bounds);
+  pos[id].y = clamp(p.y, -bounds, bounds);
+  pos[id].z = clamp(p.z, -bounds, bounds);
 }
