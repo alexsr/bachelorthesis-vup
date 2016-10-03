@@ -1,0 +1,21 @@
+{
+	"kernels": [
+		{
+			"name": "collisionNoGrid",
+			"onSystems": [],
+			"onTypes": [],
+			"constants": {
+				"dt": 0.001,
+				"staticFriction": 100.0
+			}
+		},
+    {
+			"name": "integrate",
+			"onSystems": [],
+			"onTypes": ["G"],
+      "constants": {
+          "dt": 0.001
+      }
+		}
+	]
+}

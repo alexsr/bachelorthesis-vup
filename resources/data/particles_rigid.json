@@ -84,7 +84,7 @@
             0.04
         ],
         "springcoefficient": [
-            50000.0
+            60000.0
         ],
         "dampingcoefficient": [
             10.0

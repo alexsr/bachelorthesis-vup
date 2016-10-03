@@ -1,0 +1,39 @@
+{
+	"kernels": [
+    {
+			"name": "calculateCenterOfMass",
+			"onSystems": [],
+			"onTypes": ["R"],
+      "init": true
+		},
+		{
+			"name": "calcCurrentTensor",
+			"onSystems": [],
+			"onTypes": []
+		},
+		{
+			"name": "collisionNoGrid",
+			"onSystems": [],
+			"onTypes": [],
+			"constants": {
+				"dt": 0.001
+			}
+		},
+    {
+			"name": "calcMomenta",
+			"onSystems": [],
+			"onTypes": ["R"],
+      "constants": {
+				"dt": 0.001
+      }
+		},
+    {
+			"name": "integrateRigidBody",
+			"onSystems": [],
+			"onTypes": ["R"],
+      "constants": {
+          "dt": 0.001
+      }
+		}
+	]
+}

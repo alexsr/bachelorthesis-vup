@@ -52,13 +52,13 @@
           0.04
         ],
         "stiffness": [
-          1000.0
+          2000.0
         ],
         "damping": [
-          20.0
+          50.0
         ],
 				"friction": [
-          10.0
+          4.0
         ],
         "vel": [
           0.0,
@@ -91,14 +91,14 @@
 		{
 			"name": "Granular1",
 			"type": "G",
-			"particles": 2500,
+			"particles": 500,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
-            "random-1.5,1.5",
-            "random-2,0",
-            "random-1.5,1.5",
+            "random-2,2",
+            "random-2,2",
+            "random-2,2",
             1
 					]
 				},
@@ -112,28 +112,6 @@
 					]
 				}
 			}
-		},
-		{
-			"name": "Granular2",
-			"type": "G",
-			"particles": 500,
-			"data": {
-				"pos": {
-					"frequency": 1,
-					"values": [
-            "random-0.5,0.5",
-						"random0,2",
-            "random-0.5,0.5",
-            1
-					]
-				},
-				"color": {
-					"frequency": 1,
-					"values": [
-						0.0, 0.0, 1.0, 1.0
-					]
-				}
-			}
 		}
 	],
 	"speedupstructure": {
@@ -141,7 +119,7 @@
 		"name": "uniformgrid",
 		"data": {
 			"gridCounter": 1,
-			"grid": 100
+			"grid": 200
 		},
 		"constants": {
 			"cellRadius": 0.2,
@@ -149,7 +127,7 @@
 			"cellsiny": 11,
 			"cellsinz": 11,
 			"gridMidpoint": [0,0,0,1],
-			"cellCapacity": 100
+			"cellCapacity": 200
 		}
 	}
 }
