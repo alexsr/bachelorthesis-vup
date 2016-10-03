@@ -118,13 +118,13 @@
 		{
 			"name": "Fluid1",
 			"type": "F",
-			"particles": 2500,
+			"particles": 2000,
 			"data": {
 				"pos": {
 					"frequency": 1,
 					"values": [
 						"random-2,2",
-						"random-0.5,1",
+						"random-2,2",
 						"random-2,2",
 						1.0
 					]
@@ -135,62 +135,6 @@
 						0,
 						0,
 						1,
-						1.0
-					]
-				}
-			}
-		},
-		{
-			"name": "Fluid2",
-			"type": "F",
-			"particles": 1000,
-			"data": {
-				"pos": {
-					"frequency": 1,
-					"values": [
-						"random-2,2",
-						"random1,2",
-						"random-2,2",
-						1.0
-					]
-				},
-				"color": {
-					"frequency": 1,
-					"values": [
-						1,
-						0,
-						0,
-						1.0
-					]
-				},
-				"mass": {
-					"frequency": 1,
-					"values": [
-						0.08
-					]
-				}
-			}
-		},
-		{
-			"name": "Fluid3",
-			"type": "F",
-			"particles": 4000,
-			"data": {
-				"pos": {
-					"frequency": 1,
-					"values": [
-						"random-2,2",
-						"random-2,-0.5",
-						"random-2,2",
-						1.0
-					]
-				},
-				"color": {
-					"frequency": 1,
-					"values": [
-						0,
-						1,
-						0,
 						1.0
 					]
 				}

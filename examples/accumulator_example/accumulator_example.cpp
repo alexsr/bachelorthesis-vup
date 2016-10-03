@@ -16,8 +16,14 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
-int main()
+int main(int argc, char* argv[])
 {
+  int platformID = 0;
+  int deviceID = 0;
+  if (argc == 3) {
+    platformID = atoi(argv[1]);
+    deviceID = atoi(argv[2]);
+  }
   GLFWwindow* window = vup::createWindow(WIDTH, HEIGHT, "Instanced Rendering", nullptr, nullptr);
   glfwSetKeyCallback(window, vup::closeWindowCallback);
 
@@ -28,7 +34,7 @@ int main()
   vup::ShaderProgram simpleShader(SHADERS_PATH "/instancedPhong.vert", SHADERS_PATH "/instancedPhong.frag");
   simpleShader.updateUniform("proj", cam.getProjection());
 
-  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt", 0, CL_DEVICE_TYPE_GPU, 0);
+  vup::ParticleSimulation ps(RESOURCES_PATH "/config.txt", platformID, CL_DEVICE_TYPE_GPU, deviceID);
   
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());

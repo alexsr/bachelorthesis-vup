@@ -53,7 +53,12 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
     0
   };
 #endif
-  m_context = cl::Context(m_defaultDevice, properties);
+  int clError;
+  m_context = cl::Context(m_defaultDevice, properties, 0, 0, &clError);
+  if (clError != CL_SUCCESS) {
+    throw vup::KernelCreationException("Context", clError);
+  }
+
 }
 
 vup::GPUBoilerplate::~GPUBoilerplate()
@@ -166,7 +171,7 @@ void vup::KernelHandler::extractArguments(std::string path, const std::string &s
     for (auto &param : params) {
       std::vector<std::string> parts = splitParams(param.c_str(), ' ');
       if (parts.size() < 2) {
-        throw new std::exception(); // TODO: change this exception
+        throw new CorruptDataException(path, "Kernel could not be handled correctly."); // TODO: change this exception
       }
       KernelArgument karg;
       // The kernel name always is the last string in the parameter string.
