@@ -164,7 +164,7 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
 
   density[id] = density_id;
   float density_err = density_id - restDensity;
-  pressure[id] += -density_err * 0.009f;
+  pressure[id] += -density_err * 0.02f;
 }
 
 __kernel void computePressureForce(__global float4* predictpos, __global int* neighbors, __global int* neighborCounter, __global float* density, __global float* pressure, __global float* mass, __global float4* forcePressure, __global int* globalIndices) {

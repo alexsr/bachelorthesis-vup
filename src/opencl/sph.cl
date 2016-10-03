@@ -129,7 +129,7 @@ __kernel void calcPressure(__global float4* pos, __global int* neighbors, __glob
   unsigned int g_id = globalIndices[id];
   float density_id = mass[g_id] * polySix(smoothingLength, 0.0);
   float pressure_id = 0;
-  float k = 26000.0 * mass[g_id];
+  float k = 500;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];

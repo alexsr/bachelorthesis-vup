@@ -226,6 +226,34 @@ __kernel void updateGrid(__global float4* pos, __global int* grid, volatile __gl
   }
 }
 
+__kernel void collisionNoGrid(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs,__global float* springcoefficient, __global float* dampingcoefficient) {
+  int id = get_global_id(0);
+  float m = mass[id];
+  float4 v = vel[id];
+  float4 p = pos[id];
+  float4 forceSpring = 0.0f;
+  float4 forceDamping = 0.0f;
+  float4 forceShear = 0.0f;
+  float diam = 2.0f * radius;
+  float ks = springcoefficient[id];
+  float kd = dampingcoefficient[id];
+  for (int j = 0; j < get_global_size(0); j++) {
+    float dist = distance(p.xyz, pos[j].xyz);
+    if (systemIDs[j] != systemIDs[id] && dist < radius * 2.0f && id != j) {
+      float4 diffPos = pos[j] - p;
+      float4 vj = vel[j];
+      float4 velDiff = (vj - v);
+      float4 n = diffPos / dist;
+      forceSpring += -ks * (diam - dist) * n;
+      forceDamping += kd * velDiff;
+      forceShear += 0.0f * (velDiff - dot(velDiff, n) * n);
+    }
+  }
+  float4 gravForce = 0.0f;
+  gravForce.y = -9.81f * mass[id];
+  forceIntern[id].xyz += gravForce.xyz + forceSpring.xyz + forceDamping.xyz + forceShear.xyz;
+}
+
 __kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, __global float* springcoefficient, __global float* dampingcoefficient, float dt) {
   int id = get_global_id(0);
   float4 p = pos[id];
@@ -331,7 +359,7 @@ __kernel void integrateRigidBody(__global float4* pos, __global float4* relative
   float4 forceSpring = 0.0f;
   float bounds = 2.0;
   float ybounds = 4.0;
-  float k = springcoefficient[id];
+  float k = springcoefficient[id] * 1.5;
   float kd = dampingcoefficient[id];
   bool collision = false;
   if (dot(vel[id], up) < 0 && pos[id].y < -bounds) {
@@ -359,7 +387,7 @@ __kernel void integrateRigidBody(__global float4* pos, __global float4* relative
     collision = true;
   }
   if (collision) {
-    forceSpring += -kd * vel[id];
+    forceSpring += -kd * vel[id] * 10.0;
   }
   forceIntern[id].xyz = forceSpring.xyz;
 }
