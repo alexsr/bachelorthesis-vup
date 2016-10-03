@@ -1,4 +1,4 @@
-﻿__constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
+__constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
 __constant float4 down = (float4)(0.0f, -1.0f, 0.0f, 0.0f);
 __constant float4 left = (float4)(-1.0f, 0.0f, 0.0f, 0.0f);
 __constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);

@@ -1,15 +1,15 @@
-﻿__constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
-__constant float4 down = (float4)(0.0f, -1.0f, 0.0f, 0.0f);
-__constant float4 left = (float4)(-1.0f, 0.0f, 0.0f, 0.0f);
-__constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
-__constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
-__constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
+constant float4 up = (float4)(0.0f, 1.0f, 0.0f, 0.0f);
+constant float4 down = (float4)(0.0f, -1.0f, 0.0f, 0.0f);
+constant float4 left = (float4)(-1.0f, 0.0f, 0.0f, 0.0f);
+constant float4 right = (float4)(1.0f, 0.0f, 0.0f, 0.0f);
+constant float4 forth = (float4)(0.0f, 0.0f, 1.0f, 0.0f);
+constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
-__constant float smoothingLength = 0.2;
-__constant float restDensity = 1000.0;
-__constant int neighbor_amount = 100;
-__constant float polySixConst = 3059924.7482;
-__constant float spikyConst = 223811.6387;
+constant float smoothingLength = 0.2;
+constant float restDensity = 1000.0;
+constant int neighbor_amount = 100;
+constant float polySixConst = 3059924.7482;
+constant float spikyConst = 223811.6387;
 
 float polySix(float h, float r) {
   if (0 <= r && r < h) {
@@ -154,7 +154,6 @@ __kernel void updatePressure(__global float4* pos, __global float4* predictpos, 
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];
   float density_id = mass[g_id] * polySix(smoothingLength, 0.0);
-  float pressure_id = 0;
   for (int i = 0; i < neighborCounter[id]; i++) {
     int j = neighbors[id * neighbor_amount + i];
     int g_j = globalIndices[j];
