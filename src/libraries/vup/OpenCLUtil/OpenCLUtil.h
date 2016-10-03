@@ -25,6 +25,7 @@
 #include "vup/Exceptions/BufferNotFoundException.h"
 #include "vup/Exceptions/BufferCreationException.h"
 #include "vup/Exceptions/CorruptDataException.h"
+#include "vup/Exceptions/BoilerplateException.h"
 #include <vector>
 #include <map>
 #include <algorithm>

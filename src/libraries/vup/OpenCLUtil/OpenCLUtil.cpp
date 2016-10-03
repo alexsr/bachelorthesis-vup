@@ -6,7 +6,7 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
 {
   cl::Platform::get(&m_platforms);
   if (m_platforms.size() == 0) {
-    throw std::exception();
+    throw vup::BoilerplateException("Platform", -1);
   }
   else if (m_platforms.size() <= platformID) {
     std::cout << "Platform " << platformID << " not found." << std::endl;
@@ -18,7 +18,7 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
 
   m_defaultPlatform.getDevices(deviceType, &m_devices);
   if (m_devices.size() == 0) {
-    throw std::exception();
+    throw vup::BoilerplateException("Device", -1);
   }
   else if (m_devices.size() <= deviceID) {
     std::cout << "Device " << deviceID << " not found on platform " << platformID << "." << std::endl;
@@ -56,7 +56,7 @@ vup::GPUBoilerplate::GPUBoilerplate(int platformID, cl_device_type deviceType, i
   int clError;
   m_context = cl::Context(m_defaultDevice, properties, 0, 0, &clError);
   if (clError != CL_SUCCESS) {
-    throw vup::KernelCreationException("Context", clError);
+    throw vup::BoilerplateException("Context", clError);
   }
 
 }
