@@ -76,7 +76,7 @@ __kernel void generateConnectionDistances(__global float4* pos, __global int* co
       break;
     }
     float dist = distance(p, pos[s]);
-    if (dist <= maxDist) {      
+    if (dist <= maxDist) {
       int con_id = id * maxConnections + connectionCounter[id];
       float4 calcConnection = pos[s] - pos[id];
       connectionDistances[con_id] = calcConnection;
@@ -320,14 +320,14 @@ __kernel void integrateRigidBody(__global float4* pos, __global float4* relative
   float4 q = quat[sysID];
   float4 negQuat = -q;
   negQuat.w *= -1.0f;
-  
+
   float4 r = relativePos[id];
   r.w = 0.0f;
   r.xyz = multiplyQuat(multiplyQuat(q, r), negQuat).xyz;
   vel[id] = momentum[sysID]/rigidMass[sysID] + cross(w, r);
   r.w = 1.0f;
   pos[id].xyz = centerOfMass[sysID].xyz + r.xyz;
-  
+
   float4 forceSpring = 0.0f;
   float bounds = 2.0;
   float ybounds = 4.0;

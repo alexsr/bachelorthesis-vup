@@ -1,16 +1,7 @@
 {
 	"kernels": [
-    {
-			"name": "resetGrid",
-			"onStructure": true
-		},
 		{
-			"name": "updateGrid",
-			"onSystems": [],
-			"onTypes": []
-		},
-		{
-			"name": "findNeighbors",
+			"name": "findNeighborsNoGrid",
 			"onSystems": [],
 			"onTypes": ["F"]
 		},

@@ -11,22 +11,13 @@
 			"onSystems" : [],
 			"onTypes": ["A"]
 		},
-    {
-      "name": "resetGrid",
-      "onStructure": true
-    },
-    {
-			"name": "updateGrid",
+		{
+			"name": "collisionNoGrid",
 			"onSystems": [],
 			"onTypes": []
 		},
 		{
-			"name": "collisionNonrigid",
-			"onSystems": [],
-			"onTypes": []
-		},
-		{
-			"name": "findNeighbors",
+			"name": "findNeighborsNoGrid",
 			"onSystems": [],
 			"onTypes": ["F"]
 		},

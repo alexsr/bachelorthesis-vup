@@ -1,4 +1,5 @@
 {
+	"iterations": 10,
 	"kernels": [
 		{
 			"name": "resetGrid",
@@ -13,10 +14,10 @@
 			"name": "generateConnectionDistances",
 			"onSystems": [],
 			"onTypes": ["B"],
-            "init": true,
-            "constants": {
-                "maxConnections": 26
-            }
+      "init": true,
+      "constants": {
+        "maxConnections": 26
+      }
 		},
 		{
 			"name": "collision",
@@ -30,27 +31,26 @@
 			"name": "selfcollision",
 			"onSystems": ["Body2"],
 			"onTypes": [],
-            "constants": {
-                "maxConnections": 26,
+      "constants": {
 				"dt": 0.001
-            }
+      }
 		},
         {
 			"name": "computeConnectionForces",
 			"onSystems": [],
 			"onTypes": ["B"],
-            "constants": {
-                "maxConnections": 26,
+      "constants": {
+        "maxConnections": 26,
 				"dt": 0.001
-            }
+      }
 		},
         {
 			"name": "integrate",
 			"onSystems": [],
 			"onTypes": ["B"],
-            "constants": {
-                "dt": 0.001
-            }
+      "constants": {
+        "dt": 0.001
+      }
 		}
 	]
 }

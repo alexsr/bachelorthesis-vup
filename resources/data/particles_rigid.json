@@ -1154,11 +1154,11 @@
 			"grid": 30
 		},
 		"constants": {
-			"cellRadius": 0.2,
+			"cellRadius": 0.3,
 			"cellsinx": 11,
 			"cellsiny": 22,
 			"cellsinz": 11,
-			"gridMidpoint": [0,2,0,1],
+			"gridMidpoint": [0,1,0,1],
 			"cellCapacity": 30
 		}
 	}

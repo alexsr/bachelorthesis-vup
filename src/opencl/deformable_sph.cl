@@ -7,6 +7,8 @@ __constant float4 back = (float4)(0.0f, 0.0f, -1.0f, 0.0f);
 
 __constant float radius = 0.1;
 __constant float smoothingLength = 0.2;
+__constant float polySixConst = 3059924.7482;
+__constant float spikyConst = 223811.6387;
 __constant float restDensity = 1000.0;
 __constant int neighbor_amount = 20;
 
@@ -60,7 +62,7 @@ __kernel void generateConnectionDistances(__global float4* pos, __global int* gl
     }
     int g_s = globalIndices[s];
     float dist = distance(p, pos[g_s]);
-    if (dist <= maxDist && id != s && sysID == systemIDs[s]) {      
+    if (dist <= maxDist && id != s && sysID == systemIDs[s]) {
       int con_id = id * maxConnections + connectionCounter[id];
       float4 calcConnection = pos[g_s] - p;
       connectionDistances[con_id] = calcConnection;
@@ -105,7 +107,30 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   color[id].z = k / (float)(cellsinz);
 }
 
-__kernel void fakecollision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
+__kernel void collisionNoGrid(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs, float dt) {
+  int id = get_global_id(0);
+  float m1 = mass[id];
+  float4 v1 = vel[id];
+  float4 p = pos[id];
+  for (int j = 0; j < get_global_size(0); j++) {
+    float dist = distance(p.xyz, pos[j].xyz);
+    if (systemIDs[id] != systemIDs[j] && dist < radius * 2.0f && id != j) {
+      float4 n = normalize(p - pos[j]);
+      float4 v2 = vel[j];
+      float m2 = mass[j];
+      float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
+      // v2 = v2 + jr / m2 * n;
+      // vel[id] += - jr / m1 * n;
+      // vel[other] = v2;
+      forceIntern[id] += -jr * n / dt;
+      // forceIntern[other] = jr * n / dt;
+      pos[id] += n * (radius * 2.0f - dist)/2.0f;
+      // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+    }
+  }
+}
+
+__kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {
   int id = get_global_id(0);
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
@@ -136,8 +161,8 @@ __kernel void fakecollision(__global float4* pos, __global float4* vel, __global
             v2 = v2 + jr / m2 * n;
             vel[id] = v1;
             vel[other] = v2;*/
-            forceIntern[id] = -jr * n / dt * 0.99f;
-            forceIntern[other] = jr * n / dt * 0.99f;
+            forceIntern[id] = -jr * n / dt;
+            forceIntern[other] = jr * n / dt;
             pos[id] += n * (radius * 2.0f - dist)/2.0f;
             pos[other] -= n * (radius * 2.0f - dist)/2.0f;
           }
@@ -147,6 +172,21 @@ __kernel void fakecollision(__global float4* pos, __global float4* vel, __global
   }
 }
 
+__kernel void findNeighborsNoGrid(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
+  float4 p = pos[g_id];
+  neighborCounter[id] = 0;
+  for (int index = 0; index < get_global_size(0); index++) {
+    if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength) {
+      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
+      neighborCounter[id]++;
+    }
+    if (neighborCounter[id] >= neighbor_amount - 1) {
+      break;
+    }
+  }
+}
 
 __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
   unsigned int id = get_global_id(0);
@@ -225,32 +265,17 @@ __kernel void computeConnectionForces(__global float4* pos, __global float4* vel
     forceD += dampingConstant[id] * vel_parallel;
   }
   float4 forceN = forceB + forceD;
-  // for (int i = 0; i < connectionCounter[id]; i++) {
-    // int con_id = id * maxConnections + i;
-    // int e_id = connections[con_id];
-    // float4 posDiff = pos[e_id] - pos[g_id];
-    // float4 velDiff = vel[e_id] - vel[g_id];
-    // float actualDistance = length(posDiff);
-    // float4 vel_parallel = dot(velDiff, posDiff) / dot(posDiff, posDiff) * posDiff;
-    // float4 vel_ortho = -velDiff + vel_parallel;
-    // forceF += -length(frictionConstant[id] * forceN) * normalize(vel_ortho);
-  // }
   forceIntern[g_id] += forceN + forceF;
- // printf("%d -> %f, %f, %f, %f; ", id, forceIntern[id].x, forceIntern[id].y, forceIntern[id].z, forceIntern[id].w);
 }
 
 __kernel void integrate(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs, float dt, float sign) {
   int id = get_global_id(0);
   float4 gravAcc = (float4) (0.0f, 0.0f, 0.0f, 0.0f);
   gravAcc.y = -9.81f * sign;
-  //if (id != 27) {
-    
-    //forceExtern.xyz += -M_PI_F * radius * radius * mediumDensity * length(vel[id].xyz) * vel[id].xyz;
-    vel[id].xyz += ((forceIntern[id]).xyz / mass[id] + gravAcc.xyz) * dt;
-    pos[id].xyz += vel[id].xyz * dt;    
-  //}
-    forceIntern[id] = 0.0f;
-  
+  vel[id].xyz += ((forceIntern[id]).xyz / mass[id] + gravAcc.xyz) * dt;
+  pos[id].xyz += vel[id].xyz * dt;
+  forceIntern[id] = 0.0f;
+
   float bounds = 1.0;
   float ybounds = 3.6;
   float damping = 0.99f;

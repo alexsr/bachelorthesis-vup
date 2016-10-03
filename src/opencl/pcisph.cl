@@ -72,6 +72,22 @@ __kernel void updateGrid(__global float4* pos, __global int* grid, volatile __gl
   }
 }
 
+__kernel void findNeighborsNoGrid(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* globalIndices) {
+  unsigned int id = get_global_id(0);
+  unsigned int g_id = globalIndices[id];
+  float4 p = pos[g_id];
+  neighborCounter[id] = 0;
+  for (int index = 0; index < get_global_size(0); index++) {
+    if (distance(p.xyz, pos[globalIndices[index]].xyz) <= smoothingLength) {
+      neighbors[id * neighbor_amount + neighborCounter[id]] = index;
+      neighborCounter[id]++;
+    }
+    if (neighborCounter[id] >= neighbor_amount - 1) {
+      break;
+    }
+  }
+}
+
 __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __global int* neighborCounter, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* globalIndices, __global int* typeIDs) {
   unsigned int id = get_global_id(0);
   unsigned int g_id = globalIndices[id];

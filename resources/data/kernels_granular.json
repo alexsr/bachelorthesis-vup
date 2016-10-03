@@ -10,7 +10,7 @@
 			"onTypes": []
 		},
 		{
-			"name": "rigidCollision",
+			"name": "collision",
 			"onSystems": [],
 			"onTypes": [],
 			"constants": {
@@ -25,18 +25,6 @@
       "constants": {
           "dt": 0.001
       }
-		},
-		{
-			"name": "rigidCollision"
-		},
-    {
-			"name": "integrate"
-		},
-		{
-			"name": "rigidCollision"
-		},
-    {
-			"name": "integrate"
 		}
 	]
 }

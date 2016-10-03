@@ -10,16 +10,7 @@
 			}
 		},
 		{
-			"name": "resetGrid",
-			"onStructure": true
-		},
-		{
-			"name": "updateGrid",
-			"onSystems": [],
-			"onTypes": []
-		},
-		{
-			"name": "collision",
+			"name": "collisionNoGrid",
 			"onSystems": [],
 			"onTypes": [],
 			"constants": {
@@ -27,7 +18,7 @@
 			}
 		},
 		{
-			"name": "findNeighbors",
+			"name": "findNeighborsNoGrid",
 			"onSystems": [],
 			"onTypes": ["F"]
 		},
@@ -98,16 +89,10 @@
 			}
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -149,16 +134,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -200,16 +179,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -251,16 +224,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -302,16 +269,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -353,16 +314,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -404,16 +359,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -455,16 +404,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"
@@ -506,16 +449,10 @@
 			"name": "integrate"
 		},
 		{
-			"name": "resetGrid"
+			"name": "collisionNoGrid"
 		},
 		{
-			"name": "updateGrid"
-		},
-		{
-			"name": "collision"
-		},
-		{
-			"name": "findNeighbors"
+			"name": "findNeighborsNoGrid"
 		},
 		{
 			"name": "initForces"

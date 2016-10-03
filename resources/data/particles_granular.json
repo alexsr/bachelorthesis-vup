@@ -91,7 +91,7 @@
 		{
 			"name": "Granular1",
 			"type": "G",
-			"particles": 1000,
+			"particles": 2500,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -122,7 +122,7 @@
 					"frequency": 1,
 					"values": [
             "random-0.5,0.5",
-						"random-1,2",
+						"random0,2",
             "random-0.5,0.5",
             1
 					]

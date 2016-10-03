@@ -81,9 +81,10 @@ __kernel void updateGrid(__global float4* pos, __global int* grid, volatile __gl
   float xradius = cellRadius * cellsinx;
   float yradius = cellRadius * cellsiny;
   float zradius = cellRadius * cellsinz;
-  int i = (pos[id].x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
-  int j = (pos[id].y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
-  int k = (pos[id].z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
+  float4 p = pos[id];
+  int i = (p.x - gridMidpoint.x + xradius) / xradius * (cellsinx / 2.0f);
+  int j = (p.y - gridMidpoint.y + yradius) / yradius * (cellsiny / 2.0f);
+  int k = (p.z - gridMidpoint.z + zradius) / zradius * (cellsinz / 2.0f);
   int counterIndex = i * cellsiny * cellsinz + j * cellsinz + k;
   if (counterIndex < cellsinx*cellsiny*cellsinz) {
     int n = atomic_inc(&(gridCounter[i * cellsiny * cellsinz + j * cellsinz + k]));
@@ -104,6 +105,29 @@ __kernel void printGrid(__global float4* pos, __global int* grid, volatile __glo
   color[id].x = i / (float)(cellsinx);
   color[id].y = j / (float)(cellsiny);
   color[id].z = k / (float)(cellsinz);
+}
+
+__kernel void collisionNoGrid(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* systemIDs, float dt) {
+  int id = get_global_id(0);
+  float m1 = mass[id];
+  float4 v1 = vel[id];
+  float4 p = pos[id];
+  for (int j = 0; j < get_global_size(0); j++) {
+    float dist = distance(p.xyz, pos[j].xyz);
+    if (systemIDs[id] != systemIDs[j] && dist < radius * 2.0f && id != j) {
+      float4 n = normalize(p - pos[j]);
+      float4 v2 = vel[j];
+      float m2 = mass[j];
+      float jr = -2.0 * dot(v2 - v1, n) / (1.0/m1 + 1.0/m2);
+      // v2 = v2 + jr / m2 * n;
+      // vel[id] += - jr / m1 * n;
+      // vel[other] = v2;
+      forceIntern[id] += -jr * n / dt;
+      // forceIntern[other] = jr * n / dt;
+      pos[id] += n * (radius * 2.0f - dist)/2.0f;
+      // pos[other] -= n * (radius * 2.0f - dist)/2.0f;
+    }
+  }
 }
 
 __kernel void collision(__global float4* pos, __global float4* vel, __global float* mass, __global float4* forceIntern, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, __global int* systemIDs, float dt) {

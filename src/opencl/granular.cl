@@ -38,7 +38,42 @@ __kernel void updateGrid(__global float4* pos, __global int* grid, volatile __gl
   }
 }
 
-__kernel void rigidCollision(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global int* systemIDs, __global int* globalIndices, __global float* stiffness, __global float* damping, __global float* friction, __global float* mass, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, float dt, float staticFriction) {
+__kernel void collisionNoGrid(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global int* systemIDs, __global int* globalIndices, __global float* stiffness, __global float* damping, __global float* friction, __global float* mass, float dt, float staticFriction) {
+  int id = get_global_id(0);
+  float m = mass[id];
+  float4 v = vel[id];
+  float4 p = pos[id];
+  float diam = radius * 2.0f;
+  float4 forceNormal = 0.0f;
+  float4 forceFriction = 0.0f;
+  for (int j = 0; j < get_global_size(0); j++) {
+    if (j == id) {
+      continue;
+    }
+    float4 pj = pos[j];
+    float dist = distance(p.xyz, pj.xyz);
+    if (dist < diam) {
+      float kr = stiffness[j];
+      float kd = damping[j];
+      float intersect = max(0.0f, diam-dist);
+      float ks = friction[j];
+      float mj = mass[j];
+      float4 diffPos = pj - p;
+      float4 vj = vel[j];
+      float4 velDiff = (v - vj);
+      float4 n = diffPos / dist;
+      float relativeVelocity = dot(velDiff, n);
+      float4 fn = -(kd * sqrt(intersect)*relativeVelocity + kr * pow(intersect, 1.5)) * n;
+      float4 v_tan = cross(n, cross(velDiff, n));
+      float m_eff = m * mj / (m + mj);
+      forceFriction += -staticFriction * m_eff * v_tan - min(ks * length(fn), ks * length(v_tan)) * normalize(v_tan);
+      forceNormal += fn;
+    }
+  }
+  forceIntern[id].xyz += forceFriction.xyz + forceNormal.xyz;
+}
+
+__kernel void collision(__global float4* pos, __global float4* vel, __global float4* forceIntern, __global int* systemIDs, __global int* globalIndices, __global float* stiffness, __global float* damping, __global float* friction, __global float* mass, __global int* grid, volatile __global int* gridCounter, float cellRadius, int cellsinx, int cellsiny, int cellsinz, int cellCapacity, float4 gridMidpoint, float dt, float staticFriction) {
   int id = get_global_id(0);
   int g_id = globalIndices[id];
   float xradius = cellRadius * cellsinx;

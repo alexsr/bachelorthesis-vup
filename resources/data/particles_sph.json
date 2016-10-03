@@ -88,7 +88,7 @@
 		{
 			"name": "Fluid1",
 			"type": "F",
-			"particles": 3500,
+			"particles": 1500,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -113,7 +113,7 @@
 		{
 			"name": "Fluid2",
 			"type": "F",
-			"particles": 2500,
+			"particles": 1000,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -144,7 +144,7 @@
 		{
 			"name": "Fluid3",
 			"type": "F",
-			"particles": 4000,
+			"particles": 1000,
 			"data": {
 				"pos": {
 					"frequency": 1,
@@ -168,7 +168,7 @@
 		}
 	],
 	"speedupstructure": {
-		"size": 9261,
+		"size": 1331,
 		"name": "uniformgrid",
 		"data": {
 			"gridCounter": 1,
@@ -176,9 +176,9 @@
 		},
 		"constants": {
 			"cellRadius": 0.2,
-			"cellsinx": 21,
-			"cellsiny": 21,
-			"cellsinz": 21,
+			"cellsinx": 11,
+			"cellsiny": 11,
+			"cellsinz": 11,
 			"gridMidpoint": [0,0,0,1],
 			"cellCapacity": 100
 		}
