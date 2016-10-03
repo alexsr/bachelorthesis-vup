@@ -43,11 +43,13 @@ public:
   KernelInfoLoader(std::string path);
   ~KernelInfoLoader();
   kernelInfoMap getKernelInfos() { return m_kernelInfos; }
+  int getIterations() { return m_iterations; }
   
 private:
   void load(std::string path);
   std::string m_path;
   kernelInfoMap m_kernelInfos;
+  int m_iterations;
   template <typename T> bool doesKeyExist(std::string key, std::map<std::string, T> m);
   template <typename T> std::string toString(T any);
 };

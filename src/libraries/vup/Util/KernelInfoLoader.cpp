@@ -20,9 +20,12 @@ void vup::KernelInfoLoader::load(std::string path)
       throw new CorruptDataException(m_path, "Parsing failed!");
     }
     if (!doc.HasMember("kernels") || !doc["kernels"].IsArray()) {
-      throw new CorruptDataException(m_path, "No particle size specified!");
+      throw new CorruptDataException(m_path, "No kernels specified!");
     }
-
+    m_iterations = 1;
+    if (doc.HasMember("iterations") && doc["iterations"].IsInt()) {
+      m_iterations = doc["iterations"].GetInt();
+    }
     int pos = 0;
     rapidjson::Value a = doc["kernels"].GetArray();
     // Loop through all kernel info.
