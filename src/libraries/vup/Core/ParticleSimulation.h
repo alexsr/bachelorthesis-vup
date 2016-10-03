@@ -31,7 +31,7 @@ public:
   void init();
   // Executes all kernels except initializing kernels in the order specified in m_kernelorder.
   void run();
-  double runAccumulated(double accumulator, double dt);
+  std::pair<double, double> runAccumulated(double iterCount, double accumulator, double dt);
   float getSize() { return m_size; }
   int getParticleCount() { return m_particleCount; }
   std::map<std::string, vup::VBO> getInteropVBOs() { return m_buffers->getInteropVBOs(); }

@@ -35,17 +35,19 @@ void vup::ParticleSimulation::run()
   m_queue->releaseGL(m_buffers->getGLBuffers());
 }
 
-double vup::ParticleSimulation::runAccumulated(double accumulator, double dt)
+std::pair<double, double> vup::ParticleSimulation::runAccumulated(double iterCount, double accumulator, double dt)
 {
 	m_queue->acquireGL(m_buffers->getGLBuffers());
 	while (accumulator > dt) {
+    double time = glfwGetTime();
 		for (std::string &kernel : m_kernelorder) {
 			m_queue->runRangeKernel(m_kernels->getKernel(kernel), m_kernelSize.at(kernel));
 		}
 		accumulator -= dt;
+    iterCount++;
 	}
 	m_queue->releaseGL(m_buffers->getGLBuffers());
-  return accumulator;
+  return std::pair<double, double>(iterCount, accumulator);
 }
 
 void vup::ParticleSimulation::updateConstant(const char * name, int index, float c)
@@ -353,6 +355,12 @@ void vup::ParticleSimulation::reload()
       }
       std::cout << "Set " << arg.name << " at " << arg.index << " of " << kinf.first << std::endl;
     }
+  }
+  int iterations = kinfLoader.getIterations();
+  int callListSize = m_kernelorder.size();
+  std::vector<std::string> kernelorder = m_kernelorder;
+  for (int i = 1; i < iterations; i++) {
+    m_kernelorder.insert(m_kernelorder.end(), kernelorder.begin(), kernelorder.end());
   }
 }
 

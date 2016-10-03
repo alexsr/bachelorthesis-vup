@@ -32,13 +32,12 @@ int main()
   
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
-  float dt = 0.016667f;
-  float camdt = 0.01f;
+  float dt = 0.01f;
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   double accumulator = 0.0;
-  double frames = 0.0;
+  double iterCount = 0.0;
   // Main loop
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -47,11 +46,12 @@ int main()
     vup::clearGL();
     currentTime = glfwGetTime();
     if (currentTime - lastTime >= 1) {
-      vup::updateFramerate(currentTime, lastTime, frames, window);
+      vup::updateFramerate(currentTime, lastTime, iterCount, window);
       lastTime = currentTime;
-      frames = 0;
+      std::cout << iterCount << std::endl;
+      iterCount = 0;
     }
-    frames += 1;
+    iterCount += 1;
     ps.run();
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       ps.reload();
@@ -62,7 +62,7 @@ int main()
     if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS) {
       ps.reloadKernel();
     }
-    cam.update(window, camdt);
+    cam.update(window, dt);
     simpleShader.updateUniform("view", cam.getView());
     simpleShader.use();
 

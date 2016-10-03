@@ -33,28 +33,37 @@ int main()
   vup::SphereData* sphere = new vup::SphereData(ps.getSize(), 10, 10);
   vup::ParticleRenderer* renderer = new vup::ParticleRenderer(*sphere, ps.getInteropVBOs());
   double dt = 0.01f;
-  double renderUpdate = 1.0 / 60.0;
   glfwSetTime(0.0);
   double currentTime = glfwGetTime();
   double lastTime = glfwGetTime();
   double frameTime = lastTime;
   double accumulator = 0.0;
   double renderAccumulator = 0.0;
-  double frames = 0.0;
+  double iterCount = 0;
   // Main loop
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   while (!glfwWindowShouldClose(window)) {
     vup::clearGL();
+    lastTime = currentTime;
     currentTime = glfwGetTime();
     accumulator += currentTime - lastTime;
     if (currentTime - frameTime > 1) {
-      vup::updateFramerate(currentTime, frameTime, frames, window);
+      vup::updateFramerate(currentTime, frameTime, iterCount, window);
       frameTime = currentTime;
-      frames = 0;
+      std::cout << iterCount << std::endl;
+      iterCount = 0;
     }
-    frames += 1;
+    iterCount += 1;
+    std::pair<double, double> iterCountandAcc = ps.runAccumulated(iterCount, accumulator, dt);
+    accumulator = iterCountandAcc.second;
+    iterCount = iterCountandAcc.first;
+    cam.update(window, dt);
+    simpleShader.updateUniform("view", cam.getView());
+    simpleShader.use();
+
+    renderer->execute(ps.getParticleCount());
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
       ps.reload();
       ps.init();
@@ -66,13 +75,10 @@ int main()
       ps.reloadKernel();
       currentTime = glfwGetTime();
     }
-    lastTime = currentTime;
-    accumulator = ps.runAccumulated(accumulator, dt);
-    cam.update(window, dt);
-    simpleShader.updateUniform("view", cam.getView());
-    simpleShader.use();
-
-    renderer->execute(ps.getParticleCount());
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+      accumulator = 0.0;
+      currentTime = glfwGetTime();
+    }
     glfwPollEvents();
     glfwSwapBuffers(window);
   }
