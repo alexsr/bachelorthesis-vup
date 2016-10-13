@@ -115,7 +115,7 @@ __kernel void collision(__global float4* pos, __global float4* vel, __global flo
       for (int z = k - 1; z < k + 2; z++) {
         int z_offset = z * cellCapacity;
         int n = gridCounter[x_counter_offset + y_counter_offset + z];
-        for (int o = 0; o < n; o++) {
+        for (int o = 0; o < min(n, cellCapacity); o++) {
           int other = grid[x_offset + y_offset + z_offset + o];
           float4 pj = pos[other];
           float dist = distance(p.xyz, pj.xyz);

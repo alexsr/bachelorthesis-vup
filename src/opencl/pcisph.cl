@@ -108,7 +108,7 @@ __kernel void findNeighbors(__global float4* pos, __global int* neighbors, __glo
       for (int z = max(0, k - 1); z < min(k + 2, cellsinz); z++) {
         int z_offset = z * cellCapacity;
         int n = gridCounter[x_counter_offset + y_counter_offset + z];
-        for (int o = 0; o < n; o++) {
+        for (int o = 0; o < min(n, cellCapacity); o++) {
           int other = grid[x_offset + y_offset + z_offset + o];
           float dist = distance(p.xyz, pos[other].xyz);
           if (dist <= smoothingLength && g_id != other)
