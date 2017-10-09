@@ -1,19 +1,18 @@
+#### This project is finished and will not be updated any longer.
+Please visit [VUP](https://github.com/alexsr/vup) for an ongoing rewrite of this project.
+
 # Unified Particle Framework
 
-This is the repository for my bachelor thesis "Entwicklung eines variablen Partikel-Frameworks mittels GPGPU".
+This is the repository for my bachelor thesis "Development of a variable particle frameworks utilizing GPGPU".
+In this bachelor thesis a framework for particle based simulation of physical
+systems is created. By automating the preparation process of the simulation through usage of configuration data allows the developer to build new simulation scenarios effortlessly.
+Additionally the framework’s functionality is extensible due to its overall structure. Utilizing the parallel nature of graphics hardware all calculations of the simulations are processed on the GPU.
+The simulation methods described in this thesis are integrated into the particle framework. To accelerate calculations the uniform grid data structure is used resulting in an increase of simulation performance up to 90%.
 
 ## Definition of Task
 
-Partikelsimulationen sind wichtiger Bestandteil vieler moderner Anwendungen, etwa in der Pharmazie oder in der Videospielebranche. Sie ermöglichen eine realistische Simulation von Flüssigkeiten, Gasen, Molekülen und auch von Festkörpern und sind somit universell einsetzbar. Die Parallelität der GPU ermöglicht außerdem eine echtzeitfähige Simulation der Partikel.
+Particle simulations are an important part of a lot of modern applications, e.g. in pharmaceutics or the games industry. They allow for realisitc simulation of fluids, gases, molucules, and solids and is therefore universially applicable. Additionally the parallel nature of modern GPUs enables real time simulations of particles.
 
-Diese Arbeit beschäftigt sich mit der Entwicklung eines Partikel-Frameworks auf der GPU.  Ziel der Arbeit ist es, ein Framework zu erstellen, dass variable Partikelparameter und -bewegungsfunktionen und somit eine Vereinigung partikelbasierter Körper in einer Simulation ermöglicht. Dabei soll die Rechenleistung und Parallelität der GPU ausgenutzt werden.
+The focus of this bachelor thesis is the development of a particle framework on the GPU. The goal is to create a framework which allows for both variable particle parameters and movement functions. All calculations should utilize the parallel nature of modern GPUs.
 
-Der Schwerpunkt der Arbeit liegt dabei darauf, eine Schnittstelle zu bieten, die es dem Anwender erlaubt über bereits im Framework enthaltene Partikelkonfigurationen hinaus eigene erstellen und diese nahtlos einbinden zu können.
-
-#### Die inhaltlichen Schwerpunkte der Arbeit sind:
-
-1. Recherche über Partikelsimulation und GPGPU-Programmierung
-2. Konzeption eines dynamischen Partikel-Frameworks
-3. Implementation des Frameworks
-4. Evaluation des Frameworks
-5. Dokumentation
+The main topic is to provide an interface to allow the user to both use already implemented particle simulation configurations and moreover to create and seemlessly integrate their own configurations.
